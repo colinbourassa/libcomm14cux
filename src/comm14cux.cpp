@@ -1032,8 +1032,19 @@ bool Comm14CUX::getFuelMapRowIndex(uint8_t &fuelMapRowIndex)
 
     if (readMem(Serial14CUXParams::FuelMapRowIndexOffset, 1, (uint8_t*)&rowIndex))
     {
-        // fuel map row index is stored in the high nibble
+        // fuel map starting row index is stored in the high nibble
         fuelMapRowIndex = (rowIndex >> 4);
+ 
+        // The 'fuzzy' nature of the fuel map means that the value selected
+        // by the upper nibbles of the row-column pair is actually just the
+        // upper-left corner of a square of four values, which are partially
+        // combined by using the lower nibbles of the row-column indicies as
+        // weights. To provide a simple index here, we simply round up to the
+        // next row if the lower nibble is >= 8.
+        if (((rowIndex & 0x0F) >= 0x08) && (fuelMapRowIndex < 0x07))
+        {
+            fuelMapRowIndex++;
+        }
         retVal = true;
     }
 
@@ -1053,8 +1064,19 @@ bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
 
     if (readMem(Serial14CUXParams::FuelMapColumnIndexOffset, 1, (uint8_t*)&colIndex))
     {
-        // fuel map column index is stored in the high nibble
+        // fuel map starting column index is stored in the high nibble
         fuelMapColIndex = (colIndex >> 4);
+
+        // The 'fuzzy' nature of the fuel map means that the value selected
+        // by the upper nibbles of the row-column pair is actually just the
+        // upper-left corner of a square of four values, which are partially
+        // combined by using the lower nibbles of the row-column indicies as
+        // weights. To provide a simple index here, we simply round up to the
+        // next column if the lower nibble is >= 8.
+        if (((colIndex & 0x0F) >= 0x08) && (fuelMapColIndex < 0x0F))
+        {
+            fuelMapColIndex++;
+        }
         retVal = true;
     }
 
