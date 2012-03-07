@@ -40,7 +40,10 @@ uint16_t swapShort(const uint16_t source)
 /**
  * Constructor. Initializes device handle and mutex.
  */
-Comm14CUX::Comm14CUX() : promRev(Comm14CUXDataOffsets_Unset)
+Comm14CUX::Comm14CUX() :
+    m_promRev(Comm14CUXDataOffsets_Unset),
+    m_lastReadCoarseAddress(0x0000),
+    m_lastReadQuantity(0x00)
 {
 #ifdef linux
 
@@ -376,6 +379,7 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
     uint16_t singleReqBytesRead = 0;
     bool readSuccess = false;
     int16_t readCallBytesRead = 1;
+    bool sendLastByteOnly = false;
 
     if (isConnected())
     {
@@ -385,11 +389,18 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
           // read the maximum number of bytes as is reasonable
           singleReqQuantity = getByteCountForNextRead(len, totalBytesRead);
 
+          // if the next address to read is within the 64-byte window
+          // created by the last coarse address that was set, then we
+          // can just send the final byte of the read command
+          sendLastByteOnly =
+            ((singleReqQuantity == m_lastReadQuantity) &&
+             ((addr + totalBytesRead) < (m_lastReadCoarseAddress + 64)));
+
           dprintf("14CUX: Sending cmd to read %d bytes at 0x%04X...\n",
             singleReqQuantity, addr + totalBytesRead);
 
           // if sending the read command is successful...
-          if (sendReadCmd(addr + totalBytesRead, singleReqQuantity))
+          if (sendReadCmd(addr + totalBytesRead, singleReqQuantity, sendLastByteOnly))
           {
               dprintf("14CUX: Successfully sent read command.\n");
   
@@ -414,6 +425,11 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
               {
                   dprintf("14CUX: Successfully read %d bytes.\n", singleReqBytesRead);
                   totalBytesRead += singleReqBytesRead;
+
+                  // remember the number of bytes read on this pass, in case we
+                  // want to issue an abbreviated command next time (which will
+                  // send the same number of bytes)
+                  m_lastReadQuantity = singleReqQuantity;
               }
           }
           else
@@ -431,6 +447,11 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
         dprintf("14CUX: Successfully read all requested bytes.\n");
         readSuccess = true;
     }
+    else
+    {
+        m_lastReadCoarseAddress = 0;
+        m_lastReadQuantity = 0;
+    }
 
 #ifdef linux
     pthread_mutex_unlock(&s_mutex);
@@ -445,17 +466,26 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
  * Sends the three bytes comprising a read command to the 14CUX.
  * @param addr 16-bit address at which to read
  * @param len Number of bytes to read
+ * @param lastByteOnly Send only the last byte of the read command; this will
+ *      work only if the coarse address was previously set.
  * @return True when the read command is successfully sent; false otherwise
  */
-bool Comm14CUX::sendReadCmd(uint16_t addr, uint16_t len)
+bool Comm14CUX::sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly)
 {
     bool success = false;
     uint8_t cmdByte = 0;
 
     // do the command-agnostic coarse address setup
     // (req'd for both reads and writes)
-    if (setReadCoarseAddr(addr, len))
+    if (lastByteOnly || setReadCoarseAddr(addr, len))
     {
+        // if we actually did send the command bytes to set a new coarse
+        // address, then remember what it was
+        if (!lastByteOnly)
+        {
+            m_lastReadCoarseAddress = addr;
+        }
+
         // build and send the byte for the Read command
         cmdByte = ((addr & 0x003F) | 0xC0);
         dprintf("14CUX: Sending byte: 0x%02X...\n", cmdByte);
@@ -601,6 +631,9 @@ bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
     bool retVal = false;
     uint8_t cmdByte = 0x00;
     uint8_t readByte = 0x00;
+
+    m_lastReadCoarseAddress = 0;
+    m_lastReadQuantity = 0;
 
     if (isConnected() && setWriteCoarseAddr(addr))
     {
@@ -885,7 +918,7 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
         uint16_t offset = 0;
 
         // if the revision of the PROM hasn't yet been determined...
-        if (promRev == Comm14CUXDataOffsets_Unset)
+        if (m_promRev == Comm14CUXDataOffsets_Unset)
         {
             uint8_t maxByteToByteChangeOld = 0;
             uint8_t maxByteToByteChangeNew = 0;
@@ -919,17 +952,17 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
                 // byte-to-byte changes is probably the real fuel map
                 if (maxByteToByteChangeOld < maxByteToByteChangeNew)
                 {
-                    promRev = Comm14CUXDataOffsets_Old;
+                    m_promRev = Comm14CUXDataOffsets_Old;
                 }
                 else
                 {
-                    promRev = Comm14CUXDataOffsets_New;
+                    m_promRev = Comm14CUXDataOffsets_New;
                 }
             }
         }
 
         // if the connected ECU is using the old offsets...
-        if (promRev == Comm14CUXDataOffsets_Old)
+        if (m_promRev == Comm14CUXDataOffsets_Old)
         {
             switch (fuelMapId)
             {
@@ -954,7 +987,7 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
             }
         }
         // otherwise, if using the new offsets...
-        else if (promRev == Comm14CUXDataOffsets_New)
+        else if (m_promRev == Comm14CUXDataOffsets_New)
         {
             switch (fuelMapId)
             {

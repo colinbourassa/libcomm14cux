@@ -255,13 +255,17 @@ private:
     bool setWriteCoarseAddr(uint16_t addr);
     bool setCoarseAddr(uint16_t addr, uint16_t len);
     uint16_t getByteCountForNextRead(uint16_t len, uint16_t bytesRead);
-    bool sendReadCmd(uint16_t addr, uint16_t len);
+    bool sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly);
     bool openSerial(std::string devPath);
     double hyperbolicOffsetModel(double count);
     double nistHahnModel(double count);
 
     //! Revision of the connected ECU (affecting fuel map locations)
-    Comm14CUXDataOffsets promRev;
+    Comm14CUXDataOffsets m_promRev;
+    //! The coarse address set during the last read operation
+    uint16_t m_lastReadCoarseAddress;
+    //! The number of bytes read during the last read operation
+    uint8_t m_lastReadQuantity;
 
 #ifdef linux
 
