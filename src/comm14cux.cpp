@@ -394,7 +394,8 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
           // can just send the final byte of the read command
           sendLastByteOnly =
             ((singleReqQuantity == m_lastReadQuantity) &&
-             ((addr + totalBytesRead) < (m_lastReadCoarseAddress + 64)));
+             ((addr + totalBytesRead) < (m_lastReadCoarseAddress + 64)) &&
+             (m_lastReadCoarseAddress <= (addr + totalBytesRead)));
 
           dprintf("14CUX: Sending cmd to read %d bytes at 0x%04X...\n",
             singleReqQuantity, addr + totalBytesRead);
