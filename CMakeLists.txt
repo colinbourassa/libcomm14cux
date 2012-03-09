@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 project (libcomm14cux)
 
 set (COMM14CUX_VER_MAJOR 0)
-set (COMM14CUX_VER_MINOR 2)
+set (COMM14CUX_VER_MINOR 3)
 set (COMM14CUX_VER_PATCH 0)
 
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "bin")

@@ -50,6 +50,8 @@ namespace Serial14CUXParams
     const uint16_t ThrottlePositionOffset = 0x005F;
     //! Memory location of coolant temperature value
     const uint16_t CoolantTempOffset = 0x006A;
+    //! Memory location of idle bypass motor position value
+    const uint16_t IdleBypassPositionOffset = 0x006D;
     //! Memory location of instantaneous engine speed value
     const uint16_t EngineSpeedInstantaneousOffset = 0x007A;
     //! Memory location of filtered engine speed value
@@ -238,7 +240,7 @@ public:
     bool getRoadSpeed(uint16_t &roadSpeed);
     bool getCoolantTemp(int16_t &coolantTemp);
     bool getFuelTemp(int16_t &fuelTemp);
-    bool getMAFReading(uint16_t &mafReading);
+    bool getMAFReading(float &mafReading);
     bool getEngineRPM(uint16_t &engineRPM);
     bool getThrottlePosition(float &throttlePos);
     bool getGearSelection(Comm14CUXGear &gear);
@@ -247,6 +249,7 @@ public:
     bool getCurrentFuelMap(uint8_t &fuelMapId);
     bool getFuelMapRowIndex(uint8_t &fuelMapRowIndex);
     bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
+    bool getIdleBypassMotorPosition(float &bypassMotorPos);
 
 private:
     int16_t readSerialBytes(uint8_t *buffer, uint16_t quantity);

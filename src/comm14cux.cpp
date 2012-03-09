@@ -783,17 +783,45 @@ bool Comm14CUX::getFuelTemp(int16_t &fuelTemp)
 
 /**
  * Gets the mass airflow reading at the intake.
- * @param mafReading Set to the MAF sensor value (if read successfully)
+ * @param mafReading Set to MAF measurement as a percentage of the highest
+ *   possible measurement (if read successfully)
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getMAFReading(uint16_t &mafReading)
+bool Comm14CUX::getMAFReading(float &mafReading)
 {
     uint16_t maf = 0;
     bool retVal = false;
 
     if (readMem(Serial14CUXParams::MassAirflowOffset, 2, (uint8_t*)&maf))
     {
-        mafReading = swapShort(maf);
+        mafReading = swapShort(maf) / 1023.0;
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
+ * Gets the idle bypass motor position as a percentage of the widest possible
+ * opening.
+ * @param idleBypassPos Set to the idle bypass position as a percentage of
+ *   wide-open
+ * @return True if successfully read; false otherwise
+ */
+bool Comm14CUX::getIdleBypassMotorPosition(float &bypassMotorPos)
+{
+    uint8_t pos = 0;
+    bool retVal = false;
+
+    if (readMem(Serial14CUXParams::IdleBypassPositionOffset, 1, &pos))
+    {
+        // 180 counts is fully closed; it shouldn't be reading any higher than that
+        if (pos > 180)
+        {
+            pos = 180;
+        }
+
+        bypassMotorPos = (180 - pos) / 180.0;
         retVal = true;
     }
 
