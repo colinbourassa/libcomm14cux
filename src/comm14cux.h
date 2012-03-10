@@ -63,6 +63,9 @@ namespace Serial14CUXParams
     //! Memory location of fuel temperature value
     const uint16_t FuelTempOffset = 0x2006;
 
+    //! Memory location of Fuel Map 0
+    const uint16_t FuelMap0Offset = 0xC000;
+
     //! Memory location of Fuel Map 1
     const uint16_t NewFuelMap1Offset = 0xC267;
     //! Memory location of Fuel Map 2

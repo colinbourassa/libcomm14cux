@@ -942,7 +942,7 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
     bool retVal = false;
 
     // check that the map ID is valid
-    if ((fuelMapId > 0) && (fuelMapId < 6))
+    if ((fuelMapId >= 0) && (fuelMapId <= 5))
     {
         uint16_t offset = 0;
 
@@ -990,8 +990,13 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
             }
         }
 
-        // if the connected ECU is using the old offsets...
-        if (m_promRev == Comm14CUXDataOffsets_Old)
+        // Fuel Map 0 is stored at the same location in both
+        // the old and new PROM layouts
+        if (fuelMapId == 0)
+        {
+            offset = Serial14CUXParams::FuelMap0Offset;
+        }
+        else if (m_promRev == Comm14CUXDataOffsets_Old)
         {
             switch (fuelMapId)
             {
@@ -1015,7 +1020,6 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
                     break;
             }
         }
-        // otherwise, if using the new offsets...
         else if (m_promRev == Comm14CUXDataOffsets_New)
         {
             switch (fuelMapId)
