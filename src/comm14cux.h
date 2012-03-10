@@ -254,6 +254,8 @@ public:
     bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
     bool getIdleBypassMotorPosition(float &bypassMotorPos);
 
+    void cancelRead();
+
 private:
     int16_t readSerialBytes(uint8_t *buffer, uint16_t quantity);
     int16_t writeSerialBytes(uint8_t *buffer, uint16_t quantity);
@@ -272,6 +274,8 @@ private:
     uint16_t m_lastReadCoarseAddress;
     //! The number of bytes read during the last read operation
     uint8_t m_lastReadQuantity;
+    //! Flag set when the user wishes to cancel a read operation
+    bool m_cancelRead;
 
 #ifdef linux
 

@@ -43,7 +43,8 @@ uint16_t swapShort(const uint16_t source)
 Comm14CUX::Comm14CUX() :
     m_promRev(Comm14CUXDataOffsets_Unset),
     m_lastReadCoarseAddress(0x0000),
-    m_lastReadQuantity(0x00)
+    m_lastReadQuantity(0x00),
+    m_cancelRead(false)
 {
 #ifdef linux
 
@@ -303,6 +304,15 @@ bool Comm14CUX::isConnected()
 }
 
 /**
+ * Cancels the pending read operation by aborting after the current read
+ * command is finished.
+ */
+void Comm14CUX::cancelRead()
+{
+    m_cancelRead = true;
+}
+
+/**
  * Reads bytes from the serial device using an OS-specific call.
  * @param buffer Buffer into which data should be read
  * @param quantity Number of bytes to read
@@ -381,10 +391,12 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
     int16_t readCallBytesRead = 1;
     bool sendLastByteOnly = false;
 
+    m_cancelRead = false;
+
     if (isConnected())
     {
       // loop until we've read all the bytes, or we experienced a read error
-      while ((totalBytesRead < len) && (readCallBytesRead > 0))
+      while ((totalBytesRead < len) && (readCallBytesRead > 0) && (m_cancelRead == false))
       {
           // read the maximum number of bytes as is reasonable
           singleReqQuantity = getByteCountForNextRead(len, totalBytesRead);
