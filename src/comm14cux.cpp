@@ -1105,7 +1105,7 @@ bool Comm14CUX::getCurrentFuelMap(uint8_t &fuelMapId)
  */
 bool Comm14CUX::getFuelMapRowIndex(uint8_t &fuelMapRowIndex)
 {
-    int8_t rowIndex = -1;
+    uint8_t rowIndex = 0xff;
     bool retVal = false;
 
     if (readMem(Serial14CUXParams::FuelMapRowIndexOffset, 1, (uint8_t*)&rowIndex))
@@ -1137,7 +1137,7 @@ bool Comm14CUX::getFuelMapRowIndex(uint8_t &fuelMapRowIndex)
  */
 bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
 {
-    int8_t colIndex = -1;
+    uint8_t colIndex = 0xff;
     bool retVal = false;
 
     if (readMem(Serial14CUXParams::FuelMapColumnIndexOffset, 1, (uint8_t*)&colIndex))
