@@ -816,7 +816,7 @@ bool Comm14CUX::getMAFReading(float &mafReading)
 /**
  * Gets the idle bypass motor position as a percentage of the widest possible
  * opening.
- * @param idleBypassPos Set to the idle bypass position as a percentage of
+ * @param bypassMotorPos Set to the idle bypass position as a percentage of
  *   wide-open
  * @return True if successfully read; false otherwise
  */
