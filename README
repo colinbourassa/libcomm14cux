@@ -40,6 +40,7 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+0.3.1: Cleanup of Doxygen comments
 0.3.0: - Changed MAF reading call to return a percentage rather than raw value
        - Added support for fuel map 0
        - Improved efficiency of consecutive read commands to nearby addresses
