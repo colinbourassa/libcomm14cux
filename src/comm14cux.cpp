@@ -155,10 +155,12 @@ bool Comm14CUX::connect(std::string devPath)
  * parameters for the link to match those on the 14CUX.
  * @return True if the open/setup was successful, false otherwise
  */
-#ifdef linux
 bool Comm14CUX::openSerial(std::string devPath)
 {
     bool retVal = false;
+
+#ifdef linux
+
     struct termios newtio;
     struct serial_struct serial_info;
 
@@ -217,19 +219,8 @@ bool Comm14CUX::openSerial(std::string devPath)
         }
     }
 
-    return retVal;
-}
-
 #elif defined(WIN32)
 
-/**
- * Opens the serial device for the USB<->RS-232 converter and sets the
- * parameters for the link to match those on the 14CUX.
- * @return True if the open/setup was successful, false otherwise
- */
-bool Comm14CUX::openSerial(std::string devPath)
-{
-    bool retVal = false;
     DCB dcb;
     COMMTIMEOUTS commTimeouts;
 
@@ -284,10 +275,10 @@ bool Comm14CUX::openSerial(std::string devPath)
         dprintf("14CUX: CreateFile() returned INVALID_HANDLE_VALUE\n");
     }
 
+#endif
+
     return retVal;
 }
-
-#endif
 
 /**
  * Checks the file descriptor for the serial device to determine if it has
@@ -943,7 +934,7 @@ bool Comm14CUX::getMainVoltage(float &mainVoltage)
 
 /**
  * Gets the contents of the specified fuel map.
- * @param fuelMapId ID of the fuel map, from 1 to 5
+ * @param fuelMapId ID of the fuel map, from 0 to 5
  * @param adjustmentFactor Set to the adjustment factor read at the end of the map
  * @param buffer Buffer of at least 128 bytes (16 cols x 8 rows)
  * @return True if the fuel map was successfully read; false if an invalid
@@ -1076,7 +1067,7 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
 
 /**
  * Gets the ID of the fuel map currently being used. This should be between
- * 1 and 5. The fuel map can be determined by a tune resistor in the wiring
+ * 0 and 5. The fuel map can be determined by a tune resistor in the wiring
  * harness for non-NAS Land Rovers; unmodified NAS LRs have a software
  * lockout that prevents the selection of any map other than Map 5.
  * @param fuelMapId Set to the index of the fuel map currently in use (if read
