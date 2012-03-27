@@ -902,7 +902,8 @@ bool Comm14CUX::getGearSelection(Comm14CUXGear &gear)
         {
             gear = Comm14CUXGear_DriveOrReverse;
         }
-        else // manual gearboxes apparently give midpoint values
+        else // manual gearboxes have a resistor fitted to give a
+             // midpoint value and put the ECU in 'manual mode'
         {
             gear = Comm14CUXGear_ManualGearbox;
         }
@@ -1076,10 +1077,10 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
  */
 bool Comm14CUX::getCurrentFuelMap(uint8_t &fuelMapId)
 {
-    int8_t id = -1;
+    uint8_t id = 0xff;
     bool retVal = false;
 
-    if (readMem(Serial14CUXParams::CurrentFuelMapIdOffset, 1, (uint8_t*)&id))
+    if (readMem(Serial14CUXParams::CurrentFuelMapIdOffset, 1, &id))
     {
         fuelMapId = id;
         retVal = true;
@@ -1099,7 +1100,7 @@ bool Comm14CUX::getFuelMapRowIndex(uint8_t &fuelMapRowIndex)
     uint8_t rowIndex = 0xff;
     bool retVal = false;
 
-    if (readMem(Serial14CUXParams::FuelMapRowIndexOffset, 1, (uint8_t*)&rowIndex))
+    if (readMem(Serial14CUXParams::FuelMapRowIndexOffset, 1, &rowIndex))
     {
         // fuel map starting row index is stored in the high nibble
         fuelMapRowIndex = (rowIndex >> 4);
@@ -1131,7 +1132,7 @@ bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
     uint8_t colIndex = 0xff;
     bool retVal = false;
 
-    if (readMem(Serial14CUXParams::FuelMapColumnIndexOffset, 1, (uint8_t*)&colIndex))
+    if (readMem(Serial14CUXParams::FuelMapColumnIndexOffset, 1, &colIndex))
     {
         // fuel map starting column index is stored in the high nibble
         fuelMapColIndex = (colIndex >> 4);
@@ -1161,6 +1162,26 @@ bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
 bool Comm14CUX::getFaultCodes(Comm14CUXFaultCodes &faultCodes)
 {
    return readMem(Serial14CUXParams::FaultCodesOffset, sizeof(Comm14CUXFaultCodes), (uint8_t*)&faultCodes);
+}
+
+/**
+ * Gets the state of the line driving the fuel pump relay.
+ * @param fuelPumpRelayState Set to true when the fuel pump relay is closed,
+ *  or false when it's open
+ * @return True when the relay state was successfully read; false otherwise
+ */
+bool Comm14CUX::getFuelPumpRelayState(bool &fuelPumpRelayState)
+{
+    uint8_t port1Data = 0x00;
+    bool retVal = false;
+
+    if (readMem(Serial14CUXParams::Port1Offset, 1, &port1Data))
+    {
+        fuelPumpRelayState = !(port1Data & 0x40);
+        retVal = true;
+    }
+
+    return retVal;
 }
 
 /**

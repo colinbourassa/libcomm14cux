@@ -40,6 +40,8 @@ namespace Serial14CUXParams
     //! Size of the used portion of the 14CUX PROM
     const uint16_t ROMSize = 0x4000;
 
+    //! Memory location of Port 1
+    const uint16_t Port1Offset = 0x0002;
     //! Memory location of fault code block
     const uint16_t FaultCodesOffset = 0x0049;
     //! Memory location of main voltage value
@@ -253,6 +255,7 @@ public:
     bool getFuelMapRowIndex(uint8_t &fuelMapRowIndex);
     bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
     bool getIdleBypassMotorPosition(float &bypassMotorPos);
+    bool getFuelPumpRelayState(bool &fuelPumpRelayState);
 
     void cancelRead();
 
