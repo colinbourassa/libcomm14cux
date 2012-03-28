@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 
     if (argc < 4)
     {
-        printf("read14cux using Comm14CUX v%d.%d.%d\n", ver.major, ver.minor, ver.patch);
+        printf("read14cux using libcomm14cux v%d.%d.%d\n", ver.major, ver.minor, ver.patch);
         printf("Usage: %s <serial device> <address> <length> [output file]\n", argv[0]);
         delete lucas;
         return 0;
