@@ -256,6 +256,7 @@ public:
     bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
     bool getIdleBypassMotorPosition(float &bypassMotorPos);
     bool getFuelPumpRelayState(bool &fuelPumpRelayState);
+    bool clearFaultCodes();
 
     void cancelRead();
 

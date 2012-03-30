@@ -1165,6 +1165,32 @@ bool Comm14CUX::getFaultCodes(Comm14CUXFaultCodes &faultCodes)
 }
 
 /**
+ * Clears the stored fault codes in the ECU
+ * @return True when the fault code data was successfully cleared;
+ *   false when an error occurred
+ */
+bool Comm14CUX::clearFaultCodes()
+{
+    bool writeSuccess = true;
+    int faultCodeBlockSize = sizeof(Comm14CUXFaultCodes);
+    int bytesWritten = 0;
+
+    while ((writeSuccess == true) && (bytesWritten < faultCodeBlockSize))
+    {
+        if (writeMem(Serial14CUXParams::FaultCodesOffset + bytesWritten, 0x00))
+        {
+            bytesWritten++;
+        }
+        else
+        {
+            writeSuccess = false;
+        }
+    }
+
+    return writeSuccess;
+}
+
+/**
  * Gets the state of the line driving the fuel pump relay.
  * @param fuelPumpRelayState Set to true when the fuel pump relay is closed,
  *  or false when it's open
