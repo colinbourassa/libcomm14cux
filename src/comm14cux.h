@@ -98,6 +98,9 @@ namespace Serial14CUXParams
     const uint16_t FuelMapRowIndexOffset = 0x005B;
     //! Memory location of the current fuel map column index
     const uint16_t FuelMapColumnIndexOffset = 0x005C;
+
+    //! Memory location of the fuel pump timer
+    const uint16_t FuelPumpTimerOffset = 0x00AF;
 }
 
 /**
@@ -256,7 +259,9 @@ public:
     bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
     bool getIdleBypassMotorPosition(float &bypassMotorPos);
     bool getFuelPumpRelayState(bool &fuelPumpRelayState);
+
     bool clearFaultCodes();
+    bool runFuelPump();
 
     void cancelRead();
 

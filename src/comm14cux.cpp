@@ -1211,6 +1211,27 @@ bool Comm14CUX::getFuelPumpRelayState(bool &fuelPumpRelayState)
 }
 
 /**
+ * Closes the fuel pump relay to run the pump for a single timeout period
+ * (approximately two seconds).
+ * @return True when the port and timer were written correctly; false
+ *   otherwise.
+ */
+bool Comm14CUX::runFuelPump()
+{
+    bool retVal = false;
+    uint8_t port1State = 0x00;
+
+    if (readMem(Serial14CUXParams::Port1Offset, 1, &port1State) &&
+        writeMem(Serial14CUXParams::FuelPumpTimerOffset, 0xFF) &&
+        writeMem(Serial14CUXParams::Port1Offset, port1State & 0xBF))
+    {
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * A hyperbolic curve model that describes the impedence response of
  * the 14CUX coolant/fuel temperature sensors.
  * Thanks to ZunZun.com for providing curve-fitting tools.
