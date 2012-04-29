@@ -1232,6 +1232,37 @@ bool Comm14CUX::runFuelPump()
 }
 
 /**
+ * Commands the idle air control motor to move.
+ * @param direction Direction of travel for the motor; 0 opens the valve
+ *  and 1 closes it
+ * @param steps Number of steps to travel in the specified direction
+ * @return True when the command was written successfully; false otherwise
+ */
+bool Comm14CUX::driveIdleAirControlMotor(uint8_t direction, uint8_t steps)
+{
+    // Bit 0 in 0x008A determines the direction of motion;
+    //  0 opens the valve and 1 closes it
+
+    bool retVal = false;
+    uint8_t iacDirection = 0x00;
+
+    if (readMem(0x008A, 1, &iacDirection))
+    {
+        if (direction == 0)
+        {
+            iacDirection &= 0xFE;
+        }
+        else
+        {
+            iacDirection |= 0x01;
+        }
+
+        writeMem(0x008A, iacDirection);
+        writeMem(Serial14CUXParams::IdleAirControlStepCountOffset, steps);
+    }
+}
+
+/**
  * A hyperbolic curve model that describes the impedence response of
  * the 14CUX coolant/fuel temperature sensors.
  * Thanks to ZunZun.com for providing curve-fitting tools.

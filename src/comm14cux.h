@@ -99,6 +99,8 @@ namespace Serial14CUXParams
     //! Memory location of the current fuel map column index
     const uint16_t FuelMapColumnIndexOffset = 0x005C;
 
+    //! Memory location of the idle air control motor step count
+    const uint16_t IdleAirControlStepCountOffset = 0x0075;
     //! Memory location of the fuel pump timer
     const uint16_t FuelPumpTimerOffset = 0x00AF;
 }
@@ -262,6 +264,7 @@ public:
 
     bool clearFaultCodes();
     bool runFuelPump();
+    bool driveIdleAirControlMotor(uint8_t direction, uint8_t steps);
 
     void cancelRead();
 
