@@ -1,7 +1,7 @@
-------------------
-libcomm14cux 0.3.2
+------------
+libcomm14cux
 http://code.google.com/p/libcomm14cux
-------------------
+------------
 libcomm14CUX is a cross-platform library that is capable of communicating with
 the Lucas 14CUX ECU via its diagnostic serial port. Special hardware is required
 to match the ECU's signaling scheme; the hardware is beyond the scope of this
