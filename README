@@ -40,6 +40,8 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+0.4.1: Added functions to control the fuel pump and the idle air control valve
+       Added function to get target idle speed
 0.3.2: Added function to get fuel pump relay state and function to clear
        fault codes
 0.3.1: Cleanup of Doxygen comments
