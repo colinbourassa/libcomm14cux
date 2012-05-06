@@ -862,6 +862,25 @@ bool Comm14CUX::getEngineRPM(uint16_t &engineRPM)
 }
 
 /**
+ * Gets the current target idle speed.
+ * @param targetIdleRPM Set to the current target idle speed (if read successfully)
+ * @return True if successfully read; false otherwise
+ */
+bool Comm14CUX::getTargetIdle(uint16_t &targetIdleRPM)
+{
+    uint16_t targetIdle = 0;
+    bool retVal = false;
+
+    if (readMem(Serial14CUXParams::TargetIdleSpeedOffset, 2, (uint8_t*)&targetIdle))
+    {
+        targetIdleRPM = swapShort(targetIdle);
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * Gets the throttle position as a percentage of WOT.
  * @param throttlePos Set to throttle position as a percentage (if read successfully)
  * @return True if successfully read; false otherwise

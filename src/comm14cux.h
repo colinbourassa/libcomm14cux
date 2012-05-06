@@ -64,6 +64,8 @@ namespace Serial14CUXParams
     const uint16_t RoadSpeedOffset = 0x2003;
     //! Memory location of fuel temperature value
     const uint16_t FuelTempOffset = 0x2006;
+    //! Memory location of target idle speed
+    const uint16_t TargetIdleSpeedOffset = 0x2151;
 
     //! Memory location of Fuel Map 0
     const uint16_t FuelMap0Offset = 0xC000;
@@ -252,6 +254,7 @@ public:
     bool getFuelTemp(int16_t &fuelTemp);
     bool getMAFReading(float &mafReading);
     bool getEngineRPM(uint16_t &engineRPM);
+    bool getTargetIdle(uint16_t &targetIdleRPM);
     bool getThrottlePosition(float &throttlePos);
     bool getGearSelection(Comm14CUXGear &gear);
     bool getMainVoltage(float &voltage);
