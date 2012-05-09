@@ -42,6 +42,10 @@ namespace Serial14CUXParams
 
     //! Memory location of Port 1
     const uint16_t Port1Offset = 0x0002;
+    //! Memory location of left bank fueling trim
+    const uint16_t FuelingAdjustmentLeftOffset = 0x0042;
+    //! Memory location of right bank fueling trim
+    const uint16_t FuelingAdjustmentRightOffset = 0x0046;
     //! Memory location of fault code block
     const uint16_t FaultCodesOffset = 0x0049;
     //! Memory location of main voltage value
@@ -216,6 +220,15 @@ enum Comm14CUXGear
 };
 
 /**
+ * Describes the two engine banks.
+ */
+enum Comm14CUXBank
+{
+    Comm14CUXBank_Left = 0x0,
+    Comm14CUXBank_Right = 0x1
+};
+
+/**
  * Enumerates the revisions of the PROMs, which can have different data
  * offsets (which affects reading the fuel maps.
  */
@@ -262,6 +275,7 @@ public:
     bool getCurrentFuelMap(uint8_t &fuelMapId);
     bool getFuelMapRowIndex(uint8_t &fuelMapRowIndex);
     bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
+    bool getFuelTrim(Comm14CUXBank bank, int16_t &fuelTrim);
     bool getIdleBypassMotorPosition(float &bypassMotorPos);
     bool getFuelPumpRelayState(bool &fuelPumpRelayState);
 

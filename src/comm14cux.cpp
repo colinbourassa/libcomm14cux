@@ -1173,6 +1173,37 @@ bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
 }
 
 /**
+ * Gets the current fueling trim for the specified engine bank.
+ * @param bank Bank of the engine (left or right)
+ * @param fuelTrim Set to the number of counts of fueling trim for the
+ *   specified bank, from -256 to 255.
+ * @return True if successfully read; false otherwise
+ */
+bool Comm14CUX::getFuelTrim(Comm14CUXBank bank, int16_t &fuelTrim)
+{
+    bool retVal = false;
+    uint16_t fuelTrimRaw = 0;
+    uint16_t offset = 0;
+
+    if (bank == Comm14CUXBank_Left)
+    {
+        offset = Serial14CUXParams::FuelingAdjustmentLeftOffset;
+    }
+    else if (bank == Comm14CUXBank_Right)
+    {
+        offset = Serial14CUXParams::FuelingAdjustmentRightOffset;
+    }
+
+    if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
+    {
+        fuelTrim = (fuelTrimRaw / 0x80) - 0xFF;
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * Populates the supplied struct with fault code data read from the ECU.
  * @param faultCodes Struct to populate with current fault code data
  * @return True when the fault code data was successfully read and
