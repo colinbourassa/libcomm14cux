@@ -1173,13 +1173,13 @@ bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
 }
 
 /**
- * Gets the current fueling trim for the specified engine bank.
+ * Gets the current lambda-based fueling trim for the specified engine bank.
  * @param bank Bank of the engine (left or right)
- * @param fuelTrim Set to the number of counts of fueling trim for the
- *   specified bank, from -256 to 255.
+ * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
+ *   for the specified bank, from -256 to 255.
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getFuelTrim(Comm14CUXBank bank, int16_t &fuelTrim)
+bool Comm14CUX::getLambdaTrim(Comm14CUXBank bank, int16_t &lambdaTrim)
 {
     bool retVal = false;
     uint16_t fuelTrimRaw = 0;
@@ -1187,16 +1187,16 @@ bool Comm14CUX::getFuelTrim(Comm14CUXBank bank, int16_t &fuelTrim)
 
     if (bank == Comm14CUXBank_Left)
     {
-        offset = Serial14CUXParams::FuelingAdjustmentLeftOffset;
+        offset = Serial14CUXParams::LambdaFuelingTrimLeftOffset;
     }
     else if (bank == Comm14CUXBank_Right)
     {
-        offset = Serial14CUXParams::FuelingAdjustmentRightOffset;
+        offset = Serial14CUXParams::LambdaFuelingTrimRightOffset;
     }
 
     if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
     {
-        fuelTrim = (swapShort(fuelTrimRaw) / 0x80) - 0xFF;
+        lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0xFF;
         retVal = true;
     }
 
