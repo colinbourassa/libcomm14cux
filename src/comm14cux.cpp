@@ -1196,7 +1196,7 @@ bool Comm14CUX::getFuelTrim(Comm14CUXBank bank, int16_t &fuelTrim)
 
     if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
     {
-        fuelTrim = (fuelTrimRaw / 0x80) - 0xFF;
+        fuelTrim = (swapShort(fuelTrimRaw) / 0x80) - 0xFF;
         retVal = true;
     }
 
