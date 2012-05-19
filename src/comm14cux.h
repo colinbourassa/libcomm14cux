@@ -295,7 +295,6 @@ private:
     bool sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly);
     bool openSerial(std::string devPath);
     double hyperbolicOffsetModel(double count);
-    double nistHahnModel(double count);
 
     //! Revision of the connected ECU (affecting fuel map locations)
     Comm14CUXDataOffsets m_promRev;

@@ -2,6 +2,7 @@
 #include <string>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <math.h>
 #ifdef linux
   #include <linux/serial.h>
   #include <string.h>
@@ -941,11 +942,14 @@ bool Comm14CUX::getGearSelection(Comm14CUXGear &gear)
 bool Comm14CUX::getMainVoltage(float &mainVoltage)
 {
     uint16_t storedVal = 0;
+    uint16_t adcCount = 0;
     bool retVal = false;
 
     if (readMem(Serial14CUXParams::MainVoltageOffset, 2, (uint8_t*)&storedVal))
     {
-        mainVoltage = (float)nistHahnModel((double)swapShort(storedVal));
+        storedVal = swapShort(storedVal);
+        adcCount = (16 * (378 - sqrt((25 * storedVal) - 17166))) / 25;
+        mainVoltage = (0.07 * adcCount) - 0.09;
         retVal = true;
     }
 
@@ -1332,31 +1336,6 @@ double Comm14CUX::hyperbolicOffsetModel(double count)
     double Offset = 2.8843089370081475E+02;
     temp = a * count / (b + count) + c * count / (d + count) + f * count;
     temp += Offset;
-    return temp;
-}
-
-/**
- * A curve model that describes the relationship between the adjusted main
- * voltage measurement and the voltage itself.
- * Thanks to ZunZun.com for providing curve-fitting tools.
- * @param x_in Stored/adjusted value in 14CUX
- * @return Corresponding main voltage
- */
-double Comm14CUX::nistHahnModel(double count)
-{
-    double temp = 0.0;
-
-    // coefficients
-    const double a = -3.8180435553065689E+10;
-    const double b = 1.4742017083684158E+08;
-    const double c = -1.7818458056827815E+05;
-    const double d = 1.8580596278734937E+01;
-    const double f = 2.6779917974448805E+06;
-    const double g = -3.0847085555875783E+03;
-    const double h = -3.5415536493338706E+00;
-
-    temp = (a + b * count + c * count * count + d * count * count * count) / (1.0 + f * count + g * count * count + h * count * count * count);
-
     return temp;
 }
 
