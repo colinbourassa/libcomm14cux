@@ -1200,7 +1200,7 @@ bool Comm14CUX::getLambdaTrim(Comm14CUXBank bank, int16_t &lambdaTrim)
 
     if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
     {
-        lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0xFF;
+        lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0x100;
         retVal = true;
     }
 
