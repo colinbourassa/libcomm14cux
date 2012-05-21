@@ -40,15 +40,17 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+0.4.2: Added function to retrieve lambda fuel trim
+       Improved main voltage reading accuracy
 0.4.1: Added functions to control the fuel pump and the idle air control valve
        Added function to get target idle speed
 0.3.2: Added function to get fuel pump relay state and function to clear
        fault codes
 0.3.1: Cleanup of Doxygen comments
-0.3.0: - Changed MAF reading call to return a percentage rather than raw value
-       - Added support for fuel map 0
-       - Improved efficiency of consecutive read commands to nearby addresses
-       - Added support for cancelling long read operations
+0.3.0: Changed MAF reading call to return a percentage rather than raw value
+       Added support for fuel map 0
+       Improved efficiency of consecutive read commands to nearby addresses
+       Added support for cancelling long read operations
 0.2.0: Added routines for retrieving a number of specific values, such as
         engine RPM, coolant and fuel temperatures, and road speed.
 0.1.1: Cleanup of Doxygen comments
