@@ -48,6 +48,8 @@ namespace Serial14CUXParams
     const uint16_t LambdaFuelingTrimRightOffset = 0x0046;
     //! Memory location of fault code block
     const uint16_t FaultCodesOffset = 0x0049;
+    //! Memory location of minimum throttle position value
+    const uint16_t ThrottleMinimumPositionOffset = 0x0051;
     //! Memory location of main voltage value
     const uint16_t MainVoltageOffset = 0x0055;
     //! Memory location of (low) airflow mass value
@@ -304,23 +306,19 @@ private:
     uint8_t m_lastReadQuantity;
     //! Flag set when the user wishes to cancel a read operation
     bool m_cancelRead;
+    //! Lowest throttle measurement seen so far
+    uint16_t m_lowestThrottleMeasurement;
 
 #ifdef linux
-
     //! Descriptor for the serial port device
     int sd;
-
     //! Lock to prevent multiple simultaneous open/close/read/write operations
     pthread_mutex_t s_mutex;
-
 #elif defined(WIN32)
-
     //! Descriptor for the serial port device
     HANDLE sd;
-
     //! Lock to prevent multiple simultaneous open/close/read/write operations
     HANDLE s_mutex;
-
 #endif
 
 };

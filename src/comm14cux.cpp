@@ -45,7 +45,8 @@ Comm14CUX::Comm14CUX() :
     m_promRev(Comm14CUXDataOffsets_Unset),
     m_lastReadCoarseAddress(0x0000),
     m_lastReadQuantity(0x00),
-    m_cancelRead(false)
+    m_cancelRead(false),
+    m_lowestThrottleMeasurement(0xffff)
 {
 #ifdef linux
 
@@ -889,11 +890,34 @@ bool Comm14CUX::getTargetIdle(uint16_t &targetIdleRPM)
 bool Comm14CUX::getThrottlePosition(float &throttlePos)
 {
     uint16_t throttle = 0;
+    uint16_t throttleMinPos = 0;
     bool retVal = false;
 
-    if (readMem(Serial14CUXParams::ThrottlePositionOffset, 2, (uint8_t*)&throttle))
+    if (readMem(Serial14CUXParams::ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos) &&
+        readMem(Serial14CUXParams::ThrottlePositionOffset, 2, (uint8_t*)&throttle))
     {
-        throttlePos = (swapShort(throttle) - 40) / 956.0;
+        swapShort(throttle);
+        swapShort(throttleMinPos);
+
+        // if the throttle is currently showing a lower measurement than we've yet seen,
+        // update the locally stored measurement with this new one
+        if (throttle < m_lowestThrottleMeasurement)
+        {
+            m_lowestThrottleMeasurement = throttle;
+        }
+
+        // if this library has seen a lower throttle measurement than the one stored in
+        // the ECU as the minimum position, use the lower measurement as the minimum
+        if (m_lowestThrottleMeasurement < throttleMinPos)
+        {
+            throttlePos = (throttle - m_lowestThrottleMeasurement) / 956.0;
+        }
+        // otherwise, use the ECU's stored minimum
+        else
+        {
+            throttlePos = (throttle - throttleMinPos) / 956.0;
+        }
+
         retVal = true;
     }
 
