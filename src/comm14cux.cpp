@@ -910,12 +910,12 @@ bool Comm14CUX::getThrottlePosition(float &throttlePos)
         // the ECU as the minimum position, use the lower measurement as the minimum
         if (m_lowestThrottleMeasurement < throttleMinPos)
         {
-            throttlePos = (throttle - m_lowestThrottleMeasurement) / 956.0;
+            throttlePos = (throttle - m_lowestThrottleMeasurement) / 1023.0;
         }
         // otherwise, use the ECU's stored minimum
         else
         {
-            throttlePos = (throttle - throttleMinPos) / 956.0;
+            throttlePos = (throttle - throttleMinPos) / 1023.0;
         }
 
         retVal = true;
