@@ -46,7 +46,10 @@ Comm14CUX::Comm14CUX() :
     m_lastReadCoarseAddress(0x0000),
     m_lastReadQuantity(0x00),
     m_cancelRead(false),
-    m_lowestThrottleMeasurement(0xffff)
+    m_lowestThrottleMeasurement(0xffff),
+    m_voltageFactorA(0),
+    m_voltageFactorB(0),
+    m_voltageFactorC(0)
 {
 #ifdef linux
 
@@ -959,6 +962,57 @@ bool Comm14CUX::getGearSelection(Comm14CUXGear &gear)
 }
 
 /**
+ * Determines the data layout of the connected ECU ('old' versus 'new') based on the
+ * position of the first fuel map.
+ */
+void Comm14CUX::determineDataOffsets()
+{
+    // if the revision of the PROM hasn't yet been determined...
+    if (m_promRev == Comm14CUXDataOffsets_Unset)
+    {
+        uint8_t maxByteToByteChangeOld = 0;
+        uint8_t maxByteToByteChangeNew = 0;
+        uint8_t testBufferOld[16];
+        uint8_t testBufferNew[16];
+
+        // read the first row of fuel map data at each of its two (?) possible locations
+        if (readMem(Serial14CUXParams::OldFuelMap1Offset, 16, &testBufferOld[0]) &&
+            readMem(Serial14CUXParams::NewFuelMap1Offset, 16, &testBufferNew[0]))
+        {
+            // find the greatest byte-to-byte difference in each set of data
+            for (int firstRowOffset = 1; firstRowOffset < 16; firstRowOffset++)
+            {
+                if (maxByteToByteChangeOld <
+                        abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1])))
+                {
+                    maxByteToByteChangeOld = 
+                        abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1]));
+                }
+
+                if (maxByteToByteChangeNew <
+                        abs((testBufferNew[firstRowOffset] - testBufferNew[firstRowOffset - 1])))
+                {
+                    maxByteToByteChangeNew = 
+                        abs((testBufferNew[firstRowOffset] - testBufferNew[firstRowOffset - 1]));
+                }
+            }
+
+            // real fuel map data will only have small changes between
+            // consecutive values, so the run of data with the smallest
+            // byte-to-byte changes is probably the real fuel map
+            if (maxByteToByteChangeOld < maxByteToByteChangeNew)
+            {
+                m_promRev = Comm14CUXDataOffsets_Old;
+            }
+            else
+            {
+                m_promRev = Comm14CUXDataOffsets_New;
+            }
+        }
+    }
+}
+
+/**
  * Gets the main voltage being supplied to the ECU.
  * @param mainVoltage Set to the main relay voltage (if read successfully)
  * @return True if successfully read; false otherwise
@@ -968,12 +1022,59 @@ bool Comm14CUX::getMainVoltage(float &mainVoltage)
     uint16_t storedVal = 0;
     uint16_t adcCount = 0;
     bool retVal = false;
+    bool readCoefficients = false;
 
-    if (readMem(Serial14CUXParams::MainVoltageOffset, 2, (uint8_t*)&storedVal))
+    if ((m_voltageFactorA != 0) &&
+        (m_voltageFactorB != 0) &&
+        (m_voltageFactorC != 0))
+    {
+        readCoefficients = true;
+    }
+    else
+    {
+        determineDataOffsets();
+
+        // read the coefficients from the PROM so that we can reverse the ADC computation
+        if (m_promRev == Comm14CUXDataOffsets_Old)
+        {
+            if (readMem(Serial14CUXParams::OldMainVoltageFactorAOffset, 1, &m_voltageFactorA) &&
+                readMem(Serial14CUXParams::OldMainVoltageFactorBOffset, 1, &m_voltageFactorB) &&
+                readMem(Serial14CUXParams::OldMainVoltageFactorCOffset, 2, (uint8_t*)&m_voltageFactorC))
+            {
+                m_voltageFactorC = swapShort(m_voltageFactorC);
+                readCoefficients = true;
+            }
+        }
+        else if (m_promRev == Comm14CUXDataOffsets_New)
+        {
+            if (readMem(Serial14CUXParams::NewMainVoltageFactorAOffset, 1, &m_voltageFactorA) &&
+                readMem(Serial14CUXParams::NewMainVoltageFactorBOffset, 1, &m_voltageFactorB) &&
+                readMem(Serial14CUXParams::NewMainVoltageFactorCOffset, 2, (uint8_t*)&m_voltageFactorC))
+            {
+                m_voltageFactorC = swapShort(m_voltageFactorC);
+                readCoefficients = true;
+            }
+        }
+    }
+
+    if (readCoefficients &&
+        readMem(Serial14CUXParams::MainVoltageOffset, 2, (uint8_t*)&storedVal))
     {
         storedVal = swapShort(storedVal);
-        adcCount = (16 * (378 - sqrt((25 * storedVal) - 17166))) / 25;
+
+        // reverse the quadratic math done by the ECU to get back
+        // to the originally-read ADC value
+        adcCount = -(16 * (sqrt(
+                                (4 * m_voltageFactorA * storedVal) -
+                                (m_voltageFactorA * m_voltageFactorC) +
+                                (64 * m_voltageFactorB * m_voltageFactorB)
+                               ) - (8 * m_voltageFactorB)
+                        )
+                    ) / m_voltageFactorA;
+
+        // follow the linear mapping between ADC and voltage to get the main voltage
         mainVoltage = (0.07 * adcCount) - 0.09;
+
         retVal = true;
     }
 
@@ -997,49 +1098,7 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
     {
         uint16_t offset = 0;
 
-        // if the revision of the PROM hasn't yet been determined...
-        if (m_promRev == Comm14CUXDataOffsets_Unset)
-        {
-            uint8_t maxByteToByteChangeOld = 0;
-            uint8_t maxByteToByteChangeNew = 0;
-            uint8_t testBufferOld[16];
-            uint8_t testBufferNew[16];
-
-            // read the first row of fuel map data at each of its two (?) possible locations
-            if (readMem(Serial14CUXParams::OldFuelMap1Offset, 16, &testBufferOld[0]) &&
-                readMem(Serial14CUXParams::NewFuelMap1Offset, 16, &testBufferNew[0]))
-            {
-                // find the greatest byte-to-byte difference in each set of data
-                for (int firstRowOffset = 1; firstRowOffset < 16; firstRowOffset++)
-                {
-                    if (maxByteToByteChangeOld <
-                            abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1])))
-                    {
-                        maxByteToByteChangeOld = 
-                            abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1]));
-                    }
-
-                    if (maxByteToByteChangeNew <
-                            abs((testBufferNew[firstRowOffset] - testBufferNew[firstRowOffset - 1])))
-                    {
-                        maxByteToByteChangeNew = 
-                            abs((testBufferNew[firstRowOffset] - testBufferNew[firstRowOffset - 1]));
-                    }
-                }
-
-                // real fuel map data will only have small changes between
-                // consecutive values, so the run of data with the smallest
-                // byte-to-byte changes is probably the real fuel map
-                if (maxByteToByteChangeOld < maxByteToByteChangeNew)
-                {
-                    m_promRev = Comm14CUXDataOffsets_Old;
-                }
-                else
-                {
-                    m_promRev = Comm14CUXDataOffsets_New;
-                }
-            }
-        }
+        determineDataOffsets();
 
         // Fuel Map 0 is stored at the same location in both
         // the old and new PROM layouts

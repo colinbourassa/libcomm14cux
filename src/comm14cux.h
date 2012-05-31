@@ -73,6 +73,20 @@ namespace Serial14CUXParams
     //! Memory location of target idle speed
     const uint16_t TargetIdleSpeedOffset = 0x2151;
 
+    //! Memory location of first main voltage computation factor
+    const uint16_t NewMainVoltageFactorAOffset = 0xC7C3;
+    //! Memory location of second main voltage computation factor
+    const uint16_t NewMainVoltageFactorBOffset = 0xC7C4;
+    //! Memory location of third main voltage computation factor
+    const uint16_t NewMainVoltageFactorCOffset = 0xC7C5;
+
+    //! Memory location of first main voltage computation factor
+    const uint16_t OldMainVoltageFactorAOffset = 0xC79B;
+    //! Memory location of second main voltage computation factor
+    const uint16_t OldMainVoltageFactorBOffset = 0xC79C;
+    //! Memory location of third main voltage computation factor
+    const uint16_t OldMainVoltageFactorCOffset = 0xC79D;
+
     //! Memory location of Fuel Map 0
     const uint16_t FuelMap0Offset = 0xC000;
 
@@ -297,6 +311,7 @@ private:
     bool sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly);
     bool openSerial(std::string devPath);
     double hyperbolicOffsetModel(double count);
+    void determineDataOffsets();
 
     //! Revision of the connected ECU (affecting fuel map locations)
     Comm14CUXDataOffsets m_promRev;
@@ -308,6 +323,13 @@ private:
     bool m_cancelRead;
     //! Lowest throttle measurement seen so far
     uint16_t m_lowestThrottleMeasurement;
+    //! Factor involved in computations with the main voltage
+    uint8_t m_voltageFactorA;
+    //! Factor involved in computations with the main voltage
+    uint8_t m_voltageFactorB;
+    //! Factor involved in computations with the main voltage
+    uint16_t m_voltageFactorC;
+
 
 #ifdef linux
     //! Descriptor for the serial port device
