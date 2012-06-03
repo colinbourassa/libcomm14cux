@@ -899,8 +899,8 @@ bool Comm14CUX::getThrottlePosition(float &throttlePos)
     if (readMem(Serial14CUXParams::ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos) &&
         readMem(Serial14CUXParams::ThrottlePositionOffset, 2, (uint8_t*)&throttle))
     {
-        swapShort(throttle);
-        swapShort(throttleMinPos);
+        throttle = swapShort(throttle);
+        throttleMinPos = swapShort(throttleMinPos);
 
         // if the throttle is currently showing a lower measurement than we've yet seen,
         // update the locally stored measurement with this new one
@@ -913,12 +913,12 @@ bool Comm14CUX::getThrottlePosition(float &throttlePos)
         // the ECU as the minimum position, use the lower measurement as the minimum
         if (m_lowestThrottleMeasurement < throttleMinPos)
         {
-            throttlePos = (throttle - m_lowestThrottleMeasurement) / 1023.0;
+            throttlePos = (throttle - m_lowestThrottleMeasurement) / (1023.0 - m_lowestThrottleMeasurement);
         }
         // otherwise, use the ECU's stored minimum
         else
         {
-            throttlePos = (throttle - throttleMinPos) / 1023.0;
+            throttlePos = (throttle - throttleMinPos) / (1023.0 - throttleMinPos);
         }
 
         retVal = true;
