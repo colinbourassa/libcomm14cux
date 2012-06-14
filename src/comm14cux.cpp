@@ -3,14 +3,16 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef linux
-  #include <linux/serial.h>
+#if defined(WIN32)
+  #include <windows.h>
+#else
   #include <string.h>
   #include <sys/ioctl.h>
   #include <termios.h>
   #include <arpa/inet.h>
-#elif defined(WIN32)
-  #include <windows.h>
+  #if defined(linux)
+    #include <linux/serial.h>
+  #endif
 #endif
 
 #include "comm14cux.h"
@@ -23,18 +25,18 @@
   #define dprintf
 #endif
 
-#ifdef linux
-uint16_t swapShort(const uint16_t source)
-{
-    return ntohs(source);
-}
-#elif defined (WIN32)
+#if defined(WIN32)
 uint16_t swapShort(const uint16_t source)
 {
     static const uint16_t hibyte = 0xff00;
     static const uint16_t lobyte = 0x00ff;
 
     return ((source & hibyte) >> 8) | ((source & lobyte) << 8);
+}
+#else
+uint16_t swapShort(const uint16_t source)
+{
+    return ntohs(source);
 }
 #endif
 
@@ -51,16 +53,12 @@ Comm14CUX::Comm14CUX() :
     m_voltageFactorB(0),
     m_voltageFactorC(0)
 {
-#ifdef linux
-
-    sd = 0;
-    pthread_mutex_init(&s_mutex, NULL);
-
-#elif defined(WIN32)
-
+#if defined(WIN32)
     sd = INVALID_HANDLE_VALUE;
     s_mutex = CreateMutex(NULL, TRUE, NULL);
-
+#else
+    sd = 0;
+    pthread_mutex_init(&s_mutex, NULL);
 #endif
 
 }
@@ -72,10 +70,10 @@ Comm14CUX::~Comm14CUX()
 {
     disconnect();
 
-#ifdef linux
-    pthread_mutex_destroy(&s_mutex);
-#elif defined(WIN32)
+#if defined(WIN32)
     CloseHandle(s_mutex);
+#else
+    pthread_mutex_destroy(&s_mutex);
 #endif
 }
 
@@ -98,20 +96,7 @@ Comm14CUXVersion Comm14CUX::getVersion()
  */
 void Comm14CUX::disconnect()
 {
-#ifdef linux
-
-    pthread_mutex_lock(&s_mutex);
-
-    if (isConnected())
-    {
-        close(sd);
-        sd = 0;
-    }
-
-    pthread_mutex_unlock(&s_mutex);
-
-#elif defined(WIN32)
-
+#if defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
     {
         if (isConnected())
@@ -122,7 +107,16 @@ void Comm14CUX::disconnect()
 
         ReleaseMutex(s_mutex);
     }
+#else
+    pthread_mutex_lock(&s_mutex);
 
+    if (isConnected())
+    {
+        close(sd);
+        sd = 0;
+    }
+
+    pthread_mutex_unlock(&s_mutex);
 #endif
 }
 
@@ -136,20 +130,16 @@ bool Comm14CUX::connect(std::string devPath)
 {
     bool result = false;
 
-#ifdef linux
-
-    pthread_mutex_lock(&s_mutex);
-    result = isConnected() || openSerial(devPath);
-    pthread_mutex_unlock(&s_mutex);
-
-#elif defined(WIN32)
-
+#if defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
     {
         result = isConnected() || openSerial(devPath);
         ReleaseMutex(s_mutex);
     }
-
+#else
+    pthread_mutex_lock(&s_mutex);
+    result = isConnected() || openSerial(devPath);
+    pthread_mutex_unlock(&s_mutex);
 #endif
 
     return result;
@@ -164,7 +154,9 @@ bool Comm14CUX::openSerial(std::string devPath)
 {
     bool retVal = false;
 
-#ifdef linux
+#ifdef ARDUINO
+
+#elif defined(linux)
 
     struct termios newtio;
     struct serial_struct serial_info;
@@ -292,10 +284,10 @@ bool Comm14CUX::openSerial(std::string devPath)
  */
 bool Comm14CUX::isConnected()
 {
-#ifdef linux
-    return (sd > 0);
-#elif defined(WIN32)
+#if defined(WIN32)
     return (sd != INVALID_HANDLE_VALUE);
+#else
+    return (sd > 0);
 #endif
 }
 
@@ -320,15 +312,15 @@ int16_t Comm14CUX::readSerialBytes(uint8_t *buffer, uint16_t quantity)
 
     if (isConnected())
     {
-#ifdef linux
-        bytesRead = read(sd, buffer, quantity);
-#elif defined(WIN32)
+#if defined(WIN32)
         DWORD w32BytesRead = 0;
         if ((ReadFile(sd, (UCHAR*)buffer, quantity, &w32BytesRead, NULL) == TRUE) &&
             (w32BytesRead > 0))
         {
             bytesRead = w32BytesRead;
         }
+#else
+        bytesRead = read(sd, buffer, quantity);
 #endif
     }
 
@@ -347,15 +339,15 @@ int16_t Comm14CUX::writeSerialBytes(uint8_t *buffer, uint16_t quantity)
 
     if (isConnected())
     {
-#ifdef linux
-        bytesWritten = write(sd, buffer, quantity);
-#elif defined(WIN32)
+#if defined(WIN32)
         DWORD w32BytesWritten = 0;
         if ((WriteFile(sd, (UCHAR*)buffer, quantity, &w32BytesWritten, NULL) == TRUE) &&
             (w32BytesWritten == quantity))
         {
             bytesWritten = w32BytesWritten;
         }
+#else
+        bytesWritten = write(sd, buffer, quantity);
 #endif
     }
 
@@ -371,13 +363,13 @@ int16_t Comm14CUX::writeSerialBytes(uint8_t *buffer, uint16_t quantity)
  */
 bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
 {
-#ifdef linux
-    pthread_mutex_lock(&s_mutex);
-#elif defined(WIN32)
+#if defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) != WAIT_OBJECT_0)
     {
         return false;
     }
+#else
+    pthread_mutex_lock(&s_mutex);
 #endif
 
     uint16_t totalBytesRead = 0;
@@ -462,10 +454,10 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
         m_lastReadQuantity = 0;
     }
 
-#ifdef linux
-    pthread_mutex_unlock(&s_mutex);
-#elif defined(WIN32)
+#if defined(WIN32)
     ReleaseMutex(s_mutex);
+#else
+    pthread_mutex_unlock(&s_mutex);
 #endif
 
     return readSuccess;
@@ -628,13 +620,13 @@ bool Comm14CUX::setCoarseAddr(uint16_t addr, uint16_t len)
  */
 bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
 {
-#ifdef linux
-    pthread_mutex_lock(&s_mutex);
-#elif defined(WIN32)
+#if defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) != WAIT_OBJECT_0)
     {
         return false;
     }
+#else
+    pthread_mutex_lock(&s_mutex);
 #endif
 
     bool retVal = false;
@@ -667,10 +659,10 @@ bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
         }
     }
 
-#ifdef linux
-    pthread_mutex_unlock(&s_mutex);
-#elif defined(WIN32)
+#if defined(WIN32)
     ReleaseMutex(s_mutex);
+#else
+    pthread_mutex_unlock(&s_mutex);
 #endif
 
     return retVal;

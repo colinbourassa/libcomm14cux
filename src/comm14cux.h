@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 #include <string>
-#ifdef linux
-  #include <pthread.h>
-#elif defined(WIN32)
+#if defined(WIN32)
   #include <windows.h>
+#else
+  #include <pthread.h>
 #endif
 #include "comm14cux_version.h"
 
@@ -331,16 +331,16 @@ private:
     uint16_t m_voltageFactorC;
 
 
-#ifdef linux
-    //! Descriptor for the serial port device
-    int sd;
-    //! Lock to prevent multiple simultaneous open/close/read/write operations
-    pthread_mutex_t s_mutex;
-#elif defined(WIN32)
+#if defined(WIN32)
     //! Descriptor for the serial port device
     HANDLE sd;
     //! Lock to prevent multiple simultaneous open/close/read/write operations
     HANDLE s_mutex;
+#else
+    //! Descriptor for the serial port device
+    int sd;
+    //! Lock to prevent multiple simultaneous open/close/read/write operations
+    pthread_mutex_t s_mutex;
 #endif
 
 };
