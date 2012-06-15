@@ -2,12 +2,17 @@
 #define COMM14CUX_H
 
 #include <stdint.h>
-#include <string>
-#if defined(WIN32)
-  #include <windows.h>
+
+#if defined(ARDUINO)
+  #include <SoftwareSerial.h>
 #else
-  #include <pthread.h>
+  #if defined(WIN32)
+    #include <windows.h>
+  #else
+    #include <pthread.h>
+  #endif
 #endif
+
 #include "comm14cux_version.h"
 
 namespace Serial14CUXParams
@@ -269,7 +274,7 @@ public:
     Comm14CUX();
     ~Comm14CUX();
 
-    bool connect(std::string devPath);
+    bool connect(char *devPath);
     void disconnect();
     bool isConnected();
     bool readMem(uint16_t addr, uint16_t len, uint8_t* buffer);
@@ -309,7 +314,7 @@ private:
     bool setCoarseAddr(uint16_t addr, uint16_t len);
     uint16_t getByteCountForNextRead(uint16_t len, uint16_t bytesRead);
     bool sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly);
-    bool openSerial(std::string devPath);
+    bool openSerial(char *devPath);
     double hyperbolicOffsetModel(double count);
     void determineDataOffsets();
 
@@ -330,8 +335,9 @@ private:
     //! Factor involved in computations with the main voltage
     uint16_t m_voltageFactorC;
 
-
-#if defined(WIN32)
+#if defined(ARDUINO)
+    SoftwareSerial *sd;
+#elif defined(WIN32)
     //! Descriptor for the serial port device
     HANDLE sd;
     //! Lock to prevent multiple simultaneous open/close/read/write operations

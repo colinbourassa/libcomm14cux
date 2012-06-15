@@ -1,3 +1,11 @@
+if (${ARDUINO})
+    message (STATUS "Building for Arduino!")
+    set (CMAKE_TOOLCHAIN_FILE cmake/ArduinoToolchain.cmake)
+    set (ARDUINO_DEFAULT_BOARD uno)
+    set (ARDUINO_DEFAULT_PORT /dev/ttyACM0)
+    set (ARDUINO_DEFAULT_PROGRAMMER avrisp)
+endif()
+
 cmake_minimum_required (VERSION 2.8)
 project (libcomm14cux)
 
@@ -41,7 +49,15 @@ configure_file (
 add_library (comm14cux SHARED ${SOURCE_SUBDIR}/comm14cux.cpp)
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.cpp)
 
-if (MINGW)
+if (${ARDUINO})
+
+  print_board_list()
+  print_programmer_list()
+  set (comm14cux_lib_SRCS ${SOURCE_SUBDIR}/comm14cux.cpp)
+  set (comm14cux_lib_HDRS ${SOURCE_SUBDIR}/comm14cux.h)
+  generate_arduino_library(comm14cux_lib)
+
+elseif (MINGW)
   message (STATUS "Found Windows/MinGW platform.")
 
   find_library (MINGW_LIBGCC libgcc_s_dw2-1)
@@ -88,7 +104,7 @@ if (MINGW)
   include (CPack)
 
 else()
-  message (STATUS "Platform is not Windows/MinGW; trying Linux...")
+  message (STATUS "Defaulting to Linux build configuration.")
 
   set (CMAKE_SKIP_RPATH TRUE)
   set (CMAKE_INSTALL_PREFIX "/usr")

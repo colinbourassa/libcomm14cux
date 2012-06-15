@@ -1,16 +1,27 @@
-#include <unistd.h>
-#include <string>
-#include <fcntl.h>
-#include <stdlib.h>
+// Includes for all platforms
 #include <math.h>
-#if defined(WIN32)
-  #include <windows.h>
+
+#if defined(ARDUINO)
+  // Arduino-only includes
+  #include <WProgram.h>
 #else
-  #include <string.h>
-  #include <sys/ioctl.h>
-  #include <termios.h>
-  #include <arpa/inet.h>
+  // Non-Arduino includes
+  #include <unistd.h>
+  #include <fcntl.h>
+  #include <stdlib.h>
+
+  #if defined(WIN32)
+    // Windows-only includes
+    #include <windows.h>
+  #else
+    // Non-Windows, Non-Arduino includes
+    #include <sys/ioctl.h>
+    #include <termios.h>
+    #include <arpa/inet.h>
+  #endif
+
   #if defined(linux)
+    // Linux-only includes
     #include <linux/serial.h>
   #endif
 #endif
@@ -25,7 +36,7 @@
   #define dprintf
 #endif
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(ARDUINO)
 uint16_t swapShort(const uint16_t source)
 {
     static const uint16_t hibyte = 0xff00;
@@ -53,7 +64,9 @@ Comm14CUX::Comm14CUX() :
     m_voltageFactorB(0),
     m_voltageFactorC(0)
 {
-#if defined(WIN32)
+#if defined(ARDUINO)
+    sd = 0;
+#elif defined(WIN32)
     sd = INVALID_HANDLE_VALUE;
     s_mutex = CreateMutex(NULL, TRUE, NULL);
 #else
@@ -72,7 +85,7 @@ Comm14CUX::~Comm14CUX()
 
 #if defined(WIN32)
     CloseHandle(s_mutex);
-#else
+#elif !defined(ARDUINO)
     pthread_mutex_destroy(&s_mutex);
 #endif
 }
@@ -107,7 +120,7 @@ void Comm14CUX::disconnect()
 
         ReleaseMutex(s_mutex);
     }
-#else
+#elif !defined(ARDUINO)
     pthread_mutex_lock(&s_mutex);
 
     if (isConnected())
@@ -126,7 +139,7 @@ void Comm14CUX::disconnect()
  * @return True if the serial device was successfully opened and its
  *   baud rate was set; false otherwise.
  */
-bool Comm14CUX::connect(std::string devPath)
+bool Comm14CUX::connect(char *devPath)
 {
     bool result = false;
 
@@ -136,7 +149,7 @@ bool Comm14CUX::connect(std::string devPath)
         result = isConnected() || openSerial(devPath);
         ReleaseMutex(s_mutex);
     }
-#else
+#elif !defined(ARDUINO)
     pthread_mutex_lock(&s_mutex);
     result = isConnected() || openSerial(devPath);
     pthread_mutex_unlock(&s_mutex);
@@ -150,11 +163,13 @@ bool Comm14CUX::connect(std::string devPath)
  * parameters for the link to match those on the 14CUX.
  * @return True if the open/setup was successful, false otherwise
  */
-bool Comm14CUX::openSerial(std::string devPath)
+bool Comm14CUX::openSerial(char *devPath)
 {
     bool retVal = false;
 
 #ifdef ARDUINO
+
+    sd->begin(Serial14CUXParams::Baud_14CUX);
 
 #elif defined(linux)
 
@@ -163,7 +178,7 @@ bool Comm14CUX::openSerial(std::string devPath)
 
     // attempt to open the device
     dprintf("14CUX: Opening the serial device...\n");
-    sd = open(devPath.c_str(), O_RDWR | O_NOCTTY); 
+    sd = open(devPath, O_RDWR | O_NOCTTY); 
 
     if (sd > 0)
     {
@@ -284,7 +299,9 @@ bool Comm14CUX::openSerial(std::string devPath)
  */
 bool Comm14CUX::isConnected()
 {
-#if defined(WIN32)
+#if defined(ARDUINO)
+    return (sd != 0);
+#elif defined(WIN32)
     return (sd != INVALID_HANDLE_VALUE);
 #else
     return (sd > 0);
@@ -312,7 +329,25 @@ int16_t Comm14CUX::readSerialBytes(uint8_t *buffer, uint16_t quantity)
 
     if (isConnected())
     {
-#if defined(WIN32)
+#if defined(ARDUINO)
+        char c = -1;
+        unsigned long timeout = millis() + 100;
+
+        while ((millis() < timeout) && (bytesRead < quantity))
+        {
+            // try to read a byte
+            c = sd->read();
+
+            // if a byte was read...
+            if (c != -1)
+            {
+                // save it to the buffer
+                *buffer = (uint8_t)c;
+                buffer++;
+                bytesRead++;
+            }
+        }
+#elif defined(WIN32)
         DWORD w32BytesRead = 0;
         if ((ReadFile(sd, (UCHAR*)buffer, quantity, &w32BytesRead, NULL) == TRUE) &&
             (w32BytesRead > 0))
@@ -339,7 +374,15 @@ int16_t Comm14CUX::writeSerialBytes(uint8_t *buffer, uint16_t quantity)
 
     if (isConnected())
     {
-#if defined(WIN32)
+#if defined(ARDUINO)
+        bytesWritten = 0;
+        while (bytesWritten < quantity)
+        {
+            sd->print(*buffer);
+            buffer++;
+            bytesWritten++;
+        }
+#elif defined(WIN32)
         DWORD w32BytesWritten = 0;
         if ((WriteFile(sd, (UCHAR*)buffer, quantity, &w32BytesWritten, NULL) == TRUE) &&
             (w32BytesWritten == quantity))
@@ -368,7 +411,7 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
     {
         return false;
     }
-#else
+#elif !defined(ARDUINO)
     pthread_mutex_lock(&s_mutex);
 #endif
 
@@ -456,7 +499,7 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
 
 #if defined(WIN32)
     ReleaseMutex(s_mutex);
-#else
+#elif !defined(ARDUINO)
     pthread_mutex_unlock(&s_mutex);
 #endif
 
@@ -625,7 +668,7 @@ bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
     {
         return false;
     }
-#else
+#elif !defined(ARDUINO)
     pthread_mutex_lock(&s_mutex);
 #endif
 
@@ -661,7 +704,7 @@ bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
 
 #if defined(WIN32)
     ReleaseMutex(s_mutex);
-#else
+#elif !defined(ARDUINO)
     pthread_mutex_unlock(&s_mutex);
 #endif
 
