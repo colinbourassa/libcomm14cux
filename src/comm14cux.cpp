@@ -15,6 +15,7 @@
     #include <windows.h>
   #else
     // Non-Windows, Non-Arduino includes
+    #include <string.h>
     #include <sys/ioctl.h>
     #include <termios.h>
     #include <arpa/inet.h>

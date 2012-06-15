@@ -9,7 +9,6 @@ int main(int argc, char** argv)
     uint8_t readBuf[0x10000];
     uint16_t addr;
     uint16_t len;
-    std::string device;
     std::string outputFile;
     Comm14CUX* lucas;
     Comm14CUXVersion ver;
@@ -28,7 +27,6 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    device = argv[1];
     addr = strtoul(argv[2], NULL, 0);
     len = strtoul(argv[3], NULL, 0);
 
@@ -37,7 +35,7 @@ int main(int argc, char** argv)
         outputFile = argv[4];
     }
 
-    if (lucas->connect(device))
+    if (lucas->connect(argv[1]))
     {
         if (lucas->readMem(addr, len, readBuf))
         {
