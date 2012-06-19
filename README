@@ -132,7 +132,7 @@ DLL, named something like "libcomm14cux.dll".
 CMake can be obtained from www.cmake.org, and MinGW from www.mingw.org.
 
 
-== Building with Linux ==
+== Building for Linux ==
 
 The following software is required:
 
@@ -153,7 +153,7 @@ CMakeLists.txt and re-running "cmake ." and "make install". You may want to do
 this if you do not have sudo privileges on the machine.
 
 
-== Building with Windows ==
+== Building for Windows ==
 
 A Windows build requires the following software:
 
@@ -173,7 +173,7 @@ prompt in the directory containing the libcomm14cux source:
 Note: the 'install' directive under Windows will copy the output DLL, read14cux
 executable, and header files to C:\comm14cux by default.  If the user running
 the 'make install' step does not have write permissions at C:\, this step may
-fail.)
+fail.
 
 ----------------------------------------------------
 Notes for those developing frontends to libcomm14cux
