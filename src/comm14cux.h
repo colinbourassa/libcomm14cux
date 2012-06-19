@@ -278,7 +278,7 @@ public:
     Comm14CUX();
     ~Comm14CUX();
 
-    bool connect(char *devPath);
+    bool connect(const char *devPath);
     void disconnect();
     bool isConnected();
     bool readMem(uint16_t addr, uint16_t len, uint8_t* buffer);
@@ -319,7 +319,7 @@ private:
     bool setCoarseAddr(uint16_t addr, uint16_t len);
     uint16_t getByteCountForNextRead(uint16_t len, uint16_t bytesRead);
     bool sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly);
-    bool openSerial(char *devPath);
+    bool openSerial(const char *devPath);
     double hyperbolicOffsetModel(double count);
     void determineDataOffsets();
 

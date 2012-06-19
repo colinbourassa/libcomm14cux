@@ -140,7 +140,7 @@ void Comm14CUX::disconnect()
  * @return True if the serial device was successfully opened and its
  *   baud rate was set; false otherwise.
  */
-bool Comm14CUX::connect(char *devPath)
+bool Comm14CUX::connect(const char *devPath)
 {
     bool result = false;
 
@@ -164,7 +164,7 @@ bool Comm14CUX::connect(char *devPath)
  * parameters for the link to match those on the 14CUX.
  * @return True if the open/setup was successful, false otherwise
  */
-bool Comm14CUX::openSerial(char *devPath)
+bool Comm14CUX::openSerial(const char *devPath)
 {
     bool retVal = false;
 
