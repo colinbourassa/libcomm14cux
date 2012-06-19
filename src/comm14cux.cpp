@@ -1296,13 +1296,13 @@ bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
 }
 
 /**
- * Gets the current lambda-based fueling trim for the specified engine bank.
+ * Gets the current short-term lambda-based fueling trim for the specified engine bank.
  * @param bank Bank of the engine (left or right)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getLambdaTrim(Comm14CUXBank bank, int16_t &lambdaTrim)
+bool Comm14CUX::getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim)
 {
     bool retVal = false;
     uint16_t fuelTrimRaw = 0;
@@ -1310,11 +1310,43 @@ bool Comm14CUX::getLambdaTrim(Comm14CUXBank bank, int16_t &lambdaTrim)
 
     if (bank == Comm14CUXBank_Left)
     {
-        offset = Serial14CUXParams::LambdaFuelingTrimLeftOffset;
+        offset = Serial14CUXParams::ShortTermLambdaFuelingTrimLeftOffset;
     }
     else if (bank == Comm14CUXBank_Right)
     {
-        offset = Serial14CUXParams::LambdaFuelingTrimRightOffset;
+        offset = Serial14CUXParams::ShortTermLambdaFuelingTrimRightOffset;
+    }
+
+    if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
+    {
+        lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0x100;
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+
+/**
+ * Gets the current long-term lambda-based fueling trim for the specified engine bank.
+ * @param bank Bank of the engine (left or right)
+ * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
+ *   for the specified bank, from -256 to 255.
+ * @return True if successfully read; false otherwise
+ */
+bool Comm14CUX::getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim)
+{
+    bool retVal = false;
+    uint16_t fuelTrimRaw = 0;
+    uint16_t offset = 0;
+
+    if (bank == Comm14CUXBank_Left)
+    {
+        offset = Serial14CUXParams::LongTermLambdaFuelingTrimLeftOffset;
+    }
+    else if (bank == Comm14CUXBank_Right)
+    {
+        offset = Serial14CUXParams::LongTermLambdaFuelingTrimRightOffset;
     }
 
     if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))

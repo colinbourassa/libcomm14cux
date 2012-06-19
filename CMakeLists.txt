@@ -1,4 +1,4 @@
-if (${ARDUINO})
+if (ARDUINO)
     message (STATUS "Building for Arduino!")
     set (CMAKE_TOOLCHAIN_FILE cmake/ArduinoToolchain.cmake)
     set (ARDUINO_DEFAULT_BOARD uno)
@@ -11,7 +11,7 @@ project (libcomm14cux)
 
 set (COMM14CUX_VER_MAJOR 0)
 set (COMM14CUX_VER_MINOR 4)
-set (COMM14CUX_VER_PATCH 4)
+set (COMM14CUX_VER_PATCH 5)
 
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "bin")
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
@@ -49,7 +49,7 @@ configure_file (
 add_library (comm14cux SHARED ${SOURCE_SUBDIR}/comm14cux.cpp)
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.cpp)
 
-if (${ARDUINO})
+if (ARDUINO)
 
   print_board_list()
   print_programmer_list()
