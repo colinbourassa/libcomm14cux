@@ -62,7 +62,7 @@ namespace Serial14CUXParams
     //! Memory location of main voltage value
     const uint16_t MainVoltageOffset = 0x0055;
     //! Memory location of (low) airflow mass value
-    const uint16_t MassAirflowOffset = 0x0057;
+    const uint16_t MassAirflowDirectOffset = 0x0057;
     //! Memory location of throttle position value
     const uint16_t ThrottlePositionOffset = 0x005F;
     //! Memory location of coolant temperature value
@@ -79,6 +79,8 @@ namespace Serial14CUXParams
     const uint16_t RoadSpeedOffset = 0x2003;
     //! Memory location of fuel temperature value
     const uint16_t FuelTempOffset = 0x2006;
+    //! Memory location of linearized MAF reading
+    const uint16_t MassAirflowLinearOffset = 0x204D;
     //! Memory location of target idle speed
     const uint16_t TargetIdleSpeedOffset = 0x2151;
 
@@ -157,8 +159,8 @@ typedef struct
   uint8_t Misfire_Right_Bank  : 1;
   //! Indicates a fault with the airflow meter
   uint8_t Airflow_Meter       : 1;
-  //! (Unused)
-  uint8_t Spare1              : 1;
+  //! Indicates that the tune resistor is out of range
+  uint8_t Tune_Resistor_Out_of_Range : 1;
 
 
   // Location 0x004A, mask 0xFD
@@ -172,9 +174,9 @@ typedef struct
   uint8_t Coolant_Temp_Sensor    : 1;
   //! Indicates fault with the throttle potentiometer
   uint8_t Throttle_Pot           : 1;
-  //! Indicates fault with the throttle potentiometer
+  //! Indicates that the MAF read low while the throttle pot read high
   uint8_t Throttle_Pot_Hi_MAF_Lo : 1;
-  //! Indicates fault with the throttle potentiometer
+  //! Indicates that the MAF read high while the throttle pot read low
   uint8_t Throttle_Pot_Lo_MAF_Hi : 1;
   //! Indicates fault with the carbon filter purge valve
   uint8_t Purge_Valve_Leak       : 1;
@@ -182,16 +184,24 @@ typedef struct
 
   // Location 0x004B, mask 0x00
   //! (Unused)
-  uint8_t Spare3 : 8;
+  uint8_t Spare3                 : 1;
+  //! Indicates that the fuel mix is too lean
+  uint8_t Mixture_Too_Lean       : 1;
+  //! (Unused)
+  uint8_t Spare4                 : 5;
+  //! Indicates an air leak in the intake path
+  uint8_t Intake_Air_Leak        : 1;
 
 
   // Location 0x004C, mask 0xD0
+  //! Indicates a low fuel pressure fault
+  uint8_t Low_Fuel_Pressure        : 1;
   //! (Unused)
-  uint8_t Spare4                   : 4;
+  uint8_t Spare5                   : 3;
   //! Indicates fault with the idle bypass stepper motor
   uint8_t Idle_Valve_Stepper_Motor : 1;
   //! (Unused)
-  uint8_t Spare5                   : 1;
+  uint8_t Spare6                   : 1;
   //! Indicates fault with the road speed sensor
   uint8_t Road_Speed_Sensor        : 1;
   //! Indicates fault with the gearbox neutral switch
@@ -200,16 +210,18 @@ typedef struct
 
   // Location 0x004D, mask 0x20
   //! (Unused)
-  uint8_t Spare6           : 5; 
+  uint8_t Spare7                        : 4; 
+  //! Indicates ambiguity between a low-fuel-pressure fault and an air-leak fault
+  uint8_t Low_Fuel_Pressure_or_Air_Leak : 1;
   //! Indicates fault with the fuel temperature sensor
-  uint8_t Fuel_Temp_Sensor : 1;
+  uint8_t Fuel_Temp_Sensor              : 1;
   //! (Unused)
-  uint8_t Spare7           : 2; 
+  uint8_t Spare8                        : 2; 
 
 
   // Location 0x004E, mask 0xC0
   //! (Unused)
-  uint8_t Spare8               : 6;
+  uint8_t Spare9               : 6;
   //! Indicates that the main battery had been disconnected
   uint8_t Battery_Disconnected : 1;
   //! Indicates that the battery-backed memory of the 14CUX had been cleared
@@ -254,6 +266,15 @@ enum Comm14CUXBank
 };
 
 /**
+ * Describes the two means of reading a value from the MAF.
+ */
+enum Comm14CUXAirflowType
+{
+    Comm14CUXAirflowType_Direct,
+    Comm14CUXAirflowType_Linearized
+};
+
+/**
  * Enumerates the revisions of the PROMs, which can have different data
  * offsets (which affects reading the fuel maps.
  */
@@ -290,7 +311,7 @@ public:
     bool getRoadSpeed(uint16_t &roadSpeed);
     bool getCoolantTemp(int16_t &coolantTemp);
     bool getFuelTemp(int16_t &fuelTemp);
-    bool getMAFReading(float &mafReading);
+    bool getMAFReading(Comm14CUXAirflowType type, float &mafReading);
     bool getEngineRPM(uint16_t &engineRPM);
     bool getTargetIdle(uint16_t &targetIdleRPM);
     bool getThrottlePosition(float &throttlePos);

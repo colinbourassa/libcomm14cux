@@ -827,18 +827,28 @@ bool Comm14CUX::getFuelTemp(int16_t &fuelTemp)
 
 /**
  * Gets the mass airflow reading at the intake.
+ * @param type Type of reading to take. A "Direct" reading changes linearly
+ *   with voltage but logarithmically with airflow, and "Linearized" changes
+ *   linearly with airflow.
  * @param mafReading Set to MAF measurement as a percentage of the highest
  *   possible measurement (if read successfully)
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getMAFReading(float &mafReading)
+bool Comm14CUX::getMAFReading(Comm14CUXAirflowType type, float &mafReading)
 {
     uint16_t maf = 0;
     bool retVal = false;
 
-    if (readMem(Serial14CUXParams::MassAirflowOffset, 2, (uint8_t*)&maf))
+    if ((type == Comm14CUXAirflowType_Direct) &&
+        readMem(Serial14CUXParams::MassAirflowDirectOffset, 2, (uint8_t*)&maf))
     {
         mafReading = swapShort(maf) / 1023.0;
+        retVal = true;
+    }
+    else if ((type == Comm14CUXAirflowType_Linearized) &&
+             readMem(Serial14CUXParams::MassAirflowLinearOffset, 2, (uint8_t*)&maf))
+    {
+        mafReading = swapShort(maf) / 17290.0;
         retVal = true;
     }
 
