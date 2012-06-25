@@ -1369,6 +1369,32 @@ bool Comm14CUX::getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim)
 }
 
 /**
+*/
+bool Comm14CUX::getLambdaTrimFeedback(Comm14CUXBank bank, int16_t &lambdaTrim)
+{
+    bool retVal = false;
+    uint16_t fuelTrimRaw = 0;
+    uint16_t offset = 0;
+
+    if (bank == Comm14CUXBank_Left)
+    {
+        offset = Serial14CUXParams::LambdaFuelingFeedbackLeftOffset;
+    }
+    else if (bank == Comm14CUXBank_Right)
+    {
+        offset = Serial14CUXParams::LambdaFuelingFeedbackRightOffset;
+    }
+
+    if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
+    {
+        lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0x100;
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * Populates the supplied struct with fault code data read from the ECU.
  * @param faultCodes Struct to populate with current fault code data
  * @return True when the fault code data was successfully read and

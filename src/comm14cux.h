@@ -47,14 +47,18 @@ namespace Serial14CUXParams
 
     //! Memory location of Port 1
     const uint16_t Port1Offset = 0x0002;
+    //! Memory location of left bank short-term lambda fueling trim
+    const uint16_t ShortTermLambdaFuelingTrimLeftOffset = 0x0040;
+    //! Memory location of right bank short-term lambda fueling trim
+    const uint16_t ShortTermLambdaFuelingTrimRightOffset = 0x0044;
     //! Memory location of left bank long-term lambda fueling trim
     const uint16_t LongTermLambdaFuelingTrimLeftOffset = 0x0042;
     //! Memory location of right bank long-term lambda fueling trim
     const uint16_t LongTermLambdaFuelingTrimRightOffset = 0x0046;
-    //! Memory location of left bank short-term lambda fueling trim
-    const uint16_t ShortTermLambdaFuelingTrimLeftOffset = 0x0065;
-    //! Memory location of right bank short-term lambda fueling trim
-    const uint16_t ShortTermLambdaFuelingTrimRightOffset = 0x0067;
+    //! Memory location of left bank short-term lambda fueling feedback
+    const uint16_t LambdaFuelingFeedbackLeftOffset = 0x0065;
+    //! Memory location of right bank short-term lambda fueling feedback
+    const uint16_t LambdaFuelingFeedbackRightOffset = 0x0067;
     //! Memory location of fault code block
     const uint16_t FaultCodesOffset = 0x0049;
     //! Memory location of minimum throttle position value
@@ -321,6 +325,7 @@ public:
     bool getCurrentFuelMap(uint8_t &fuelMapId);
     bool getFuelMapRowIndex(uint8_t &fuelMapRowIndex);
     bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
+    bool getLambdaTrimFeedback(Comm14CUXBank bank, int16_t &lambdaTrim);
     bool getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim);
     bool getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim);
     bool getIdleBypassMotorPosition(float &bypassMotorPos);
