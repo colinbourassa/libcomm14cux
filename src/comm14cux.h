@@ -47,10 +47,6 @@ namespace Serial14CUXParams
 
     //! Memory location of Port 1
     const uint16_t Port1Offset = 0x0002;
-    //! Memory location of left bank short-term lambda fueling trim
-    const uint16_t ShortTermLambdaFuelingTrimLeftOffset = 0x0040;
-    //! Memory location of right bank short-term lambda fueling trim
-    const uint16_t ShortTermLambdaFuelingTrimRightOffset = 0x0044;
     //! Memory location of left bank long-term lambda fueling trim
     const uint16_t LongTermLambdaFuelingTrimLeftOffset = 0x0042;
     //! Memory location of right bank long-term lambda fueling trim
@@ -150,7 +146,7 @@ typedef struct
 {
   // Location 0x0049, mask 0x77
   //! Indicates fault with the ECU memory checksum
-  uint8_t ECU_Memory_Check    : 1;
+  uint8_t PROM_Checksum_Failure : 1;
   //! Indicates fault with the left oxygen sensor
   uint8_t Lambda_Sensor_Left  : 1;
   //! Indicates fault with the right oxygen sensor
@@ -192,20 +188,22 @@ typedef struct
   //! Indicates that the fuel mix is too lean
   uint8_t Mixture_Too_Lean       : 1;
   //! (Unused)
-  uint8_t Spare4                 : 5;
+  uint8_t Spare4                 : 1;
   //! Indicates an air leak in the intake path
   uint8_t Intake_Air_Leak        : 1;
+  //! (Unused)
+  uint8_t Spare5                 : 4;
 
 
   // Location 0x004C, mask 0xD0
   //! Indicates a low fuel pressure fault
   uint8_t Low_Fuel_Pressure        : 1;
   //! (Unused)
-  uint8_t Spare5                   : 3;
+  uint8_t Spare6                   : 3;
   //! Indicates fault with the idle bypass stepper motor
   uint8_t Idle_Valve_Stepper_Motor : 1;
   //! (Unused)
-  uint8_t Spare6                   : 1;
+  uint8_t Spare7                   : 1;
   //! Indicates fault with the road speed sensor
   uint8_t Road_Speed_Sensor        : 1;
   //! Indicates fault with the gearbox neutral switch
@@ -214,22 +212,22 @@ typedef struct
 
   // Location 0x004D, mask 0x20
   //! (Unused)
-  uint8_t Spare7                        : 4; 
+  uint8_t Spare8                        : 4; 
   //! Indicates ambiguity between a low-fuel-pressure fault and an air-leak fault
   uint8_t Low_Fuel_Pressure_or_Air_Leak : 1;
   //! Indicates fault with the fuel temperature sensor
   uint8_t Fuel_Temp_Sensor              : 1;
   //! (Unused)
-  uint8_t Spare8                        : 2; 
+  uint8_t Spare9                        : 2; 
 
 
   // Location 0x004E, mask 0xC0
   //! (Unused)
-  uint8_t Spare9               : 6;
+  uint8_t Spare10              : 6;
   //! Indicates that the main battery had been disconnected
   uint8_t Battery_Disconnected : 1;
   //! Indicates that the battery-backed memory of the 14CUX had been cleared
-  uint8_t ECM_Memory_Cleared   : 1;
+  uint8_t RAM_Checksum_Failure : 1;
 
 } Comm14CUXFaultCodes;
 
@@ -325,7 +323,6 @@ public:
     bool getCurrentFuelMap(uint8_t &fuelMapId);
     bool getFuelMapRowIndex(uint8_t &fuelMapRowIndex);
     bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
-    bool getLambdaTrimFeedback(Comm14CUXBank bank, int16_t &lambdaTrim);
     bool getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim);
     bool getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim);
     bool getIdleBypassMotorPosition(float &bypassMotorPos);

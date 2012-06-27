@@ -1320,16 +1320,19 @@ bool Comm14CUX::getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim)
 
     if (bank == Comm14CUXBank_Left)
     {
-        offset = Serial14CUXParams::ShortTermLambdaFuelingTrimLeftOffset;
+        offset = Serial14CUXParams::LambdaFuelingFeedbackLeftOffset;
     }
     else if (bank == Comm14CUXBank_Right)
     {
-        offset = Serial14CUXParams::ShortTermLambdaFuelingTrimRightOffset;
+        offset = Serial14CUXParams::LambdaFuelingFeedbackRightOffset;
     }
 
     if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
     {
-        lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0x100;
+        // compute the number of "fueling counts" (will be between -256 and +255),
+        // and then invert over that range (since the memory location actually
+        // stores a feedback measurement rather than a fueling trim)
+        lambdaTrim = (((swapShort(fuelTrimRaw) / 0x80) - 0x100) + 1) * -1;
         retVal = true;
     }
 
@@ -1361,32 +1364,7 @@ bool Comm14CUX::getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim)
 
     if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
     {
-        lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0x100;
-        retVal = true;
-    }
-
-    return retVal;
-}
-
-/**
-*/
-bool Comm14CUX::getLambdaTrimFeedback(Comm14CUXBank bank, int16_t &lambdaTrim)
-{
-    bool retVal = false;
-    uint16_t fuelTrimRaw = 0;
-    uint16_t offset = 0;
-
-    if (bank == Comm14CUXBank_Left)
-    {
-        offset = Serial14CUXParams::LambdaFuelingFeedbackLeftOffset;
-    }
-    else if (bank == Comm14CUXBank_Right)
-    {
-        offset = Serial14CUXParams::LambdaFuelingFeedbackRightOffset;
-    }
-
-    if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
-    {
+        // compute the number of "fueling counts" (will be between -256 and +255),
         lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0x100;
         retVal = true;
     }
