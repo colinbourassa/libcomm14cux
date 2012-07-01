@@ -40,6 +40,9 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+0.4.5: Added more fault codes, as well as fault code numbers
+       Added switchable short/long term lambda fuel trim
+       Added switchable linearized/direct MAF readings
 0.4.4: Improved main voltage reading accuracy further
        Improved throttle pot position accuracy
 0.4.2: Added function to retrieve lambda fuel trim
