@@ -238,10 +238,10 @@ bool Comm14CUX::openSerial(const char *devPath)
     COMMTIMEOUTS commTimeouts;
 
     // attempt to open the device
-    dprintf("14CUX: Opening the serial device '%s'...\n", devPath.c_str());
+    dprintf("14CUX: Opening the serial device '%s'...\n", devPath);
 
     // open and get a handle to the serial device
-    sd = CreateFile(devPath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL,
+    sd = CreateFile(devPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     // verify that the serial device was opened
