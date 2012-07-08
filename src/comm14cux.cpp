@@ -84,7 +84,7 @@ Comm14CUX::~Comm14CUX()
 {
     disconnect();
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(ARDUINO)
     CloseHandle(s_mutex);
 #elif !defined(ARDUINO)
     pthread_mutex_destroy(&s_mutex);
@@ -110,7 +110,9 @@ Comm14CUXVersion Comm14CUX::getVersion()
  */
 void Comm14CUX::disconnect()
 {
-#if defined(WIN32)
+#if defined(ARDUINO)
+    sd = 0;
+#elif defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
     {
         if (isConnected())
@@ -121,7 +123,7 @@ void Comm14CUX::disconnect()
 
         ReleaseMutex(s_mutex);
     }
-#elif !defined(ARDUINO)
+#else
     pthread_mutex_lock(&s_mutex);
 
     if (isConnected())
@@ -144,13 +146,17 @@ bool Comm14CUX::connect(const char *devPath)
 {
     bool result = false;
 
-#if defined(WIN32)
+#if defined(ARDUINO)
+
+    result = isConnected() || openSerial(devPath);
+
+#elif defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
     {
         result = isConnected() || openSerial(devPath);
         ReleaseMutex(s_mutex);
     }
-#elif !defined(ARDUINO)
+#else
     pthread_mutex_lock(&s_mutex);
     result = isConnected() || openSerial(devPath);
     pthread_mutex_unlock(&s_mutex);
@@ -407,7 +413,7 @@ int16_t Comm14CUX::writeSerialBytes(uint8_t *buffer, uint16_t quantity)
  */
 bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(ARDUINO)
     if (WaitForSingleObject(s_mutex, INFINITE) != WAIT_OBJECT_0)
     {
         return false;
@@ -498,7 +504,7 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
         m_lastReadQuantity = 0;
     }
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(ARDUINO)
     ReleaseMutex(s_mutex);
 #elif !defined(ARDUINO)
     pthread_mutex_unlock(&s_mutex);
@@ -664,7 +670,7 @@ bool Comm14CUX::setCoarseAddr(uint16_t addr, uint16_t len)
  */
 bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(ARDUINO)
     if (WaitForSingleObject(s_mutex, INFINITE) != WAIT_OBJECT_0)
     {
         return false;
@@ -703,7 +709,7 @@ bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
         }
     }
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(ARDUINO)
     ReleaseMutex(s_mutex);
 #elif !defined(ARDUINO)
     pthread_mutex_unlock(&s_mutex);
