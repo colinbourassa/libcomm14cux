@@ -84,19 +84,26 @@ namespace Serial14CUXParams
     //! Memory location of target idle speed
     const uint16_t TargetIdleSpeedOffset = 0x2151;
 
-    //! Memory location of first main voltage computation factor
-    const uint16_t NewMainVoltageFactorAOffset = 0xC7C3;
-    //! Memory location of second main voltage computation factor
-    const uint16_t NewMainVoltageFactorBOffset = 0xC7C4;
-    //! Memory location of third main voltage computation factor
-    const uint16_t NewMainVoltageFactorCOffset = 0xC7C5;
+    //! Fixed main voltage coefficient 'A' for very old ECUs (<= 1990)
+    const uint8_t RevAMainVoltageFactorA = 0x64;
+    //! Fixed main voltage coefficient 'B' for very old ECUs (<= 1990)
+    const uint8_t RevAMainVoltageFactorB = 0xBD;
+    //! Fixed main voltage coefficient 'C' for very old ECUs (<= 1990)
+    const uint16_t RevAMainVoltageFactorC = 0x6180;
 
     //! Memory location of first main voltage computation factor
-    const uint16_t OldMainVoltageFactorAOffset = 0xC79B;
+    const uint16_t RevBMainVoltageFactorAOffset = 0xC79B;
     //! Memory location of second main voltage computation factor
-    const uint16_t OldMainVoltageFactorBOffset = 0xC79C;
+    const uint16_t RevBMainVoltageFactorBOffset = 0xC79C;
     //! Memory location of third main voltage computation factor
-    const uint16_t OldMainVoltageFactorCOffset = 0xC79D;
+    const uint16_t RevBMainVoltageFactorCOffset = 0xC79D;
+
+    //! Memory location of first main voltage computation factor
+    const uint16_t RevCMainVoltageFactorAOffset = 0xC7C3;
+    //! Memory location of second main voltage computation factor
+    const uint16_t RevCMainVoltageFactorBOffset = 0xC7C4;
+    //! Memory location of third main voltage computation factor
+    const uint16_t RevCMainVoltageFactorCOffset = 0xC7C5;
 
     //! Memory location of Fuel Map 0
     const uint16_t FuelMap0Offset = 0xC000;
@@ -284,10 +291,12 @@ enum Comm14CUXDataOffsets
 {
     //! The revision of the connect ECU has not yet been determined.
     Comm14CUXDataOffsets_Unset = 0x00,
-    //! The connected ECU uses the old offsets for fuel map data.
-    Comm14CUXDataOffsets_Old = 0x01,
-    //! The connected ECU uses the new offsets for fuel map data.
-    Comm14CUXDataOffsets_New = 0x02
+    //! The connected ECU uses the first revision of data offsets
+    Comm14CUXDataOffsets_RevA = 0x01,
+    //! The connected ECU uses the second revision of data offsets
+    Comm14CUXDataOffsets_RevB = 0x02,
+    //! The connected ECU uses the third revision of data offsets
+    Comm14CUXDataOffsets_RevC = 0x03
 };
 
 /**

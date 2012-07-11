@@ -1026,6 +1026,7 @@ void Comm14CUX::determineDataOffsets()
         uint8_t maxByteToByteChangeNew = 0;
         uint8_t testBufferOld[16];
         uint8_t testBufferNew[16];
+        uint8_t voltageOffsetA;
 
         // read the first row of fuel map data at each of its two (?) possible locations
         if (readMem(Serial14CUXParams::OldFuelMap1Offset, 16, &testBufferOld[0]) &&
@@ -1054,11 +1055,23 @@ void Comm14CUX::determineDataOffsets()
             // byte-to-byte changes is probably the real fuel map
             if (maxByteToByteChangeOld < maxByteToByteChangeNew)
             {
-                m_promRev = Comm14CUXDataOffsets_Old;
+                // very old 14CU(X) units (1990ish and earlier) have some of the main-voltage
+                // computation factors hardcoded, so we need to check for that as well
+                if (readMem(Serial14CUXParams::RevBMainVoltageFactorAOffset, 1, &voltageOffsetA))
+                {
+                    if (voltageOffsetA == 0xFF)
+                    {
+                        m_promRev = Comm14CUXDataOffsets_RevA;
+                    }
+                    else
+                    {
+                        m_promRev = Comm14CUXDataOffsets_RevB;
+                    }
+                }
             }
             else
             {
-                m_promRev = Comm14CUXDataOffsets_New;
+                m_promRev = Comm14CUXDataOffsets_RevC;
             }
         }
     }
@@ -1087,21 +1100,28 @@ bool Comm14CUX::getMainVoltage(float &mainVoltage)
         determineDataOffsets();
 
         // read the coefficients from the PROM so that we can reverse the ADC computation
-        if (m_promRev == Comm14CUXDataOffsets_Old)
+        if (m_promRev == Comm14CUXDataOffsets_RevA)
         {
-            if (readMem(Serial14CUXParams::OldMainVoltageFactorAOffset, 1, &m_voltageFactorA) &&
-                readMem(Serial14CUXParams::OldMainVoltageFactorBOffset, 1, &m_voltageFactorB) &&
-                readMem(Serial14CUXParams::OldMainVoltageFactorCOffset, 2, (uint8_t*)&m_voltageFactorC))
+            m_voltageFactorA = Serial14CUXParams::RevAMainVoltageFactorA;
+            m_voltageFactorB = Serial14CUXParams::RevAMainVoltageFactorB;
+            m_voltageFactorC = Serial14CUXParams::RevAMainVoltageFactorC;
+            readCoefficients = true;
+        }
+        else if (m_promRev == Comm14CUXDataOffsets_RevB)
+        {
+            if (readMem(Serial14CUXParams::RevBMainVoltageFactorAOffset, 1, &m_voltageFactorA) &&
+                readMem(Serial14CUXParams::RevBMainVoltageFactorBOffset, 1, &m_voltageFactorB) &&
+                readMem(Serial14CUXParams::RevBMainVoltageFactorCOffset, 2, (uint8_t*)&m_voltageFactorC))
             {
                 m_voltageFactorC = swapShort(m_voltageFactorC);
                 readCoefficients = true;
             }
         }
-        else if (m_promRev == Comm14CUXDataOffsets_New)
+        else if (m_promRev == Comm14CUXDataOffsets_RevC)
         {
-            if (readMem(Serial14CUXParams::NewMainVoltageFactorAOffset, 1, &m_voltageFactorA) &&
-                readMem(Serial14CUXParams::NewMainVoltageFactorBOffset, 1, &m_voltageFactorB) &&
-                readMem(Serial14CUXParams::NewMainVoltageFactorCOffset, 2, (uint8_t*)&m_voltageFactorC))
+            if (readMem(Serial14CUXParams::RevCMainVoltageFactorAOffset, 1, &m_voltageFactorA) &&
+                readMem(Serial14CUXParams::RevCMainVoltageFactorBOffset, 1, &m_voltageFactorB) &&
+                readMem(Serial14CUXParams::RevCMainVoltageFactorCOffset, 2, (uint8_t*)&m_voltageFactorC))
             {
                 m_voltageFactorC = swapShort(m_voltageFactorC);
                 readCoefficients = true;
@@ -1158,7 +1178,8 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
         {
             offset = Serial14CUXParams::FuelMap0Offset;
         }
-        else if (m_promRev == Comm14CUXDataOffsets_Old)
+        else if ((m_promRev == Comm14CUXDataOffsets_RevA) ||
+                 (m_promRev == Comm14CUXDataOffsets_RevB))
         {
             switch (fuelMapId)
             {
@@ -1182,7 +1203,7 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
                     break;
             }
         }
-        else if (m_promRev == Comm14CUXDataOffsets_New)
+        else if (m_promRev == Comm14CUXDataOffsets_RevC)
         {
             switch (fuelMapId)
             {
