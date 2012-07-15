@@ -1014,7 +1014,7 @@ bool Comm14CUX::getGearSelection(Comm14CUXGear &gear)
 }
 
 /**
- * Determines the data layout of the connected ECU ('old' versus 'new') based on the
+ * Determines the revision of the code in the connected ECU based on the
  * position of the first fuel map.
  */
 void Comm14CUX::determineDataOffsets()
