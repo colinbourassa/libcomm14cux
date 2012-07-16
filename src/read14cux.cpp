@@ -87,7 +87,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        printf("Error: could not open serial device.\n", argv[0]);
+        printf("Error: could not open serial device (%s).\n", argv[1]);
         retVal = -4;
     }
 
