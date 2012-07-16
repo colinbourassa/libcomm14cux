@@ -1166,7 +1166,7 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
     bool retVal = false;
 
     // check that the map ID is valid
-    if ((fuelMapId >= 0) && (fuelMapId <= 5))
+    if (fuelMapId <= 5)
     {
         uint16_t offset = 0;
 
