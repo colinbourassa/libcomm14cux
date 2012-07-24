@@ -325,7 +325,7 @@ public:
     bool getMAFReading(Comm14CUXAirflowType type, float &mafReading);
     bool getEngineRPM(uint16_t &engineRPM);
     bool getTargetIdle(uint16_t &targetIdleRPM);
-    bool getThrottlePosition(float &throttlePos);
+    bool getThrottlePosition(float &throttlePos, bool corrected);
     bool getGearSelection(Comm14CUXGear &gear);
     bool getMainVoltage(float &voltage);
     bool getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_t *buffer);

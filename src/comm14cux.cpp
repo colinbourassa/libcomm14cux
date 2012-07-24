@@ -940,40 +940,59 @@ bool Comm14CUX::getTargetIdle(uint16_t &targetIdleRPM)
 /**
  * Gets the throttle position as a percentage of WOT.
  * @param throttlePos Set to throttle position as a percentage (if read successfully)
+ * @param corrected True to correct the throttle percentage so that the stored minimum
+ *   value shows 0%; false to show the reading as a simple percentage of the maximum
+ *   reading of 1023.
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getThrottlePosition(float &throttlePos)
+bool Comm14CUX::getThrottlePosition(float &throttlePos, bool corrected)
 {
     uint16_t throttle = 0;
     uint16_t throttleMinPos = 0;
+    uint16_t correctionOffset = 0;
     bool retVal = false;
 
-    if (readMem(Serial14CUXParams::ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos) &&
-        readMem(Serial14CUXParams::ThrottlePositionOffset, 2, (uint8_t*)&throttle))
+    if (readMem(Serial14CUXParams::ThrottlePositionOffset, 2, (uint8_t*)&throttle))
     {
-        throttle = swapShort(throttle);
-        throttleMinPos = swapShort(throttleMinPos);
-
-        // if the throttle is currently showing a lower measurement than we've yet seen,
-        // update the locally stored measurement with this new one
-        if (throttle < m_lowestThrottleMeasurement)
+        // if we're being asked to correct the measured value (so that the lowest
+        // actual measurement is shown as 0%), then read the stored minimum position
+        if (corrected)
         {
-            m_lowestThrottleMeasurement = throttle;
-        }
+            if (readMem(Serial14CUXParams::ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos))
+            {
+                throttle = swapShort(throttle);
+                throttleMinPos = swapShort(throttleMinPos);
 
-        // if this library has seen a lower throttle measurement than the one stored in
-        // the ECU as the minimum position, use the lower measurement as the minimum
-        if (m_lowestThrottleMeasurement < throttleMinPos)
-        {
-            throttlePos = (throttle - m_lowestThrottleMeasurement) / (1023.0 - m_lowestThrottleMeasurement);
+                // if the throttle is currently showing a lower measurement than we've yet seen,
+                // update the locally stored measurement with this new one
+                if (throttle < m_lowestThrottleMeasurement)
+                {
+                    m_lowestThrottleMeasurement = throttle;
+                }
+
+                // if this library has seen a lower throttle measurement than the one stored in
+                // the ECU as the minimum position, use the lower measurement as the minimum
+                if (m_lowestThrottleMeasurement < throttleMinPos)
+                {
+                    correctionOffset = m_lowestThrottleMeasurement;
+                }
+                // otherwise, use the ECU's stored minimum
+                else
+                {
+                    correctionOffset = throttleMinPos;
+                }
+
+                retVal = true;
+            }
         }
-        // otherwise, use the ECU's stored minimum
         else
         {
-            throttlePos = (throttle - throttleMinPos) / (1023.0 - throttleMinPos);
+            retVal = true;
         }
 
-        retVal = true;
+        // subtract off the base offset (which is zero for an absolute reading, or
+        // the minimum throttle position reading for a corrected reading)
+        throttlePos = (throttle - correctionOffset) / (1023.0 - correctionOffset);
     }
 
     return retVal;
