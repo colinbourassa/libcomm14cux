@@ -284,6 +284,15 @@ enum Comm14CUXAirflowType
 };
 
 /**
+ * Describes the two methods of interpreting a throttle position.
+ */
+enum Comm14CUXThrottlePosType
+{
+    Comm14CUXThrottlePosType_Absolute,
+    Comm14CUXThrottlePosType_Corrected
+};
+
+/**
  * Enumerates the revisions of the PROMs, which can have different data
  * offsets (which affects reading the fuel maps.
  */
@@ -325,7 +334,7 @@ public:
     bool getMAFReading(Comm14CUXAirflowType type, float &mafReading);
     bool getEngineRPM(uint16_t &engineRPM);
     bool getTargetIdle(uint16_t &targetIdleRPM);
-    bool getThrottlePosition(float &throttlePos, bool corrected);
+    bool getThrottlePosition(Comm14CUXThrottlePosType type, float &throttlePos);
     bool getGearSelection(Comm14CUXGear &gear);
     bool getMainVoltage(float &voltage);
     bool getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_t *buffer);

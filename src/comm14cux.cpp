@@ -939,13 +939,13 @@ bool Comm14CUX::getTargetIdle(uint16_t &targetIdleRPM)
 
 /**
  * Gets the throttle position as a percentage of WOT.
+ * @param type Selects either an 'absolute' throttle reading (a simple percentage
+ *   of the maximum reading of 1023), or a 'corrected' throttle reading (which is
+ *   adjusted so that the lowest value read is shown as 0%)
  * @param throttlePos Set to throttle position as a percentage (if read successfully)
- * @param corrected True to correct the throttle percentage so that the stored minimum
- *   value shows 0%; false to show the reading as a simple percentage of the maximum
- *   reading of 1023.
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getThrottlePosition(float &throttlePos, bool corrected)
+bool Comm14CUX::getThrottlePosition(Comm14CUXThrottlePosType type, float &throttlePos)
 {
     uint16_t throttle = 0;
     uint16_t throttleMinPos = 0;
@@ -956,7 +956,7 @@ bool Comm14CUX::getThrottlePosition(float &throttlePos, bool corrected)
     {
         // if we're being asked to correct the measured value (so that the lowest
         // actual measurement is shown as 0%), then read the stored minimum position
-        if (corrected)
+        if (type == Comm14CUXThrottlePosType_Corrected)
         {
             if (readMem(Serial14CUXParams::ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos))
             {
