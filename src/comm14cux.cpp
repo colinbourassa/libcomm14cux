@@ -954,13 +954,14 @@ bool Comm14CUX::getThrottlePosition(Comm14CUXThrottlePosType type, float &thrott
 
     if (readMem(Serial14CUXParams::ThrottlePositionOffset, 2, (uint8_t*)&throttle))
     {
+        throttle = swapShort(throttle);
+
         // if we're being asked to correct the measured value (so that the lowest
         // actual measurement is shown as 0%), then read the stored minimum position
         if (type == Comm14CUXThrottlePosType_Corrected)
         {
             if (readMem(Serial14CUXParams::ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos))
             {
-                throttle = swapShort(throttle);
                 throttleMinPos = swapShort(throttleMinPos);
 
                 // if the throttle is currently showing a lower measurement than we've yet seen,
