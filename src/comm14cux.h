@@ -324,6 +324,7 @@ public:
     bool isConnected();
     bool readMem(uint16_t addr, uint16_t len, uint8_t* buffer);
     bool writeMem(uint16_t addr, uint8_t val);
+    void testWrite();
     bool dumpROM(uint8_t* buffer);
     bool getFaultCodes(Comm14CUXFaultCodes &faultCodes);
     Comm14CUXVersion getVersion();
@@ -393,6 +394,13 @@ private:
     int sd;
     //! Lock to prevent multiple simultaneous open/close/read/write operations
     pthread_mutex_t s_mutex;
+
+    #if !defined(linux)
+        //! Descriptor controlled using select()
+        fd_set sds;
+        //! Timeout for select()
+        struct timeval comms_timeout;
+    #endif
 #endif
 
 };

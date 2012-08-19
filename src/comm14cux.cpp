@@ -1,3 +1,9 @@
+// libcomm14cux - a communications library for the Lucas 14CUX ECU
+
+#if defined(WIN32) && defined(linux)
+#error "Only one of 'WIN32' or 'linux' may be defined."
+#endif
+
 // Includes for all platforms
 #include <math.h>
 
@@ -24,17 +30,51 @@
   #if defined(linux)
     // Linux-only includes
     #include <linux/serial.h>
+  #elif !defined(WIN32)
+    // Other UNIXes (incl. Mac OS X)
+
+    // There is no serial.h in Mac OS X;
+    // to get around all sorts of serial I/O problems, enable use of
+    // the select() call to manage IO timeouts
+    #define SELECT
   #endif
 #endif
 
 #include "comm14cux.h"
 
-//#define DEBUG_P
+// Enhanced debug (bit masks)
+#define DEBUG_ERR  1            // print errors
+#define DEBUG_WARN 2            // print warnings
+#define DEBUG_INFO 4            // information
+
+#define DEBUG_ALL  7            // all
+
+#define DEBUG_P DEBUG_ERR
+
 #ifdef DEBUG_P
   #include <stdio.h>
-  #define dprintf printf
+
+  #if (DEBUG_P & DEBUG_ERR)
+    #define dprintf_err   printf
+  #else
+    #define dprintf_err
+  #endif
+
+  #if (DEBUG_P & DEBUG_WARN)
+    #define dprintf_warn  printf
+  #else
+    #define dprintf_warn
+  #endif
+
+  #if (DEBUG_P & DEBUG_INFO)
+    #define dprintf_info  printf
+  #else
+    #define dprintf_info
+  #endif
 #else
-  #define dprintf
+  #define dprintf_err
+  #define dprintf_warn
+  #define dprintf_info
 #endif
 
 #if defined(WIN32) || defined(ARDUINO)
@@ -73,8 +113,10 @@ Comm14CUX::Comm14CUX() :
 #else
     sd = 0;
     pthread_mutex_init(&s_mutex, NULL);
+#if !defined(linux)
+    FD_ZERO(&sds);
 #endif
-
+#endif
 }
 
 /**
@@ -130,6 +172,10 @@ void Comm14CUX::disconnect()
     {
         close(sd);
         sd = 0;
+#if !defined(linux)
+        // for other UNIXes
+        FD_ZERO(&sds);
+#endif
     }
 
     pthread_mutex_unlock(&s_mutex);
@@ -149,17 +195,42 @@ bool Comm14CUX::connect(const char *devPath)
 #if defined(ARDUINO)
 
     result = isConnected() || openSerial(devPath);
+    if result
+    {
+        dprintf_info("14CUX(info): Done connect (Arduino)\n");
+    }
+    else
+    {
+        dprintf_err("14CUX(error): Connect failed (Arduino)\n");
+    }
 
 #elif defined(WIN32)
+
     if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
     {
         result = isConnected() || openSerial(devPath);
         ReleaseMutex(s_mutex);
+        dprintf_info("14CUX(info): Done connect (WIN32)\n");
     }
-#else
+    else
+    {
+        dprintf_err("14CUX(error): Connect failed (WIN32)\n");
+    }
+
+#else // Linux/Unix
+
     pthread_mutex_lock(&s_mutex);
     result = isConnected() || openSerial(devPath);
     pthread_mutex_unlock(&s_mutex);
+    if (result)
+    {
+        dprintf_info("14CUX(info): Done connect (Linux/Unix)\n");
+    }
+    else
+    {
+        dprintf_err("14CUX(error): Connect failed (Linux/Unix)\n");
+    }
+
 #endif
 
     return result;
@@ -168,6 +239,7 @@ bool Comm14CUX::connect(const char *devPath)
 /**
  * Opens the serial device for the USB<->RS-232 converter and sets the
  * parameters for the link to match those on the 14CUX.
+ * Uses OS-specific calls to do this in the correct manner.
  * @return True if the open/setup was successful, false otherwise
  */
 bool Comm14CUX::openSerial(const char *devPath)
@@ -177,6 +249,7 @@ bool Comm14CUX::openSerial(const char *devPath)
 #ifdef ARDUINO
 
     sd->begin(Serial14CUXParams::Baud_14CUX);
+    retVal = true;
 
 #elif defined(linux)
 
@@ -184,12 +257,12 @@ bool Comm14CUX::openSerial(const char *devPath)
     struct serial_struct serial_info;
 
     // attempt to open the device
-    dprintf("14CUX: Opening the serial device...\n");
-    sd = open(devPath, O_RDWR | O_NOCTTY); 
+    dprintf_info("14CUX(info): Opening the serial device...\n");
+    sd = open(devPath, O_RDWR | O_NOCTTY);
 
     if (sd > 0)
     {
-        dprintf("14CUX: Opened device successfully.\n");
+        dprintf_info("14CUX(info): Opened device successfully.\n");
         memset(&newtio, 0, sizeof(newtio));
 
         newtio.c_cflag = (CREAD | CS8 | CLOCAL);
@@ -209,21 +282,20 @@ bool Comm14CUX::openSerial(const char *devPath)
         cfsetospeed(&newtio, B38400);
 
         // attempt to set the termios parameters
-        dprintf("14CUX: Setting serial port parameters (except baud)...\n");
+        dprintf_info("14CUX(info): Setting serial port parameters (except baud)...\n");
         if ((tcflush(sd, TCIFLUSH) == 0) &&
             (tcsetattr(sd, TCSANOW, &newtio) == 0))
         {
             // attempt to set a custom baud rate
-            dprintf("14CUX: Setting custom baud rate...\n");
+            dprintf_info("14CUX(info): Setting custom baud rate...\n");
             if (ioctl(sd, TIOCGSERIAL, &serial_info) != -1)
             {
                 serial_info.flags = ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
-                serial_info.custom_divisor =
-                    serial_info.baud_base / Serial14CUXParams::Baud_14CUX;
+                serial_info.custom_divisor = serial_info.baud_base / Serial14CUXParams::Baud_14CUX;
 
                 if (ioctl(sd, TIOCSSERIAL, &serial_info) != -1)
                 {
-                    dprintf("14CUX: Baud rate setting successful.\n");
+                    dprintf_info("14CUX(info): Baud rate setting successful.\n");
                     retVal = true;
                 }
             }
@@ -233,7 +305,7 @@ bool Comm14CUX::openSerial(const char *devPath)
         // close it before returning with failure
         if (!retVal)
         {
-            dprintf("14CUX: Failure setting up port; closing serial device...\n");
+            dprintf_err("14CUX(error): Failure setting up port; closing serial device...\n");
             close(sd);
         }
     }
@@ -244,11 +316,11 @@ bool Comm14CUX::openSerial(const char *devPath)
     COMMTIMEOUTS commTimeouts;
 
     // attempt to open the device
-    dprintf("14CUX: Opening the serial device '%s'...\n", devPath);
+    dprintf_info("14CUX(info): Opening the serial device (Win32) '%s'...\n", devPath.c_str());
 
     // open and get a handle to the serial device
     sd = CreateFile(devPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     // verify that the serial device was opened
     if (sd != INVALID_HANDLE_VALUE)
@@ -256,15 +328,15 @@ bool Comm14CUX::openSerial(const char *devPath)
         if (GetCommState(sd, &dcb) == TRUE)
         {
             // set the serial port parameters, including the custom baud rate
-            dcb.BaudRate     = Serial14CUXParams::Baud_14CUX;
-            dcb.fParity      = FALSE;
+            dcb.BaudRate = Serial14CUXParams::Baud_14CUX;
+            dcb.fParity = FALSE;
             dcb.fOutxCtsFlow = FALSE;
             dcb.fOutxDsrFlow = FALSE;
-            dcb.fDtrControl  = FALSE;
-            dcb.fRtsControl  = FALSE;
-            dcb.ByteSize     = 8;
-            dcb.Parity       = 0;
-            dcb.StopBits     = 0;
+            dcb.fDtrControl = FALSE;
+            dcb.fRtsControl = FALSE;
+            dcb.ByteSize = 8;
+            dcb.Parity = 0;
+            dcb.StopBits = 0;
 
             if ((SetCommState(sd, &dcb) == TRUE) &&
                 (GetCommTimeouts(sd, &commTimeouts) == TRUE))
@@ -285,17 +357,141 @@ bool Comm14CUX::openSerial(const char *devPath)
         // close it before returning with failure
         if (!retVal)
         {
-            dprintf("14CUX: Failure setting up port; closing serial device...\n");
+            dprintf_warn("14CUX(warning): Failure setting up port; closing serial device...\n");
             CloseHandle(sd);
         }
     }
     else
     {
-        dprintf("14CUX: CreateFile() returned INVALID_HANDLE_VALUE\n");
+        dprintf_err("14CUX(error): CreateFile() returned INVALID_HANDLE_VALUE (WIN32)\n");
     }
 
+#else
+    // Unix (incl. Mac OS X)
+
+    struct termios newtio;
+    // struct serial_struct serial_info;
+
+    // attempt to open the device
+    dprintf_info("14CUX(info): Opening the serial device (Unix) ...\n");
+    // open for read write, not controlling terminal, and ignore DCD line (i.e. no blocking )
+    sd = open(devPath, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    // 0_NONBLOCK is like O_NDELAY, and lets you open (and maybe read) without DCD
+    // But this is reported to disable VTIME on some systems :-(
+
+    if (sd < 0)
+    {
+        dprintf_err("14CUX(error): USB TTY open() failed, errno %d, %s\n", errno, strerror(errno));
+    }
+    else
+    {
+        FD_SET(sd, &sds); // Add the opened file descriptor to our select() set
+
+        dprintf_info("14CUX(info): Opened device successfully.\n");
+        memset(&newtio, 0, sizeof(newtio)); // we probably should fill this out with tcgetattr(), then make changes.
+
+        newtio.c_cflag = (CREAD | CS8 | CLOCAL);
+
+        // set non-canonical mode
+        newtio.c_lflag = 0; // This probably disables VTIME, below
+
+        // when waiting for responses, wait until we haven't received
+        // any characters for one-tenth of a second before timing out
+        // Ment to work when ICANON is disabled, OS X ???
+        newtio.c_cc[VTIME] = 1; // VTIME may not be honored on Mac OS X read, use select() to read [or alarm()]
+        newtio.c_cc[VMIN] = 0;
+
+        // set the baud rate selector to 38400, which, in this case,
+        // is simply an indicator that we're using a custom baud rate
+        // (set by an ioctl() below), some documents suggest B38400 is in some way an initial magic value?
+        cfsetispeed(&newtio, B38400);
+        cfsetospeed(&newtio, B38400);
+
+        // attempt to set the termios parameters
+        dprintf_info("14CUX(info): Setting serial port parameters (except baud)...\n");
+
+        // Make sure file descriptor is for a TTY device
+        if (!isatty(sd))
+        {
+            dprintf_err("14CUX(error): File descriptor not a TTY device (openSerial()).\n");
+        }
+        else if (tcflush(sd, TCIFLUSH) != 0)    // flush unread output
+        {
+            dprintf_err("14CUX(error): tcflush() input failed, errno %d, %s\n", errno, strerror(errno));
+        }
+        else if (tcsetattr(sd, TCSANOW, &newtio) != 0)  // set the termios struct, term.h (ttycom.h TIOCSETA)
+        {
+            dprintf_err
+                ("14CUX(error): tcsetattr() failed to set termios struct, errno %d, %s\n", errno, strerror(errno));
+        }
+        else
+        {
+            // attempt to set a custom baud rate
+            dprintf_info("14CUX(info): Setting custom baud rate...\n");
+
+            // speed_t in /Developer//SDKs/MacOSX10.5.sdk/usr/include/sys/termios.h  (unsigned long)
+            // _IOW in /usr/include/sys/ioccom.h
+            // The below IOCTL fails in x86_64 mode as speed_t goes from 4 to 8 bytes and is lost
+            // It would seem the IOCTL requires the speed to be a uint32 to work, even in x86_64 - at least on 10.5.8
+            // The typing and sizeof for this is all a bit sloppy, and clarification of the IOSSIOSPEED request would be appreciated.
+            // Perhaps it is dependent on the com port hardware driver, but this is at least now working on 10.5.8 with a USB FTDI adapter.
+            #define IOSSIOSPEED _IOW('T', 2, int)   //  was ....speed_t), what does 'T' and 2 mean and do?
+            int new_baud = static_cast < int >(Serial14CUXParams::Baud_14CUX);
+            if (ioctl(sd, IOSSIOSPEED, &new_baud, 1) == -1)
+            {
+                // return -1 is error, otherwise value depends on call
+                dprintf_err("14CUX(error): ioctl(), errno %d, %s\n", errno, strerror(errno));
+                dprintf_err("   new_baud %d\n", new_baud);
+                dprintf_err("   sizeof(speed_t)=%d sizeof(int)=%d\n", sizeof(speed_t), sizeof(int));
+                dprintf_err("   IOS 0x%x\n", IOSSIOSPEED);
+            }
+
+            // Now try and verify that the speed was set correctly
+            struct termios termAttr;    // clean readback variable to confirm settings
+            speed_t baudRate = 0;
+
+            // Obtain a copy of the termios structure for our adjusted port
+            tcgetattr(sd, &termAttr);
+
+            // Get the output speed
+            baudRate = cfgetospeed(&termAttr);
+            dprintf_info("Output speed = %d\n", baudRate);
+
+            // Get the input speed
+            baudRate = cfgetispeed(&termAttr);
+            dprintf_info("Input speed = %d\n", baudRate);
+            dprintf_info("VTIME = %d\n", termAttr.c_cc[VTIME]);
+
+            if (baudRate == (Serial14CUXParams::Baud_14CUX))
+            {
+                dprintf_info("14CUX(info): Baud rate setting successful.\n");
+                retVal = true;
+            }
+        }
+
+        // the serial device was opened, but couldn't be configured properly;
+        // close it before returning with failure
+        if (!retVal)
+        {
+            dprintf_err("14CUX(error): Failure setting up port (Unix); closing serial device...\n");
+            close(sd);
+            FD_ZERO(&sds);
+        }
+    }
 #endif
 
+// Send the serial test pattern shortly after attempting a connection
+// Enable this when debugging the serial port speed and operation
+#ifdef FALSE
+    if (retVal)
+    {
+        dprintf_warn("14CUX(warn): Sending serial test pattern.\n");
+        sleep(2);
+        testWrite(); // send the pattern
+        dprintf_warn("14CUX(warn): Serial test pattern done.\n");
+        sleep(5);
+    }
+#endif
     return retVal;
 }
 
@@ -330,7 +526,7 @@ void Comm14CUX::cancelRead()
  * @param quantity Number of bytes to read
  * @return Number of bytes read from the device, or -1 if no bytes could be read
  */
-int16_t Comm14CUX::readSerialBytes(uint8_t *buffer, uint16_t quantity)
+int16_t Comm14CUX::readSerialBytes(uint8_t* buffer, uint16_t quantity)
 {
     int16_t bytesRead = -1;
 
@@ -348,6 +544,12 @@ int16_t Comm14CUX::readSerialBytes(uint8_t *buffer, uint16_t quantity)
             // if a byte was read...
             if (c != -1)
             {
+                // indicate that we've received at least one char
+                if (bytesRead < 0)
+                {
+                    bytesRead = 1;
+                }
+
                 // save it to the buffer
                 *buffer = (uint8_t)c;
                 buffer++;
@@ -356,14 +558,69 @@ int16_t Comm14CUX::readSerialBytes(uint8_t *buffer, uint16_t quantity)
         }
 #elif defined(WIN32)
         DWORD w32BytesRead = 0;
-        if ((ReadFile(sd, (UCHAR*)buffer, quantity, &w32BytesRead, NULL) == TRUE) &&
+        if ((ReadFile(sd, (UCHAR *) buffer, quantity, &w32BytesRead, NULL) == TRUE) &&
             (w32BytesRead > 0))
         {
             bytesRead = w32BytesRead;
         }
-#else
+#elif defined(linux)
         bytesRead = read(sd, buffer, quantity);
+
+#else // other Unix (incl. Mac OS X)
+        int sel_nr = 1;         // init to get into the loop
+        int read_cnt = 0;
+
+        // There are subtle differences in read(,,timeout), select(), & ARDUINO
+        // read() waits till count, or the line has been idle for time, before returning (perhaps some chars)
+        // select() waits for time before reading (looping as necessary)
+        // ARDUINO requires all chars and stops reading at time
+
+        bytesRead = 0;
+        while ((bytesRead < quantity) && (sel_nr > 0))
+        {
+            comms_timeout.tv_sec = 0;
+            comms_timeout.tv_usec = 100000;
+
+            // setsize, read set, write set error set, timeout
+            sel_nr = select(sd + 1, &sds, NULL, NULL, &comms_timeout);
+
+            if (sel_nr < 0)
+            {
+                // quickly using non thread save strerror, perror to std err is alternative
+                dprintf_err("14CUX(error): select() error %d %s\n", errno, strerror(errno));
+            }
+
+            if (sel_nr == 1)
+            {
+                // our descriptor is now ready with something; read some bytes
+                read_cnt = read(sd, buffer, quantity - bytesRead);
+
+                if (read_cnt > 0)
+                {
+                    bytesRead += read_cnt;
+                    buffer += read_cnt; // move the index
+                }
+
+                if (read_cnt <= 0)
+                {
+                    dprintf_err("14CUX(error): Unexpected read result %d\n", read_cnt);
+                    return -1;
+                }
+
+                dprintf_info("14CUX(info): Read %d byte(s)\n", read_cnt);
+            }
+
+            if (sel_nr > 1)
+            {
+                dprintf_err("14CUX(error): Error (internal) select() more than 1 descriptor!\n");
+                return -1;
+            }
+        }                       // while
 #endif
+    }
+    else
+    {
+        dprintf_warn("14CUX(warning): Not connected.\n");
     }
 
     return bytesRead;
@@ -375,7 +632,7 @@ int16_t Comm14CUX::readSerialBytes(uint8_t *buffer, uint16_t quantity)
  * @param quantity Number of bytes to write
  * @return Number of bytes written to the device, or -1 if no bytes could be written
  */
-int16_t Comm14CUX::writeSerialBytes(uint8_t *buffer, uint16_t quantity)
+int16_t Comm14CUX::writeSerialBytes(uint8_t* buffer, uint16_t quantity)
 {
     int16_t bytesWritten = -1;
 
@@ -391,7 +648,7 @@ int16_t Comm14CUX::writeSerialBytes(uint8_t *buffer, uint16_t quantity)
         }
 #elif defined(WIN32)
         DWORD w32BytesWritten = 0;
-        if ((WriteFile(sd, (UCHAR*)buffer, quantity, &w32BytesWritten, NULL) == TRUE) &&
+        if ((WriteFile(sd, (UCHAR *) buffer, quantity, &w32BytesWritten, NULL) == TRUE) &&
             (w32BytesWritten == quantity))
         {
             bytesWritten = w32BytesWritten;
@@ -403,6 +660,51 @@ int16_t Comm14CUX::writeSerialBytes(uint8_t *buffer, uint16_t quantity)
 
     return bytesWritten;
 }
+
+
+/**
+ * Writes a test pattern so the baud rate can be validated on an oscilloscope
+ */
+void Comm14CUX::testWrite(void)
+{
+    // Serial Comms:-
+    // On RS232 data lines, Mark is negative, Space is positive Voltage
+    // RS232 controll line, ON is positive, OFF is negative
+    // RS232 drivers are usually inverting.
+    // UART and other serial ICs like MCUs are designed to work with inverting drivers
+    //
+    // The 14CUX uses levels between 0 and approximatly 12V
+    // The output from the 14CUX MCU is inverting
+    // The input to the MCU is direct with voltage limiting (non-inverting)
+    //
+    // Notation:-
+    //     Md = data mark
+    //     Sd = data space
+    //     Ss = Start space
+    //     Ms = Stop mark
+    //     Mi = Idle mark (often a 0 or variable length, can be a large multiple of 16 (or 8) x UART BRG clock
+    //     PB = Parity Bit
+    // Useful patterns:-
+    //     0x55     [Mi] Ss Md Sd Md Sd Md Sd Md Sd Ms [Mi]
+    //     0xFF     [Mi] Ss Md Md Md Md Md Md Md Md Ms [Mi]
+    //
+    // Each character is 10 bits.
+    // bit time is 1/7812
+    // 781.2 characters will last 1 second
+    // 3906 will last 5 seconds
+    uint8_t c = 0xff;
+    int i;
+
+    for (i = 0; i < 3906; i++)
+    {
+        if (writeSerialBytes(&c, 1) != 1)
+        {
+            dprintf_err("14CUX(error): Failed to write test pattern. cnt=%d\n", i);
+            return;
+        }
+    }
+}
+
 
 /**
  * Reads the specified number of bytes from memory at the specified address.
@@ -433,69 +735,70 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
 
     if (isConnected())
     {
-      // loop until we've read all the bytes, or we experienced a read error
-      while ((totalBytesRead < len) && (readCallBytesRead > 0) && (m_cancelRead == false))
-      {
-          // read the maximum number of bytes as is reasonable
-          singleReqQuantity = getByteCountForNextRead(len, totalBytesRead);
+        // loop until we've read all the bytes, or we experienced a read error
+        while ((totalBytesRead < len) && (readCallBytesRead > 0) && (m_cancelRead == false))
+        {
+            // read the maximum number of bytes as is reasonable
+            singleReqQuantity = getByteCountForNextRead(len, totalBytesRead);
 
-          // if the next address to read is within the 64-byte window
-          // created by the last coarse address that was set, then we
-          // can just send the final byte of the read command
-          sendLastByteOnly =
-            ((singleReqQuantity == m_lastReadQuantity) &&
-             ((addr + totalBytesRead) < (m_lastReadCoarseAddress + 64)) &&
-             (m_lastReadCoarseAddress <= (addr + totalBytesRead)));
+            // if the next address to read is within the 64-byte window
+            // created by the last coarse address that was set, then we
+            // can just send the final byte of the read command
+            sendLastByteOnly =
+                ((singleReqQuantity == m_lastReadQuantity) &&
+                 ((addr + totalBytesRead) < (m_lastReadCoarseAddress + 64)) &&
+                 (m_lastReadCoarseAddress <= (addr + totalBytesRead)));
 
-          dprintf("14CUX: Sending cmd to read %d bytes at 0x%04X...\n",
-            singleReqQuantity, addr + totalBytesRead);
+            dprintf_info
+                ("14CUX(info): Sending cmd to read %d bytes at 0x%04X...\n", singleReqQuantity, addr + totalBytesRead);
 
-          // if sending the read command is successful...
-          if (sendReadCmd(addr + totalBytesRead, singleReqQuantity, sendLastByteOnly))
-          {
-              dprintf("14CUX: Successfully sent read command.\n");
-  
-              // reset the number of bytes read during this single read operation
-              singleReqBytesRead = 0;
-  
-              // loop until we've read all the bytes for this single read operation,
-              // or until we time out
-              do
-              {
-                  readCallBytesRead = readSerialBytes(
-                    buffer + totalBytesRead + singleReqBytesRead,
-                    singleReqQuantity - singleReqBytesRead);
+            // if sending the read command is successful...
+            if (sendReadCmd(addr + totalBytesRead, singleReqQuantity, sendLastByteOnly))
+            {
+                dprintf_info("14CUX(info): Successfully sent read command.\n");
 
-                  singleReqBytesRead += readCallBytesRead;
+                // reset the number of bytes read during this single read operation
+                singleReqBytesRead = 0;
 
-              } while ((readCallBytesRead > 0) && (singleReqBytesRead < singleReqQuantity));
-  
-              // if all the reads were successful, add the total bytes
-              // read from this request to the overall total
-              if (readCallBytesRead > 0)
-              {
-                  dprintf("14CUX: Successfully read %d bytes.\n", singleReqBytesRead);
-                  totalBytesRead += singleReqBytesRead;
+                // loop until we've read all the bytes for this single read operation,
+                // or until we time out
+                do
+                {
+                    readCallBytesRead =
+                        readSerialBytes(buffer + totalBytesRead +
+                                        singleReqBytesRead, singleReqQuantity - singleReqBytesRead);
 
-                  // remember the number of bytes read on this pass, in case we
-                  // want to issue an abbreviated command next time (which will
-                  // send the same number of bytes)
-                  m_lastReadQuantity = singleReqQuantity;
-              }
-          }
-          else
-          {
-              // if we were unable to even send the read command,
-              // stop with failure
-              readCallBytesRead = -1;
-          }
-       }
+                    singleReqBytesRead += readCallBytesRead;
+                }
+                while ((readCallBytesRead > 0) && (singleReqBytesRead < singleReqQuantity));
+
+                // if all the reads were successful, add the total bytes
+                // read from this request to the overall total
+                if (readCallBytesRead > 0)
+                {
+                    dprintf_info("14CUX(info): Successfully read %d bytes.\n", singleReqBytesRead);
+                    totalBytesRead += singleReqBytesRead;
+
+                    // remember the number of bytes read on this pass, in case we
+                    // want to issue an abbreviated command next time (which will
+                    // send the same number of bytes)
+                    m_lastReadQuantity = singleReqQuantity;
+                }
+            }
+            else
+            {
+                // if we were unable to even send the read command,
+                // stop with failure
+                dprintf_err("14CUX(error): Failed to send read command");
+                readCallBytesRead = -1;
+            }
+        }
     }
 
     // if we read as many bytes as were requested, indicate success
     if (totalBytesRead == len)
     {
-        dprintf("14CUX: Successfully read all requested bytes.\n");
+        dprintf_info("14CUX(info): Successfully read all requested bytes.\n");
         readSuccess = true;
     }
     else
@@ -539,7 +842,7 @@ bool Comm14CUX::sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly)
 
         // build and send the byte for the Read command
         cmdByte = ((addr & 0x003F) | 0xC0);
-        dprintf("14CUX: Sending byte: 0x%02X...\n", cmdByte);
+        dprintf_info("14CUX(info): Sending Read command byte: 0x%02X... (no echo)\n", cmdByte);
         if (writeSerialBytes(&cmdByte, 1) == 1)
         {
             // The 14CUX doesn't echo the Read command byte;
@@ -548,6 +851,10 @@ bool Comm14CUX::sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly)
             // successfully sent without checking for an echo
             // of the last byte.
             success = true;
+        }
+        else
+        {
+            dprintf_err("14CUX(error): Faled to write byte!\n");
         }
     }
 
@@ -597,7 +904,7 @@ bool Comm14CUX::setCoarseAddr(uint16_t addr, uint16_t len)
     uint8_t readByte = 0x00;
     bool retVal = false;
 
-    dprintf("14CUX: Sending command to set coarse address...\n");
+    dprintf_info("14CUX(info): Sending command to set coarse address...\n");
 
     if (len == 0)
     {
@@ -618,20 +925,21 @@ bool Comm14CUX::setCoarseAddr(uint16_t addr, uint16_t len)
         // preset values; if it isn't, return failure
         switch (len)
         {
-            case Serial14CUXParams::ReadCount1:
-                firstByte = Serial14CUXParams::ReadCount1Value;
-                break;
-            case Serial14CUXParams::ReadCount2:
-                firstByte = Serial14CUXParams::ReadCount2Value;
-                break;
-            case Serial14CUXParams::ReadCount3:
-                firstByte = Serial14CUXParams::ReadCount3Value;
-                break;
-            case Serial14CUXParams::ReadCount4:
-                firstByte = Serial14CUXParams::ReadCount4Value;
-                break;
-            default:
-                return false;
+        case Serial14CUXParams::ReadCount1:
+            firstByte = Serial14CUXParams::ReadCount1Value;
+            break;
+        case Serial14CUXParams::ReadCount2:
+            firstByte = Serial14CUXParams::ReadCount2Value;
+            break;
+        case Serial14CUXParams::ReadCount3:
+            firstByte = Serial14CUXParams::ReadCount3Value;
+            break;
+        case Serial14CUXParams::ReadCount4:
+            firstByte = Serial14CUXParams::ReadCount4Value;
+            break;
+        default:
+            dprintf_err("14CUX(error): Invalid length.\n");
+            return false;
         }
     }
 
@@ -640,7 +948,7 @@ bool Comm14CUX::setCoarseAddr(uint16_t addr, uint16_t len)
     firstByte <<= 2;
     firstByte |= (addr >> 14);
 
-    dprintf("14CUX: Sending byte: 0x%02X...\n", firstByte);
+    dprintf_info("14CUX(info): Sending byte: 0x%02X...\n", firstByte);
 
     if ((writeSerialBytes(&firstByte, 1) == 1) &&
         (readSerialBytes(&readByte, 1) == 1) &&
@@ -649,7 +957,7 @@ bool Comm14CUX::setCoarseAddr(uint16_t addr, uint16_t len)
         // bits 13:6 of the address
         secondByte = ((addr >> 6) & 0x00ff);
 
-        dprintf("14CUX: Sending byte: 0x%02X...\n", secondByte);
+        dprintf_info("14CUX(info): Sending byte: 0x%02X...\n", secondByte);
 
         if ((writeSerialBytes(&secondByte, 1) == 1) &&
             (readSerialBytes(&readByte, 1) == 1) &&
@@ -692,14 +1000,14 @@ bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
         cmdByte = ((addr & 0x003F) | 0x80);
 
         // send (and look for the echo of) the third command byte
-        dprintf("14CUX: Sending byte: 0x%02X...\n", cmdByte);
+        dprintf_info("14CUX(info): Sending byte: 0x%02X...\n", cmdByte);
         if ((writeSerialBytes(&cmdByte, 1) == 1) &&
             (readSerialBytes(&readByte, 1) == 1) &&
             (readByte == cmdByte))
         {
             // send (and look for the echo of) the byte
             // containing the value to write
-            dprintf("14CUX: Sending byte: 0x%02X...\n", val);
+            dprintf_info("14CUX(info): Sending byte: 0x%02X...\n", val);
             if ((writeSerialBytes(&val, 1) == 1) &&
                 (readSerialBytes(&readByte, 1) == 1) &&
                 (readByte == val))
@@ -767,8 +1075,7 @@ uint16_t Comm14CUX::getByteCountForNextRead(uint16_t len, uint16_t bytesRead)
  */
 bool Comm14CUX::dumpROM(uint8_t* buffer)
 {
-    return readMem(
-      Serial14CUXParams::ROMAddress, Serial14CUXParams::ROMSize, buffer);
+    return readMem(Serial14CUXParams::ROMAddress, Serial14CUXParams::ROMSize, buffer);
 }
 
 /**
@@ -1017,12 +1324,13 @@ bool Comm14CUX::getGearSelection(Comm14CUXGear &gear)
         {
             gear = Comm14CUXGear_ParkOrNeutral;
         }
-        else if (nSwitch > 0xD0) // if the reading is fairly high, it's drive/reverse
+        else if (nSwitch > 0xD0)    // if the reading is fairly high, it's drive/reverse
         {
             gear = Comm14CUXGear_DriveOrReverse;
         }
-        else // manual gearboxes have a resistor fitted to give a
-             // midpoint value and put the ECU in 'manual mode'
+        else
+        // manual gearboxes have a resistor fitted to give a
+        // midpoint value and put the ECU in 'manual mode'
         {
             gear = Comm14CUXGear_ManualGearbox;
         }
@@ -1058,14 +1366,14 @@ void Comm14CUX::determineDataOffsets()
                 if (maxByteToByteChangeOld <
                         abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1])))
                 {
-                    maxByteToByteChangeOld = 
+                    maxByteToByteChangeOld =
                         abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1]));
                 }
 
                 if (maxByteToByteChangeNew <
                         abs((testBufferNew[firstRowOffset] - testBufferNew[firstRowOffset - 1])))
                 {
-                    maxByteToByteChangeNew = 
+                    maxByteToByteChangeNew =
                         abs((testBufferNew[firstRowOffset] - testBufferNew[firstRowOffset - 1]));
                 }
             }
@@ -1156,13 +1464,10 @@ bool Comm14CUX::getMainVoltage(float &mainVoltage)
 
         // reverse the quadratic math done by the ECU to get back
         // to the originally-read ADC value
-        adcCount = -(16 * (sqrt(
-                                (4 * m_voltageFactorA * storedVal) -
+        adcCount = -(16 * (sqrt((4 * m_voltageFactorA * storedVal) -
                                 (m_voltageFactorA * m_voltageFactorC) +
-                                (64 * m_voltageFactorB * m_voltageFactorB)
-                               ) - (8 * m_voltageFactorB)
-                        )
-                    ) / m_voltageFactorA;
+                                (64 * m_voltageFactorB * m_voltageFactorB)) -
+                           (8 * m_voltageFactorB))) / m_voltageFactorA;
 
         // follow the linear mapping between ADC and voltage to get the main voltage
         mainVoltage = (0.07 * adcCount) - 0.09;
@@ -1181,7 +1486,7 @@ bool Comm14CUX::getMainVoltage(float &mainVoltage)
  * @return True if the fuel map was successfully read; false if an invalid
  *   fuel map ID was given of if reading failed
  */
-bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_t *buffer)
+bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_t* buffer)
 {
     bool retVal = false;
 
@@ -1198,53 +1503,52 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
         {
             offset = Serial14CUXParams::FuelMap0Offset;
         }
-        else if ((m_promRev == Comm14CUXDataOffsets_RevA) ||
-                 (m_promRev == Comm14CUXDataOffsets_RevB))
+        else if ((m_promRev == Comm14CUXDataOffsets_RevA) || (m_promRev == Comm14CUXDataOffsets_RevB))
         {
             switch (fuelMapId)
             {
-                case 1:
-                    offset = Serial14CUXParams::OldFuelMap1Offset;
-                    break;
-                case 2:
-                    offset = Serial14CUXParams::OldFuelMap2Offset;
-                    break;
-                case 3:
-                    offset = Serial14CUXParams::OldFuelMap3Offset;
-                    break;
-                case 4:
-                    offset = Serial14CUXParams::OldFuelMap4Offset;
-                    break;
-                case 5:
-                    offset = Serial14CUXParams::OldFuelMap5Offset;
-                    break;
-                default:
-                    offset = 0;
-                    break;
+            case 1:
+                offset = Serial14CUXParams::OldFuelMap1Offset;
+                break;
+            case 2:
+                offset = Serial14CUXParams::OldFuelMap2Offset;
+                break;
+            case 3:
+                offset = Serial14CUXParams::OldFuelMap3Offset;
+                break;
+            case 4:
+                offset = Serial14CUXParams::OldFuelMap4Offset;
+                break;
+            case 5:
+                offset = Serial14CUXParams::OldFuelMap5Offset;
+                break;
+            default:
+                offset = 0;
+                break;
             }
         }
         else if (m_promRev == Comm14CUXDataOffsets_RevC)
         {
             switch (fuelMapId)
             {
-                case 1:
-                    offset = Serial14CUXParams::NewFuelMap1Offset;
-                    break;
-                case 2:
-                    offset = Serial14CUXParams::NewFuelMap2Offset;
-                    break;
-                case 3:
-                    offset = Serial14CUXParams::NewFuelMap3Offset;
-                    break;
-                case 4:
-                    offset = Serial14CUXParams::NewFuelMap4Offset;
-                    break;
-                case 5:
-                    offset = Serial14CUXParams::NewFuelMap5Offset;
-                    break;
-                default:
-                    offset = 0;
-                    break;
+            case 1:
+                offset = Serial14CUXParams::NewFuelMap1Offset;
+                break;
+            case 2:
+                offset = Serial14CUXParams::NewFuelMap2Offset;
+                break;
+            case 3:
+                offset = Serial14CUXParams::NewFuelMap3Offset;
+                break;
+            case 4:
+                offset = Serial14CUXParams::NewFuelMap4Offset;
+                break;
+            case 5:
+                offset = Serial14CUXParams::NewFuelMap5Offset;
+                break;
+            default:
+                offset = 0;
+                break;
             }
         }
 
@@ -1253,7 +1557,7 @@ bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_
             uint16_t adjFactor = 0;
 
             // read the fuel map data and the 16-bit adjustment factor at the end
-            if (readMem(offset, Serial14CUXParams::FuelMapSize, buffer) && 
+            if (readMem(offset, Serial14CUXParams::FuelMapSize, buffer) &&
                 readMem(offset + Serial14CUXParams::FuelMapSize, 2, (uint8_t*)&adjFactor))
             {
                 adjustmentFactor = swapShort(adjFactor);
@@ -1303,7 +1607,7 @@ bool Comm14CUX::getFuelMapRowIndex(uint8_t &fuelMapRowIndex)
     {
         // fuel map starting row index is stored in the high nibble
         fuelMapRowIndex = (rowIndex >> 4);
- 
+
         // The 'fuzzy' nature of the fuel map means that the value selected
         // by the upper nibbles of the row-column pair is actually just the
         // upper-left corner of a square of four values, which are partially
@@ -1427,7 +1731,7 @@ bool Comm14CUX::getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim)
  */
 bool Comm14CUX::getFaultCodes(Comm14CUXFaultCodes &faultCodes)
 {
-   return readMem(Serial14CUXParams::FaultCodesOffset, sizeof(Comm14CUXFaultCodes), (uint8_t*)&faultCodes);
+    return readMem(Serial14CUXParams::FaultCodesOffset, sizeof(Comm14CUXFaultCodes), (uint8_t*)&faultCodes);
 }
 
 /**

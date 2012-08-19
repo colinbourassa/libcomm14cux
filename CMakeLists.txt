@@ -6,6 +6,12 @@ if (ARDUINO)
     set (ARDUINO_DEFAULT_PROGRAMMER avrisp)
 endif()
 
+if (APPLE)
+    # For a universal dylib & read14cux 'ppc i386' architecture,
+    # we want to target everything from 10.4 up
+    set(CMAKE_OSX_ARCHITECTURES ppc i386 x86_64)
+endif()
+
 cmake_minimum_required (VERSION 2.8)
 project (libcomm14cux)
 
