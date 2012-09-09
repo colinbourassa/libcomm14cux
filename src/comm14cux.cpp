@@ -49,7 +49,7 @@
 
 #define DEBUG_ALL  7            // all
 
-#define DEBUG_P DEBUG_ERR
+//#define DEBUG_P DEBUG_ERR
 
 #ifdef DEBUG_P
   #include <stdio.h>
@@ -316,7 +316,7 @@ bool Comm14CUX::openSerial(const char *devPath)
     COMMTIMEOUTS commTimeouts;
 
     // attempt to open the device
-    dprintf_info("14CUX(info): Opening the serial device (Win32) '%s'...\n", devPath.c_str());
+    dprintf_info("14CUX(info): Opening the serial device (Win32) '%s'...\n", devPath);
 
     // open and get a handle to the serial device
     sd = CreateFile(devPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
@@ -482,14 +482,12 @@ bool Comm14CUX::openSerial(const char *devPath)
 
 // Send the serial test pattern shortly after attempting a connection
 // Enable this when debugging the serial port speed and operation
-#ifdef FALSE
+#if 0
     if (retVal)
     {
         dprintf_warn("14CUX(warn): Sending serial test pattern.\n");
-        sleep(2);
         testWrite(); // send the pattern
         dprintf_warn("14CUX(warn): Serial test pattern done.\n");
-        sleep(5);
     }
 #endif
     return retVal;
