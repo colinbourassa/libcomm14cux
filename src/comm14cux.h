@@ -51,10 +51,10 @@ namespace Serial14CUXParams
     const uint16_t LongTermLambdaFuelingTrimLeftOffset = 0x0042;
     //! Memory location of right bank long-term lambda fueling trim
     const uint16_t LongTermLambdaFuelingTrimRightOffset = 0x0046;
-    //! Memory location of left bank short-term lambda fueling feedback
-    const uint16_t LambdaFuelingFeedbackLeftOffset = 0x0065;
-    //! Memory location of right bank short-term lambda fueling feedback
-    const uint16_t LambdaFuelingFeedbackRightOffset = 0x0067;
+    //! Memory location of left bank short-term lambda fueling trim
+    const uint16_t ShortTermLambdaFuelingTrimLeftOffset = 0x0065;
+    //! Memory location of right bank short-term lambda fueling trim
+    const uint16_t ShortTermLambdaFuelingTrimRightOffset = 0x0067;
     //! Memory location of fault code block
     const uint16_t FaultCodesOffset = 0x0049;
     //! Memory location of minimum throttle position value

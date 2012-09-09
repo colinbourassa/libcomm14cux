@@ -1658,6 +1658,7 @@ bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
 
 /**
  * Gets the current short-term lambda-based fueling trim for the specified engine bank.
+ * A larger number indicates more fuel being delivered.
  * @param bank Bank of the engine (left or right)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
@@ -1671,19 +1672,17 @@ bool Comm14CUX::getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim)
 
     if (bank == Comm14CUXBank_Left)
     {
-        offset = Serial14CUXParams::LambdaFuelingFeedbackLeftOffset;
+        offset = Serial14CUXParams::ShortTermLambdaFuelingTrimLeftOffset;
     }
     else if (bank == Comm14CUXBank_Right)
     {
-        offset = Serial14CUXParams::LambdaFuelingFeedbackRightOffset;
+        offset = Serial14CUXParams::ShortTermLambdaFuelingTrimRightOffset;
     }
 
     if ((offset != 0) && readMem(offset, 2, (uint8_t*)&fuelTrimRaw))
     {
-        // compute the number of "fueling counts" (will be between -256 and +255),
-        // and then invert over that range (since the memory location actually
-        // stores a feedback measurement rather than a fueling trim)
-        lambdaTrim = (((swapShort(fuelTrimRaw) / 0x80) - 0x100) + 1) * -1;
+        // compute the number of "fueling counts" (will be between -256 and +255)
+        lambdaTrim = ((swapShort(fuelTrimRaw) / 0x80) - 0x100);
         retVal = true;
     }
 
@@ -1693,6 +1692,7 @@ bool Comm14CUX::getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim)
 
 /**
  * Gets the current long-term lambda-based fueling trim for the specified engine bank.
+ * A larger number indicates more fuel being delivered.
  * @param bank Bank of the engine (left or right)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
