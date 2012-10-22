@@ -15,6 +15,41 @@
 
 #include "comm14cux_version.h"
 
+// Enhanced debug (bit masks)
+#define DEBUG_ERR  1            // print errors
+#define DEBUG_WARN 2            // print warnings
+#define DEBUG_INFO 4            // information
+
+#define DEBUG_ALL  7            // all
+
+//#define DEBUG_P DEBUG_ERR
+
+#ifdef DEBUG_P
+  #include <stdio.h>
+
+  #if (DEBUG_P & DEBUG_ERR)
+    #define dprintf_err   printf
+  #else
+    #define dprintf_err
+  #endif
+
+  #if (DEBUG_P & DEBUG_WARN)
+    #define dprintf_warn  printf
+  #else
+    #define dprintf_warn
+  #endif
+
+  #if (DEBUG_P & DEBUG_INFO)
+    #define dprintf_info  printf
+  #else
+    #define dprintf_info
+  #endif
+#else
+  #define dprintf_err
+  #define dprintf_warn
+  #define dprintf_info
+#endif
+
 namespace Serial14CUXParams
 {
     //! First byte-count threshold for reading
@@ -307,6 +342,8 @@ enum Comm14CUXDataOffsets
     //! The connected ECU uses the third revision of data offsets
     Comm14CUXDataOffsets_RevC = 0x03
 };
+
+uint16_t swapShort(const uint16_t source);
 
 /**
  * Allows communications with a 14CUX ECU via its 7812.5bps serial link.

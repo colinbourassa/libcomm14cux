@@ -52,14 +52,18 @@ configure_file (
   "${SOURCE_SUBDIR}/comm14cux_version.h"
   )
 
-add_library (comm14cux SHARED ${SOURCE_SUBDIR}/comm14cux.cpp)
+add_library (comm14cux SHARED ${SOURCE_SUBDIR}/setup.cpp
+                              ${SOURCE_SUBDIR}/protocol.cpp
+                              ${SOURCE_SUBDIR}/data.cpp)
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.cpp)
 
 if (ARDUINO)
 
   print_board_list()
   print_programmer_list()
-  set (comm14cux_lib_SRCS ${SOURCE_SUBDIR}/comm14cux.cpp)
+  set (comm14cux_lib_SRCS ${SOURCE_SUBDIR}/setup.cpp
+                          ${SOURCE_SUBDIR}/protocol.cpp
+                          ${SOURCE_SUBDIR}/data.cpp)
   set (comm14cux_lib_HDRS ${SOURCE_SUBDIR}/comm14cux.h)
   generate_arduino_library(comm14cux_lib)
 
