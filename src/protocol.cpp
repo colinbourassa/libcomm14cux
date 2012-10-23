@@ -75,9 +75,8 @@ int16_t Comm14CUX::readSerialBytes(uint8_t* buffer, uint16_t quantity)
         {
             bytesRead = w32BytesRead;
         }
-#elif defined(linux)
+#elif defined(linux) || defined(__FreeBSD__)
         bytesRead = read(sd, buffer, quantity);
-
 #else // other Unix (incl. Mac OS X)
         int sel_nr = 1;         // init to get into the loop
         int read_cnt = 0;
@@ -301,7 +300,7 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
             {
                 // if we were unable to even send the read command,
                 // stop with failure
-                dprintf_err("14CUX(error): Failed to send read command");
+                dprintf_err("14CUX(error): Failed to send read command\n");
                 readCallBytesRead = -1;
             }
         }

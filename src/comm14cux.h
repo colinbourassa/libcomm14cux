@@ -10,6 +10,7 @@
     #include <windows.h>
   #else
     #include <pthread.h>
+    #include <errno.h>
   #endif
 #endif
 
@@ -432,7 +433,7 @@ private:
     //! Lock to prevent multiple simultaneous open/close/read/write operations
     pthread_mutex_t s_mutex;
 
-    #if !defined(linux)
+    #if !defined(linux) && !defined(__FreeBSD__)
         //! Descriptor controlled using select()
         fd_set sds;
         //! Timeout for select()

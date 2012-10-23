@@ -78,9 +78,9 @@ Comm14CUX::Comm14CUX() :
 #else
     sd = 0;
     pthread_mutex_init(&s_mutex, NULL);
-#if !defined(linux)
-    FD_ZERO(&sds);
-#endif
+    #if !defined(linux) && !defined(__FreeBSD__)
+        FD_ZERO(&sds);
+    #endif
 #endif
 }
 
@@ -137,7 +137,7 @@ void Comm14CUX::disconnect()
     {
         close(sd);
         sd = 0;
-#if !defined(linux)
+#if !defined(linux) && !defined(__FreeBSD__)
         // for other UNIXes
         FD_ZERO(&sds);
 #endif
@@ -205,6 +205,10 @@ bool Comm14CUX::connect(const char *devPath)
  * Opens the serial device for the USB<->RS-232 converter and sets the
  * parameters for the link to match those on the 14CUX.
  * Uses OS-specific calls to do this in the correct manner.
+ * Note for FreeBSD users: Do not use the ttyX devices, as they block
+ * on the open() call while waiting for a carrier detect line, which
+ * will never be asserted. Instead, use the equivalent cuaX device.
+ * Example: /dev/cuaU0 (instead of /dev/ttyU0)
  * @return True if the open/setup was successful, false otherwise
  */
 bool Comm14CUX::openSerial(const char *devPath)
@@ -215,6 +219,54 @@ bool Comm14CUX::openSerial(const char *devPath)
 
     sd->begin(Serial14CUXParams::Baud_14CUX);
     retVal = true;
+
+#elif defined(__FreeBSD__)
+
+	struct termios newtio;
+
+    // attempt to open the device
+    dprintf_info("14CUX(info): Opening the serial device (%s)...\n", devPath);
+    sd = open(devPath, O_RDWR | O_NOCTTY);
+
+	if (sd > 0)
+	{
+		dprintf_info("14CUX(info): Opened device successfully.\n");
+        memset(&newtio, 0, sizeof(newtio));
+
+        newtio.c_cflag = (CREAD | CS8 | CLOCAL);
+
+        // set non-canonical mode
+        newtio.c_lflag = 0;
+
+        // when waiting for responses, wait until we haven't received
+        // any characters for 0.5 seconds before timing out
+		// (This is set higher than the 0.1 seconds used by the Linux
+		//  code, as values much lower than this cause the first echoed
+		//  byte to be missed when running under BSD.)
+        newtio.c_cc[VTIME] = 5;
+        newtio.c_cc[VMIN] = 0;
+
+        // set the input and output baud rates to 7812
+        cfsetispeed(&newtio, Serial14CUXParams::Baud_14CUX);
+        cfsetospeed(&newtio, Serial14CUXParams::Baud_14CUX);
+
+		// attempt to set the termios parameters
+        dprintf_info("14CUX(info): Setting serial port parameters (except baud)...\n");
+        if ((tcflush(sd, TCIFLUSH) == 0) &&
+            (tcsetattr(sd, TCSANOW, &newtio) == 0))
+        {
+			retVal = true;
+		}
+		else
+		{
+			dprintf_err("14CUX(error): Failure setting up port\n");
+			close(sd);
+		}
+	}
+	else
+	{
+		dprintf_err("14CUX(error): Error opening device (%s)\n", strerror(errno));
+	}
 
 #elif defined(linux)
 
