@@ -68,6 +68,7 @@ if (ARDUINO)
   generate_arduino_library(comm14cux_lib)
 
 elseif (MINGW)
+
   message (STATUS "Found Windows/MinGW platform.")
 
   find_library (MINGW_LIBGCC libgcc_s_dw2-1)
@@ -114,18 +115,28 @@ elseif (MINGW)
   include (CPack)
 
 else()
-  message (STATUS "Defaulting to Linux build configuration.")
+
+  message (STATUS "Defaulting to Unix/Linux build configuration.")
 
   set (CMAKE_SKIP_RPATH TRUE)
-  set (CMAKE_INSTALL_PREFIX "/usr")
+
+  if ((CMAKE_SYSTEM_NAME MATCHES "OpenBSD") OR
+      (CMAKE_SYSTEM_NAME MATCHES "FreeBSD"))
+    set (CMAKE_INSTALL_PREFIX "/usr/local")
+    message (STATUS "System is a BSD variant; set install path prefix to ${CMAKE_INSTALL_PREFIX}.")
+    set (IS_BSD true)
+  else()
+    set (CMAKE_INSTALL_PREFIX "/usr")
+  endif()
 
   set_target_properties (
     comm14cux
       PROPERTIES
         SOVERSION ${COMM14CUX_VER_MAJOR}
-        VERSION ${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}
+        VERSION   ${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}
   )
-  target_link_libraries (read14cux comm14cux)
+
+  target_link_libraries (read14cux comm14cux pthread)
 
   # set the installation destinations for the header files,
   # shared library binaries, and reference utility
@@ -135,12 +146,22 @@ else()
            PERMISSIONS
             OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-  install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so
-                 ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}
-                 ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}
-           DESTINATION "lib"
-           PERMISSIONS
-            OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+  if (IS_BSD)
+    message (STATUS "Using BSD-style shared library naming (.so and .so.x.x)")
+    install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so
+                   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}
+             DESTINATION "lib"
+             PERMISSIONS
+              OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+  else()
+    message (STATUS "Using Linux-style shared library naming.")
+    install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so
+                   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}
+                   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}
+             DESTINATION "lib"
+             PERMISSIONS
+              OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+  endif()
 
   install (DIRECTORY DESTINATION "share/doc/comm14cux" DIRECTORY_PERMISSIONS
             OWNER_READ OWNER_EXECUTE OWNER_WRITE
@@ -160,28 +181,29 @@ else()
             GROUP_READ GROUP_EXECUTE
             WORLD_READ WORLD_EXECUTE)
 
-  # set the architecture flag that will be used by the Debian package builder
-  if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-    set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64)
-  elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
-    set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE i386)
-  endif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+  if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    # set the architecture flag that will be used by the Debian package builder
+    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+      set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64)
+    elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
+      set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE i386)
+    endif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
 
-  set (CPACK_GENERATOR "DEB")
-  set (CPACK_PACKAGE_NAME ${PROJECT_NAME})
-  set (CPACK_PACKAGE_VERSION_MAJOR ${COMM14CUX_VER_MAJOR})
-  set (CPACK_PACKAGE_VERSION_MINOR ${COMM14CUX_VER_MINOR})
-  set (CPACK_PACKAGE_VERSION_PATCH ${COMM14CUX_VER_PATCH})
-  set (CPACK_DEBIAN_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
-  set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Colin Bourassa <lucas.14cux@gmail.com>")
-  set (CPACK_DEBIAN_PACKAGE_SECTION "Libraries")
-  set (CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.13), libstdc++6 (>= 4.6.1)")
-  set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Library supporting serial communication with the Lucas 14CUX engine control module")
-  set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}-${CMAKE_SYSTEM_NAME}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
-  set (CPACK_RESOURCE_FILE_LICENSE "LICENSE")
-  set (CPACK_RESOURCE_FILE_README "README")
-
-  include(CPack)
+    set (CPACK_GENERATOR "DEB")
+    set (CPACK_PACKAGE_NAME ${PROJECT_NAME})
+    set (CPACK_PACKAGE_VERSION_MAJOR ${COMM14CUX_VER_MAJOR})
+    set (CPACK_PACKAGE_VERSION_MINOR ${COMM14CUX_VER_MINOR})
+    set (CPACK_PACKAGE_VERSION_PATCH ${COMM14CUX_VER_PATCH})
+    set (CPACK_DEBIAN_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
+    set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Colin Bourassa <lucas.14cux@gmail.com>")
+    set (CPACK_DEBIAN_PACKAGE_SECTION "Libraries")
+    set (CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.13), libstdc++6 (>= 4.6.1)")
+    set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Library supporting serial communication with the Lucas 14CUX engine control module")
+    set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}-${CMAKE_SYSTEM_NAME}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+    set (CPACK_RESOURCE_FILE_LICENSE "LICENSE")
+    set (CPACK_RESOURCE_FILE_README "README")
+    include(CPack)
+  endif()
 
 endif()
 
