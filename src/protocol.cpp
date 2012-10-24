@@ -75,7 +75,7 @@ int16_t Comm14CUX::readSerialBytes(uint8_t* buffer, uint16_t quantity)
         {
             bytesRead = w32BytesRead;
         }
-#elif defined(linux) || defined(__FreeBSD__)
+#elif defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__)
         bytesRead = read(sd, buffer, quantity);
 #else // other Unix (incl. Mac OS X)
         int sel_nr = 1;         // init to get into the loop

@@ -23,7 +23,7 @@
 
 #define DEBUG_ALL  7            // all
 
-//#define DEBUG_P DEBUG_ERR
+//#define DEBUG_P DEBUG_ALL
 
 #ifdef DEBUG_P
   #include <stdio.h>
@@ -433,7 +433,7 @@ private:
     //! Lock to prevent multiple simultaneous open/close/read/write operations
     pthread_mutex_t s_mutex;
 
-    #if !defined(linux) && !defined(__FreeBSD__)
+    #if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
         //! Descriptor controlled using select()
         fd_set sds;
         //! Timeout for select()
