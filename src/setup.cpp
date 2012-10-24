@@ -251,7 +251,7 @@ bool Comm14CUX::openSerial(const char *devPath)
         cfsetospeed(&newtio, Serial14CUXParams::Baud_14CUX);
 
 		// attempt to set the termios parameters
-        dprintf_info("14CUX(info): Setting serial port parameters (except baud)...\n");
+        dprintf_info("14CUX(info): Setting serial port parameters...\n");
         if ((tcflush(sd, TCIFLUSH) == 0) &&
             (tcsetattr(sd, TCSANOW, &newtio) == 0))
         {
