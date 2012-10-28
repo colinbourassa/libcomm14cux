@@ -116,16 +116,20 @@ elseif (MINGW)
 
 else()
 
-  message (STATUS "Defaulting to Unix/Linux build configuration.")
+  message (STATUS "Defaulting to UNIX/Linux/BSD build configuration.")
 
   set (CMAKE_SKIP_RPATH TRUE)
 
   if ((CMAKE_SYSTEM_NAME MATCHES "OpenBSD") OR
       (CMAKE_SYSTEM_NAME MATCHES "FreeBSD"))
     set (CMAKE_INSTALL_PREFIX "/usr/local")
-    message (STATUS "System is a BSD variant; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
+    message (STATUS "System is OpenBSD/FreeBSD; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
+  elseif(CMAKE_SYSTEM_NAME MATCHES "NetBSD")
+    set (CMAKE_INSTALL_PREFIX "/usr/pkg")
+    message (STATUS "System is NetBSD; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
   else()
     set (CMAKE_INSTALL_PREFIX "/usr")
+    message (STATUS "Install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
   endif()
 
   set_target_properties (

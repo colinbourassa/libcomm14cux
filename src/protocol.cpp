@@ -18,6 +18,8 @@
   #if defined(WIN32)
     // Windows-only includes
     #include <windows.h>
+  #elif defined(__NetBSD__)
+    #include <string.h>
   #endif
 #endif
 
