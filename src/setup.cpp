@@ -220,7 +220,7 @@ bool Comm14CUX::openSerial(const char *devPath)
     sd->begin(Serial14CUXParams::Baud_14CUX);
     retVal = true;
 
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(linux)
 
 	struct termios newtio;
 
@@ -239,11 +239,15 @@ bool Comm14CUX::openSerial(const char *devPath)
         newtio.c_lflag = 0;
 
         // when waiting for responses, wait until we haven't received
-        // any characters for 0.5 seconds before timing out
-		// (This is set higher than the 0.1 seconds used by the Linux
-		//  code, as values much lower than this cause the first echoed
-		//  byte to be missed when running under BSD.)
+        // any characters for a certain period before timing out
+        // (Linux seems to get away with a shorter timeout period;
+        //  the same timeout period on BSD causes the first character
+        //  to be missed, which results in the entire read failing.)
+#ifdef linux
+        newtio.c_cc[VTIME] = 1;
+#else
         newtio.c_cc[VTIME] = 5;
+#endif
         newtio.c_cc[VMIN] = 0;
 
         // set the input and output baud rates to 7812
@@ -267,65 +271,6 @@ bool Comm14CUX::openSerial(const char *devPath)
 	{
 		dprintf_err("14CUX(error): Error opening device (%s)\n", strerror(errno));
 	}
-
-#elif defined(linux)
-
-    struct termios newtio;
-    struct serial_struct serial_info;
-
-    // attempt to open the device
-    dprintf_info("14CUX(info): Opening the serial device...\n");
-    sd = open(devPath, O_RDWR | O_NOCTTY);
-
-    if (sd > 0)
-    {
-        dprintf_info("14CUX(info): Opened device successfully.\n");
-        memset(&newtio, 0, sizeof(newtio));
-
-        newtio.c_cflag = (CREAD | CS8 | CLOCAL);
-
-        // set non-canonical mode
-        newtio.c_lflag = 0;
-
-        // when waiting for responses, wait until we haven't received
-        // any characters for one-tenth of a second before timing out
-        newtio.c_cc[VTIME] = 1;
-        newtio.c_cc[VMIN] = 0;
-
-        // set the baud rate selector to 38400, which, in this case,
-        // is simply an indicator that we're using a custom baud rate
-        // (set by an ioctl() below)
-        cfsetispeed(&newtio, B38400);
-        cfsetospeed(&newtio, B38400);
-
-        // attempt to set the termios parameters
-        dprintf_info("14CUX(info): Setting serial port parameters (except baud)...\n");
-        if ((tcflush(sd, TCIFLUSH) == 0) &&
-            (tcsetattr(sd, TCSANOW, &newtio) == 0))
-        {
-            // attempt to set a custom baud rate
-            dprintf_info("14CUX(info): Setting custom baud rate...\n");
-            if (ioctl(sd, TIOCGSERIAL, &serial_info) != -1)
-            {
-                serial_info.flags = ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
-                serial_info.custom_divisor = serial_info.baud_base / Serial14CUXParams::Baud_14CUX;
-
-                if (ioctl(sd, TIOCSSERIAL, &serial_info) != -1)
-                {
-                    dprintf_info("14CUX(info): Baud rate setting successful.\n");
-                    retVal = true;
-                }
-            }
-        }
-
-        // the serial device was opened, but couldn't be configured properly;
-        // close it before returning with failure
-        if (!retVal)
-        {
-            dprintf_err("14CUX(error): Failure setting up port; closing serial device...\n");
-            close(sd);
-        }
-    }
 
 #elif defined(WIN32)
 
