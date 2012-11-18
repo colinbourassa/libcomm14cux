@@ -116,17 +116,20 @@ elseif (MINGW)
 
 else()
 
-  message (STATUS "Defaulting to Unix/Linux build configuration.")
+  message (STATUS "Defaulting to UNIX/Linux/BSD build configuration.")
 
   set (CMAKE_SKIP_RPATH TRUE)
 
   if ((CMAKE_SYSTEM_NAME MATCHES "OpenBSD") OR
       (CMAKE_SYSTEM_NAME MATCHES "FreeBSD"))
     set (CMAKE_INSTALL_PREFIX "/usr/local")
-    message (STATUS "System is a BSD variant; set install path prefix to ${CMAKE_INSTALL_PREFIX}.")
-    set (IS_BSD true)
+    message (STATUS "System is OpenBSD/FreeBSD; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
+  elseif(CMAKE_SYSTEM_NAME MATCHES "NetBSD")
+    set (CMAKE_INSTALL_PREFIX "/usr/pkg")
+    message (STATUS "System is NetBSD; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
   else()
     set (CMAKE_INSTALL_PREFIX "/usr")
+    message (STATUS "Install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
   endif()
 
   set_target_properties (
@@ -146,15 +149,15 @@ else()
            PERMISSIONS
             OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-  if (IS_BSD)
-    message (STATUS "Using BSD-style shared library naming (.so and .so.x.x)")
+  if (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    message (STATUS "Using OpenBSD-style shared library naming.")
     install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so
                    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}
              DESTINATION "lib"
              PERMISSIONS
               OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
   else()
-    message (STATUS "Using Linux-style shared library naming.")
+    message (STATUS "Using Linux/FreeBSD-style shared library naming.")
     install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so
                    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}
                    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}
