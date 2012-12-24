@@ -18,8 +18,6 @@
   #if defined(WIN32)
     // Windows-only includes
     #include <windows.h>
-  #elif defined(__NetBSD__)
-    #include <string.h>
   #endif
 #endif
 
@@ -77,7 +75,7 @@ int16_t Comm14CUX::readSerialBytes(uint8_t* buffer, uint16_t quantity)
         {
             bytesRead = w32BytesRead;
         }
-#elif defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#elif defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__)
         bytesRead = read(sd, buffer, quantity);
 #else // other Unix (incl. Mac OS X)
         int sel_nr = 1;         // init to get into the loop
