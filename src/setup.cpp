@@ -78,7 +78,7 @@ Comm14CUX::Comm14CUX() :
 #else
     sd = 0;
     pthread_mutex_init(&s_mutex, NULL);
-    #if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
+    #if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
         FD_ZERO(&sds);
     #endif
 #endif
@@ -137,7 +137,7 @@ void Comm14CUX::disconnect()
     {
         close(sd);
         sd = 0;
-#if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
+#if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
         // for other UNIXes
         FD_ZERO(&sds);
 #endif
@@ -220,7 +220,7 @@ bool Comm14CUX::openSerial(const char *devPath)
     sd->begin(Serial14CUXParams::Baud_14CUX);
     retVal = true;
 
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(linux)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(linux)
 
 	struct termios newtio;
 

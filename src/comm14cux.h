@@ -433,7 +433,7 @@ private:
     //! Lock to prevent multiple simultaneous open/close/read/write operations
     pthread_mutex_t s_mutex;
 
-    #if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
+    #if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
         //! Descriptor controlled using select()
         fd_set sds;
         //! Timeout for select()
