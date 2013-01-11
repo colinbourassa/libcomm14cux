@@ -184,6 +184,25 @@ bool Comm14CUX::getEngineRPM(uint16_t &engineRPM)
 }
 
 /**
+ * Gets the RPM limit in revolutions per minute.
+ * @param rpmLimit Set to the RPM limit if read successfully
+ * @return True if successfully read; false otherwise
+ */
+bool Comm14CUX::getRPMLimit(uint16_t &rpmLimit)
+{
+    uint16_t pulseWidth = 0;
+    bool retVal = false;
+
+    if (readMem(Serial14CUXParams::RPMLimitOffset, 2, (uint8_t*)&pulseWidth))
+    {
+        rpmLimit = 7500000 / pulseWidth;
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * Gets the current target idle speed.
  * @param targetIdleRPM Set to the current target idle speed (if read successfully)
  * @return True if successfully read; false otherwise
