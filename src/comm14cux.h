@@ -168,6 +168,9 @@ namespace Serial14CUXParams
     //! Memory location of Fuel Map 5
     const uint16_t OldFuelMap5Offset = 0xC687;
 
+    //! Memory location of the tune number (code revision) in BCD
+    const uint16_t TuneRevisionOffset = 0xFFE9;
+
     //! Size of each fuel map, in bytes
     const uint16_t FuelMapSize = 0x80;
     //! Memory location of the current fuel map ID
@@ -387,6 +390,7 @@ public:
     bool getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim);
     bool getIdleBypassMotorPosition(float &bypassMotorPos);
     bool getFuelPumpRelayState(bool &fuelPumpRelayState);
+    bool getTuneRevision(uint16_t &tuneNumber);
 
     bool clearFaultCodes();
     bool runFuelPump();

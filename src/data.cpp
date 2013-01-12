@@ -174,8 +174,7 @@ bool Comm14CUX::getEngineRPM(uint16_t &engineRPM)
         }
         else
         {
-            pulseWidth = swapShort(pulseWidth);
-            engineRPM = 7500000 / pulseWidth;
+            engineRPM = 7500000 / swapShort(pulseWidth);
         }
         retVal = true;
     }
@@ -195,7 +194,7 @@ bool Comm14CUX::getRPMLimit(uint16_t &rpmLimit)
 
     if (readMem(Serial14CUXParams::RPMLimitOffset, 2, (uint8_t*)&pulseWidth))
     {
-        rpmLimit = 7500000 / pulseWidth;
+        rpmLimit = 7500000 / swapShort(pulseWidth);
         retVal = true;
     }
 
@@ -751,6 +750,32 @@ bool Comm14CUX::getFuelPumpRelayState(bool &fuelPumpRelayState)
     if (readMem(Serial14CUXParams::Port1Offset, 1, &port1Data))
     {
         fuelPumpRelayState = !(port1Data & 0x40);
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
+ * Gets the tune revision of the code in the PROM.
+ * @param tuneRevision Decimal representation of the tune revision
+ * @return True when the read was successful, false otherwise
+ */
+bool Comm14CUX::getTuneRevision(uint16_t &tuneRevision)
+{
+    uint8_t tuneRevHex[2];
+    char tuneRevStr[4];
+    bool retVal = false;
+
+    if (readMem(Serial14CUXParams::TuneRevisionOffset, 2, tuneRevHex))
+    {
+        tuneRevision = 0;
+        for (int byteIdx = 0; byteIdx < 2; ++byteIdx)
+        {
+            tuneRevision = (tuneRevision * 100) +               // from the previous byte
+                           (((tuneRevHex[byteIdx] >> 4) * 10) + // high nibble of current byte
+                           (tuneRevHex[byteIdx] & 0x0F));       // low nibble of current byte
+        }
         retVal = true;
     }
 
