@@ -120,7 +120,7 @@ namespace Serial14CUXParams
     //! Memory location of linearized MAF reading
     const uint16_t MassAirflowLinearOffset = 0x204D;
     //! Memory location of target idle speed
-    const uint16_t TargetIdleSpeedOffset = 0x2151;
+    const uint16_t TargetIdleSpeedOffset = 0x2051;
 
     //! Fixed main voltage coefficient 'A' for very old ECUs (<= 1990)
     const uint8_t RevAMainVoltageFactorA = 0x64;
