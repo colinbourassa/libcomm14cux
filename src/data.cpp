@@ -783,6 +783,26 @@ bool Comm14CUX::getTuneRevision(uint16_t &tuneRevision)
 }
 
 /**
+ * Gets a flag indicating whether the ECU is in "idle mode"
+ * @param idleMode Set to true when the ECU is driving an idle speed,
+ *   false otherwise
+ * @return True when the read was successful, false otherwise
+ */
+bool Comm14CUX::getIdleMode(bool &idleMode)
+{
+    uint8_t idleModeByte;
+    bool retVal = false;
+
+    if (readMem(Serial14CUXParams::IdleModeOffset, 1, &idleModeByte))
+    {
+        idleMode = ((idleModeByte & 0x01) == 0x01);
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * Closes the fuel pump relay to run the pump for a single timeout period
  * (approximately two seconds).
  * @return True when the port and timer were written correctly; false

@@ -117,6 +117,8 @@ namespace Serial14CUXParams
     const uint16_t FuelTempOffset = 0x2006;
     //! Memory location of RPM limit (in RAM)
     const uint16_t RPMLimitOffset = 0x200C;
+    //! Memory location of idle mode bit
+    const uint16_t IdleModeOffset = 0x2047;
     //! Memory location of linearized MAF reading
     const uint16_t MassAirflowLinearOffset = 0x204D;
     //! Memory location of target idle speed
@@ -391,6 +393,7 @@ public:
     bool getIdleBypassMotorPosition(float &bypassMotorPos);
     bool getFuelPumpRelayState(bool &fuelPumpRelayState);
     bool getTuneRevision(uint16_t &tuneNumber);
+    bool getIdleMode(bool &idleMode);
 
     bool clearFaultCodes();
     bool runFuelPump();
