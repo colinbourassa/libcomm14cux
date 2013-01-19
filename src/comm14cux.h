@@ -394,6 +394,7 @@ public:
     bool getFuelPumpRelayState(bool &fuelPumpRelayState);
     bool getTuneRevision(uint16_t &tuneNumber);
     bool getIdleMode(bool &idleMode);
+    bool isMILOn(bool &milOn);
 
     bool clearFaultCodes();
     bool runFuelPump();

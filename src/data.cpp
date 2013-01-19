@@ -803,6 +803,27 @@ bool Comm14CUX::getIdleMode(bool &idleMode)
 }
 
 /**
+ * Gets the state of the Malfunction Indicator Lamp (MIL). Note that
+ * a MIL implies that at least one fault code is set, but not every
+ * fault code will trigger a MIL.
+ * @param milOn Set to true when the MIL is lit, false otherwise
+ * @return True when the read was successful, false otherwise
+ */
+bool Comm14CUX::isMILOn(bool &milOn)
+{
+    uint8_t portData;
+    bool retVal = false;
+
+    if (readMem(Serial14CUXParams::Port1Offset, 1, &portData))
+    {
+        milOn = !(portData & 0x01);
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * Closes the fuel pump relay to run the pump for a single timeout period
  * (approximately two seconds).
  * @return True when the port and timer were written correctly; false
