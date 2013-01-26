@@ -372,7 +372,7 @@ public:
     void testWrite();
     bool dumpROM(uint8_t* buffer);
     bool getFaultCodes(Comm14CUXFaultCodes &faultCodes);
-    Comm14CUXVersion getVersion();
+    static Comm14CUXVersion getVersion();
 
     bool getRoadSpeed(uint16_t &roadSpeed);
     bool getCoolantTemp(int16_t &coolantTemp);
