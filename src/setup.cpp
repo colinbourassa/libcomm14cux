@@ -149,7 +149,7 @@ void Comm14CUX::disconnect()
 
 /**
  * Opens the serial port (or returns with success if it is already open.)
- * @param devPath Full path to the serial device (e.g. "/dev/ttyUSB0")
+ * @param devPath Full path to the serial device (e.g. "/dev/ttyUSB0" or "COM2")
  * @return True if the serial device was successfully opened and its
  *   baud rate was set; false otherwise.
  */
