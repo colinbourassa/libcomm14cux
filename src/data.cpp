@@ -105,7 +105,7 @@ bool Comm14CUX::getFuelTemp(int16_t &fuelTemp)
  *   possible measurement (if read successfully)
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getMAFReading(Comm14CUXAirflowType type, float &mafReading)
+bool Comm14CUX::getMAFReading(const Comm14CUXAirflowType type, float &mafReading)
 {
     uint16_t maf = 0;
     bool retVal = false;
@@ -228,7 +228,7 @@ bool Comm14CUX::getTargetIdle(uint16_t &targetIdleRPM)
  * @param throttlePos Set to throttle position as a percentage (if read successfully)
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getThrottlePosition(Comm14CUXThrottlePosType type, float &throttlePos)
+bool Comm14CUX::getThrottlePosition(const Comm14CUXThrottlePosType type, float &throttlePos)
 {
     uint16_t throttle = 0;
     uint16_t throttleMinPos = 0;
@@ -462,7 +462,7 @@ bool Comm14CUX::getMainVoltage(float &mainVoltage)
  * @return True if the fuel map was successfully read; false if an invalid
  *   fuel map ID was given of if reading failed
  */
-bool Comm14CUX::getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_t* buffer)
+bool Comm14CUX::getFuelMap(const uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_t* buffer)
 {
     bool retVal = false;
 
@@ -640,7 +640,7 @@ bool Comm14CUX::getFuelMapColumnIndex(uint8_t &fuelMapColIndex)
  *   for the specified bank, from -256 to 255.
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim)
+bool Comm14CUX::getLambdaTrimShort(const Comm14CUXBank bank, int16_t &lambdaTrim)
 {
     bool retVal = false;
     uint16_t fuelTrimRaw = 0;
@@ -674,7 +674,7 @@ bool Comm14CUX::getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim)
  *   for the specified bank, from -256 to 255.
  * @return True if successfully read; false otherwise
  */
-bool Comm14CUX::getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim)
+bool Comm14CUX::getLambdaTrimLong(const Comm14CUXBank bank, int16_t &lambdaTrim)
 {
     bool retVal = false;
     uint16_t fuelTrimRaw = 0;
@@ -851,7 +851,7 @@ bool Comm14CUX::runFuelPump()
  * @param steps Number of steps to travel in the specified direction
  * @return True when the command was written successfully; false otherwise
  */
-bool Comm14CUX::driveIdleAirControlMotor(uint8_t direction, uint8_t steps)
+bool Comm14CUX::driveIdleAirControlMotor(const uint8_t direction, const uint8_t steps)
 {
     // Bit 0 in 0x008A determines the direction of motion;
     //  0 opens the valve and 1 closes it
@@ -882,7 +882,7 @@ bool Comm14CUX::driveIdleAirControlMotor(uint8_t direction, uint8_t steps)
  * @param count Value measured by 14CUX ADC
  * @return Corresponding sensor value in degrees Fahrenheit
  */
-double Comm14CUX::hyperbolicOffsetModel(double count)
+double Comm14CUX::hyperbolicOffsetModel(const double count)
 {
     double temp;
     temp = 0.0;
