@@ -16,8 +16,8 @@ int main(int argc, char** argv)
     int retVal;
 
     retVal = 0;
+    ver = Comm14CUX::getVersion();
     lucas = new Comm14CUX();
-    ver = lucas->getVersion();
 
     if (argc < 4)
     {
