@@ -40,6 +40,8 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+0.5.4: Added functions to retrieve the idle-mode status and MIL status;
+       also miscellaneous cleanup
 0.5.3: Fixed polarity of short-term lambda trim; it was previously reversed
 0.5.2: Added switchable absolute/corrected throttle position readings
 0.5.1: Support for old revision of ECU (fixing main voltage calculation)
