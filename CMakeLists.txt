@@ -84,7 +84,8 @@ elseif (MINGW)
   file (WRITE "README.TXT" ${README_CONTENTS})
   file (WRITE "LICENSE.TXT" ${LICENSE_CONTENTS})
 
-  set (CMAKE_INSTALL_PREFIX "C:/comm14cux")
+  message (STATUS "Defaulting installation path to: $ENV{SystemDrive}/comm14cux")
+  set (CMAKE_INSTALL_PREFIX "$ENV{SystemDrive}/comm14cux")
 
   set_target_properties (
     comm14cux
