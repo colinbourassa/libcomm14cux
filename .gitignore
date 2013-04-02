@@ -1,0 +1,9 @@
+CMakeCache.txt
+CMakeFiles/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+Makefile
+_CPack_Packages/
+cmake_install.cmake
+src/comm14cux_version.h
+docs/
