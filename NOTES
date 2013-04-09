@@ -1,0 +1,24 @@
+OSX:
+IOSSIOSPEED?
+
+FreeBSD:
+ /dev/cuaU0
+Looks good. Port setup is actually simpler than Linux because the termios
+struct takes the nonstandard baud rate directly. No ioctl() is required.
+
+OpenBSD:
+ /dev/cuaU0
+Apparent problem with termios, specifically with the VTIME parameter. When
+the ECU is connected and powered on, everything works fine, but when the
+ECU doesn't respond, the read() call blocks forever instead of timing out
+after VTIME*0.1s.
+
+NetBSD:
+ /dev/ttyU0 - blocks on open(), probably not correct
+ /dev/ctyU0 - blocks on open(), probably not correct
+ /dev/dtyU0 - opens fine, but still problems with tcsetattr()
+Seems the uftdi driver is busted (with respect to the baud rate selection.)
+Even though the FTDI chip is capable of arbitrary baud rates, the driver
+returns EINVAL (from tcsetattr()) if any nonstandard rate is passed in.
+Of course, this prevents the system from setting up the port correctly.
+
