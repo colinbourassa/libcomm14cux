@@ -150,7 +150,7 @@ bool Comm14CUX::connect(const char *devPath)
     result = isConnected() || openSerial(devPath);
     if result
     {
-        dprintf_info("14CUX(info): Done connect (Arduino)\n");
+        dprintf_info("14CUX(info): Connected (Arduino)\n");
     }
     else
     {
@@ -163,11 +163,11 @@ bool Comm14CUX::connect(const char *devPath)
     {
         result = isConnected() || openSerial(devPath);
         ReleaseMutex(s_mutex);
-        dprintf_info("14CUX(info): Done connect (WIN32)\n");
+        dprintf_info("14CUX(info): Connected (Win32)\n");
     }
     else
     {
-        dprintf_err("14CUX(error): Connect failed (WIN32)\n");
+        dprintf_err("14CUX(error): Connect failed (Win32)\n");
     }
 
 #else // Linux/Unix
@@ -177,7 +177,7 @@ bool Comm14CUX::connect(const char *devPath)
     pthread_mutex_unlock(&s_mutex);
     if (result)
     {
-        dprintf_info("14CUX(info): Done connect (Linux/Unix)\n");
+        dprintf_info("14CUX(info): Connected (Linux/Unix)\n");
     }
     else
     {
@@ -365,13 +365,13 @@ bool Comm14CUX::openSerial(const char *devPath)
         // close it before returning with failure
         if (!retVal)
         {
-            dprintf_warn("14CUX(warning): Failure setting up port; closing serial device...\n");
+            dprintf_err("14CUX(error): Failure setting up port; closing serial device...\n");
             CloseHandle(sd);
         }
     }
     else
     {
-        dprintf_err("14CUX(error): CreateFile() returned INVALID_HANDLE_VALUE (WIN32)\n");
+        dprintf_err("14CUX(error): Error opening device.\n");
     }
 
 #endif
