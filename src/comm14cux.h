@@ -369,7 +369,6 @@ public:
     bool isConnected();
     bool readMem(uint16_t addr, uint16_t len, uint8_t* buffer);
     bool writeMem(uint16_t addr, uint8_t val);
-    void testWrite();
     bool dumpROM(uint8_t* buffer);
     bool getFaultCodes(Comm14CUXFaultCodes &faultCodes);
     static Comm14CUXVersion getVersion();
@@ -401,6 +400,10 @@ public:
     bool driveIdleAirControlMotor(uint8_t direction, uint8_t steps);
 
     void cancelRead();
+
+#if 0
+    void testWrite();
+#endif
 
 private:
     int16_t readSerialBytes(uint8_t *buffer, uint16_t quantity);
@@ -443,13 +446,6 @@ private:
     int sd;
     //! Lock to prevent multiple simultaneous open/close/read/write operations
     pthread_mutex_t s_mutex;
-
-    #if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
-        //! Descriptor controlled using select()
-        fd_set sds;
-        //! Timeout for select()
-        struct timeval comms_timeout;
-    #endif
 #endif
 
 };

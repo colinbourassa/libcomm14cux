@@ -30,13 +30,8 @@
   #if defined(linux)
     // Linux-only includes
     #include <linux/serial.h>
-  #elif !defined(WIN32)
-    // Other UNIXes (incl. Mac OS X)
-
-    // There is no serial.h in Mac OS X;
-    // to get around all sorts of serial I/O problems, enable use of
-    // the select() call to manage IO timeouts
-    #define SELECT
+  #elif defined(__APPLE__)
+    #include <IOKit/serial/ioss.h>
   #endif
 #endif
 
@@ -78,9 +73,6 @@ Comm14CUX::Comm14CUX() :
 #else
     sd = 0;
     pthread_mutex_init(&s_mutex, NULL);
-    #if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
-        FD_ZERO(&sds);
-    #endif
 #endif
 }
 
@@ -137,10 +129,6 @@ void Comm14CUX::disconnect()
     {
         close(sd);
         sd = 0;
-#if !defined(linux) && !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
-        // for other UNIXes
-        FD_ZERO(&sds);
-#endif
     }
 
     pthread_mutex_unlock(&s_mutex);
@@ -220,90 +208,77 @@ bool Comm14CUX::openSerial(const char *devPath)
     sd->begin(Serial14CUXParams::Baud_14CUX);
     retVal = true;
 
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#elif defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+    // Most UNIXes can handle the serial port in a similar fashion (using
+    // the termios interface.) The only major difference between them is
+    // the assignment of the nonstandard baud rate, which is done directly
+    // into the termios struct for BSD, but via ioctls for both Linux and OS X.
 
 	struct termios newtio;
+    bool success = true;
 
-    // attempt to open the device
     dprintf_info("14CUX(info): Opening the serial device (%s)...\n", devPath);
     sd = open(devPath, O_RDWR | O_NOCTTY);
 
 	if (sd > 0)
 	{
 		dprintf_info("14CUX(info): Opened device successfully.\n");
-        memset(&newtio, 0, sizeof(newtio));
 
-        newtio.c_cflag = (CREAD | CS8 | CLOCAL);
-
-        // set non-canonical mode
-        newtio.c_lflag = 0;
-
-        // when waiting for responses, wait until we haven't received
-        // any characters for 0.5 seconds before timing out
-		// (This is set higher than the 0.1 seconds used by the Linux
-		//  code, as values much lower than this cause the first echoed
-		//  byte to be missed when running under BSD.)
-        newtio.c_cc[VTIME] = 5;
-        newtio.c_cc[VMIN] = 0;
-
-        // set the input and output baud rates to 7812
-        cfsetispeed(&newtio, Serial14CUXParams::Baud_14CUX);
-        cfsetospeed(&newtio, Serial14CUXParams::Baud_14CUX);
-
-		// attempt to set the termios parameters
-        dprintf_info("14CUX(info): Setting serial port parameters...\n");
-        if ((tcflush(sd, TCIFLUSH) == 0) &&
-            (tcsetattr(sd, TCSANOW, &newtio) == 0))
+        if (tcgetattr(sd, &newtio) != 0)
         {
-			retVal = true;
-		}
-		else
-		{
-			dprintf_err("14CUX(error): Failure setting up port\n");
-			close(sd);
-		}
-	}
-	else
-	{
-		dprintf_err("14CUX(error): Error opening device (%s)\n", strerror(errno));
-	}
+            dprintf_err("14CUX(error): Unable to read serial port parameters.\n");
+            success = false;
+        }
 
-#elif defined(linux)
-
-    struct termios newtio;
-    struct serial_struct serial_info;
-
-    // attempt to open the device
-    dprintf_info("14CUX(info): Opening the serial device...\n");
-    sd = open(devPath, O_RDWR | O_NOCTTY);
-
-    if (sd > 0)
-    {
-        dprintf_info("14CUX(info): Opened device successfully.\n");
-        memset(&newtio, 0, sizeof(newtio));
-
-        newtio.c_cflag = (CREAD | CS8 | CLOCAL);
-
-        // set non-canonical mode
-        newtio.c_lflag = 0;
-
-        // when waiting for responses, wait until we haven't received
-        // any characters for one-tenth of a second before timing out
-        newtio.c_cc[VTIME] = 1;
-        newtio.c_cc[VMIN] = 0;
-
-        // set the baud rate selector to 38400, which, in this case,
-        // is simply an indicator that we're using a custom baud rate
-        // (set by an ioctl() below)
-        cfsetispeed(&newtio, B38400);
-        cfsetospeed(&newtio, B38400);
-
-        // attempt to set the termios parameters
-        dprintf_info("14CUX(info): Setting serial port parameters (except baud)...\n");
-        if ((tcflush(sd, TCIFLUSH) == 0) &&
-            (tcsetattr(sd, TCSANOW, &newtio) == 0))
+        if (success)
         {
-            // attempt to set a custom baud rate
+            // set up the serial port in non-canonical mode
+            newtio.c_cflag = (CREAD | CS8 | CLOCAL);
+            newtio.c_lflag = 0;
+
+#if defined(linux) || defined(__APPLE__)
+            // when waiting for responses, wait until we haven't received any
+            // characters for a period of time before returning with failure
+            newtio.c_cc[VTIME] = 1;
+            newtio.c_cc[VMIN] = 0;
+
+            // set the baud rate selector to 38400, which, in this case,
+            // is simply an indicator that we're using a custom baud rate
+            // (set by an ioctl() below)
+            cfsetispeed(&newtio, B38400);
+            cfsetospeed(&newtio, B38400);
+
+#else // BSD and other UNIXes
+
+            // This is set higher than the 0.1 seconds used by the Linux/OSX
+            // code, as values much lower than this cause the first echoed
+            // byte to be missed when running under BSD.
+            newtio.c_cc[VTIME] = 5;
+            newtio.c_cc[VMIN] = 0;
+
+            // set the input and output baud rates to 7812
+            cfsetispeed(&newtio, Serial14CUXParams::Baud_14CUX);
+            cfsetospeed(&newtio, Serial14CUXParams::Baud_14CUX);
+#endif
+
+            // attempt to set the termios parameters
+            dprintf_info("14CUX(info): Setting serial port parameters...\n");
+
+            // flush the serial buffers and set the new parameters
+            if ((tcflush(sd, TCIFLUSH) != 0) ||
+                (tcsetattr(sd, TCSANOW, &newtio) != 0))
+            {
+                dprintf_err("14CUX(error): Failure setting up port\n");
+                close(sd);
+                success = false;
+            }
+        }
+
+#ifdef linux
+        // Linux requires an ioctl() to set a nonstandard baud rate
+        if (success)
+        {
+            struct serial_struct serial_info;
             dprintf_info("14CUX(info): Setting custom baud rate...\n");
             if (ioctl(sd, TIOCGSERIAL, &serial_info) != -1)
             {
@@ -317,15 +292,31 @@ bool Comm14CUX::openSerial(const char *devPath)
                 }
             }
         }
-
-        // the serial device was opened, but couldn't be configured properly;
-        // close it before returning with failure
-        if (!retVal)
+#elif defined(__APPLE__)
+        // OS X requires an ioctl() to set a nonstandard baud rate
+        if (success)
         {
-            dprintf_err("14CUX(error): Failure setting up port; closing serial device...\n");
+            speed_t speed = Serial14CUXParams::Baud_14CUX;
+            if (ioctl(sd, IOSSIOSPEED, &speed) != -1)
+            {
+                retVal = true;
+            }
+            else
+            {
+                dprintf_err("14CUX(error): Unable to set baud rate.\n");
+            }
+        }
+#endif
+        // close the device if it couldn't be configured
+        if (retVal == false)
+        {
             close(sd);
         }
-    }
+	}
+	else // open() returned failure
+	{
+		dprintf_err("14CUX(error): Error opening device (%s)\n", strerror(errno));
+	}
 
 #elif defined(WIN32)
 
@@ -383,118 +374,6 @@ bool Comm14CUX::openSerial(const char *devPath)
         dprintf_err("14CUX(error): CreateFile() returned INVALID_HANDLE_VALUE (WIN32)\n");
     }
 
-#else
-    // Unix (incl. Mac OS X)
-
-    struct termios newtio;
-    // struct serial_struct serial_info;
-
-    // attempt to open the device
-    dprintf_info("14CUX(info): Opening the serial device (Unix) ...\n");
-    // open for read write, not controlling terminal, and ignore DCD line (i.e. no blocking )
-    sd = open(devPath, O_RDWR | O_NOCTTY | O_NONBLOCK);
-    // 0_NONBLOCK is like O_NDELAY, and lets you open (and maybe read) without DCD
-    // But this is reported to disable VTIME on some systems :-(
-
-    if (sd < 0)
-    {
-        dprintf_err("14CUX(error): USB TTY open() failed, errno %d, %s\n", errno, strerror(errno));
-    }
-    else
-    {
-        FD_SET(sd, &sds); // Add the opened file descriptor to our select() set
-
-        dprintf_info("14CUX(info): Opened device successfully.\n");
-        memset(&newtio, 0, sizeof(newtio)); // we probably should fill this out with tcgetattr(), then make changes.
-
-        newtio.c_cflag = (CREAD | CS8 | CLOCAL);
-
-        // set non-canonical mode
-        newtio.c_lflag = 0; // This probably disables VTIME, below
-
-        // when waiting for responses, wait until we haven't received
-        // any characters for one-tenth of a second before timing out
-        // Ment to work when ICANON is disabled, OS X ???
-        newtio.c_cc[VTIME] = 1; // VTIME may not be honored on Mac OS X read, use select() to read [or alarm()]
-        newtio.c_cc[VMIN] = 0;
-
-        // set the baud rate selector to 38400, which, in this case,
-        // is simply an indicator that we're using a custom baud rate
-        // (set by an ioctl() below), some documents suggest B38400 is in some way an initial magic value?
-        cfsetispeed(&newtio, B38400);
-        cfsetospeed(&newtio, B38400);
-
-        // attempt to set the termios parameters
-        dprintf_info("14CUX(info): Setting serial port parameters (except baud)...\n");
-
-        // Make sure file descriptor is for a TTY device
-        if (!isatty(sd))
-        {
-            dprintf_err("14CUX(error): File descriptor not a TTY device (openSerial()).\n");
-        }
-        else if (tcflush(sd, TCIFLUSH) != 0)    // flush unread output
-        {
-            dprintf_err("14CUX(error): tcflush() input failed, errno %d, %s\n", errno, strerror(errno));
-        }
-        else if (tcsetattr(sd, TCSANOW, &newtio) != 0)  // set the termios struct, term.h (ttycom.h TIOCSETA)
-        {
-            dprintf_err
-                ("14CUX(error): tcsetattr() failed to set termios struct, errno %d, %s\n", errno, strerror(errno));
-        }
-        else
-        {
-            // attempt to set a custom baud rate
-            dprintf_info("14CUX(info): Setting custom baud rate...\n");
-
-            // speed_t in /Developer//SDKs/MacOSX10.5.sdk/usr/include/sys/termios.h  (unsigned long)
-            // _IOW in /usr/include/sys/ioccom.h
-            // The below IOCTL fails in x86_64 mode as speed_t goes from 4 to 8 bytes and is lost
-            // It would seem the IOCTL requires the speed to be a uint32 to work, even in x86_64 - at least on 10.5.8
-            // The typing and sizeof for this is all a bit sloppy, and clarification of the IOSSIOSPEED request would be appreciated.
-            // Perhaps it is dependent on the com port hardware driver, but this is at least now working on 10.5.8 with a USB FTDI adapter.
-            #define IOSSIOSPEED _IOW('T', 2, int)   //  was ....speed_t), what does 'T' and 2 mean and do?
-            int new_baud = static_cast < int >(Serial14CUXParams::Baud_14CUX);
-            if (ioctl(sd, IOSSIOSPEED, &new_baud, 1) == -1)
-            {
-                // return -1 is error, otherwise value depends on call
-                dprintf_err("14CUX(error): ioctl(), errno %d, %s\n", errno, strerror(errno));
-                dprintf_err("   new_baud %d\n", new_baud);
-                dprintf_err("   sizeof(speed_t)=%d sizeof(int)=%d\n", sizeof(speed_t), sizeof(int));
-                dprintf_err("   IOS 0x%x\n", IOSSIOSPEED);
-            }
-
-            // Now try and verify that the speed was set correctly
-            struct termios termAttr;    // clean readback variable to confirm settings
-            speed_t baudRate = 0;
-
-            // Obtain a copy of the termios structure for our adjusted port
-            tcgetattr(sd, &termAttr);
-
-            // Get the output speed
-            baudRate = cfgetospeed(&termAttr);
-            dprintf_info("Output speed = %d\n", baudRate);
-
-            // Get the input speed
-            baudRate = cfgetispeed(&termAttr);
-            dprintf_info("Input speed = %d\n", baudRate);
-            dprintf_info("VTIME = %d\n", termAttr.c_cc[VTIME]);
-
-            if (baudRate == (Serial14CUXParams::Baud_14CUX))
-            {
-                dprintf_info("14CUX(info): Baud rate setting successful.\n");
-                retVal = true;
-            }
-        }
-
-        // the serial device was opened, but couldn't be configured properly;
-        // close it before returning with failure
-        if (!retVal)
-        {
-            dprintf_err("14CUX(error): Failure setting up port (Unix); closing serial device...\n");
-            close(sd);
-            FD_ZERO(&sds);
-        }
-    }
 #endif
 
 // Send the serial test pattern shortly after attempting a connection

@@ -77,58 +77,8 @@ int16_t Comm14CUX::readSerialBytes(uint8_t* buffer, uint16_t quantity)
         {
             bytesRead = w32BytesRead;
         }
-#elif defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#else
         bytesRead = read(sd, buffer, quantity);
-#else // other Unix (incl. Mac OS X)
-        int sel_nr = 1;         // init to get into the loop
-        int read_cnt = 0;
-
-        // There are subtle differences in read(,,timeout), select(), & ARDUINO
-        // read() waits till count, or the line has been idle for time, before returning (perhaps some chars)
-        // select() waits for time before reading (looping as necessary)
-        // ARDUINO requires all chars and stops reading at time
-
-        bytesRead = 0;
-        while ((bytesRead < quantity) && (sel_nr > 0))
-        {
-            comms_timeout.tv_sec = 0;
-            comms_timeout.tv_usec = 100000;
-
-            // setsize, read set, write set error set, timeout
-            sel_nr = select(sd + 1, &sds, NULL, NULL, &comms_timeout);
-
-            if (sel_nr < 0)
-            {
-                // quickly using non thread save strerror, perror to std err is alternative
-                dprintf_err("14CUX(error): select() error %d %s\n", errno, strerror(errno));
-            }
-
-            if (sel_nr == 1)
-            {
-                // our descriptor is now ready with something; read some bytes
-                read_cnt = read(sd, buffer, quantity - bytesRead);
-
-                if (read_cnt > 0)
-                {
-                    bytesRead += read_cnt;
-                    buffer += read_cnt; // move the index
-                }
-
-                if (read_cnt <= 0)
-                {
-                    dprintf_err("14CUX(error): Unexpected read result %d\n", read_cnt);
-                    return -1;
-                }
-
-                dprintf_info("14CUX(info): Read %d byte(s)\n", read_cnt);
-            }
-
-            if (sel_nr > 1)
-            {
-                dprintf_err("14CUX(error): Error (internal) select() more than 1 descriptor!\n");
-                return -1;
-            }
-        }                       // while
 #endif
     }
     else
@@ -175,6 +125,7 @@ int16_t Comm14CUX::writeSerialBytes(uint8_t* buffer, uint16_t quantity)
 }
 
 
+#if 0
 /**
  * Writes a test pattern so the baud rate can be validated on an oscilloscope
  */
@@ -217,7 +168,7 @@ void Comm14CUX::testWrite(void)
         }
     }
 }
-
+#endif
 
 /**
  * Reads the specified number of bytes from memory at the specified address.
