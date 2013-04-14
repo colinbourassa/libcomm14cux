@@ -6,12 +6,6 @@ if (ARDUINO)
     set (ARDUINO_DEFAULT_PROGRAMMER avrisp)
 endif()
 
-if (APPLE)
-    # For a universal dylib & read14cux 'ppc i386' architecture,
-    # we want to target everything from 10.4 up
-    set(CMAKE_OSX_ARCHITECTURES ppc i386 x86_64)
-endif()
-
 cmake_minimum_required (VERSION 2.8)
 project (libcomm14cux)
 
@@ -122,9 +116,10 @@ else()
   set (CMAKE_SKIP_RPATH TRUE)
 
   if ((CMAKE_SYSTEM_NAME MATCHES "OpenBSD") OR
-      (CMAKE_SYSTEM_NAME MATCHES "FreeBSD"))
+      (CMAKE_SYSTEM_NAME MATCHES "FreeBSD") OR
+      (CMAKE_SYSTEM_NAME MATCHES "Darwin"))
     set (CMAKE_INSTALL_PREFIX "/usr/local")
-    message (STATUS "System is OpenBSD/FreeBSD; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
+    message (STATUS "System is OpenBSD/FreeBSD/OS X; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
   elseif(CMAKE_SYSTEM_NAME MATCHES "NetBSD")
     set (CMAKE_INSTALL_PREFIX "/usr/pkg")
     message (STATUS "System is NetBSD; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
@@ -154,6 +149,14 @@ else()
     message (STATUS "Using OpenBSD-style shared library naming.")
     install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so
                    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}
+             DESTINATION "lib"
+             PERMISSIONS
+              OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    message (STATUS "Using Mac OS X-style shared library naming.")
+    install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.dylib
+                   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.${COMM14CUX_VER_MAJOR}.dylib
+                   ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}.dylib
              DESTINATION "lib"
              PERMISSIONS
               OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
