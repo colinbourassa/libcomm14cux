@@ -1,19 +1,17 @@
-FreeBSD (/dev/cuaU0): Working as of FreeBSD 9.0
+Linux (/dev/ttyUSB?): Working
 
-OpenBSD (/dev/cuaU0): Working as of OpenBSD 5.2
+FreeBSD (/dev/cuaU*): Working as of FreeBSD 9.0
+
+OpenBSD (/dev/cuaU*): Working as of OpenBSD 5.2
 
 NetBSD 6.0:
- /dev/ttyU0 - blocks on open(), probably not correct
- /dev/ctyU0 - blocks on open(), probably not correct
- /dev/dtyU0 - opens fine, but still problems with tcsetattr()
+ /dev/ttyU* - blocks on open(), probably not correct
+ /dev/ctyU* - blocks on open(), probably not correct
+ /dev/dtyU* - opens fine, but still problems with tcsetattr()
 Seems the uftdi driver is busted (with respect to the baud rate selection.)
 Even though the FTDI chip is capable of arbitrary baud rates, the driver
 returns EINVAL (from tcsetattr()) if any nonstandard rate is passed in.
 Of course, this prevents the system from setting up the port correctly.
 
-OSX: Reportedly working, based on user-contributed patch.
-     No further details available.
-     Independent research shows that the IOSSIOSPEED ioctl
-     may be useful for setting the nonstandard baud rate
-     on OSX >= 10.4.
+OS X (/dev/cu.usbserial*): Working as of OS X 10.6.
 
