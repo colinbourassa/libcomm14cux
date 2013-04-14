@@ -1,4 +1,4 @@
-Linux (/dev/ttyUSB?): Working
+Linux (/dev/ttyUSB*): Working
 
 FreeBSD (/dev/cuaU*): Working as of FreeBSD 9.0
 
