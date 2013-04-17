@@ -1,0 +1,7 @@
+0) Install arduino-core
+   This should pull in: avr-libc avrdude binutils-avr gcc-avr
+1) Run cmake for an Arduino build:
+   cmake -DARDUINO=1 .
+2) Make the library:
+   make comm14cux_lib
+
