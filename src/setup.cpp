@@ -232,9 +232,15 @@ bool Comm14CUX::openSerial(const char *devPath)
 
         if (success)
         {
-            // set up the serial port in non-canonical mode
-            newtio.c_cflag = (CREAD | CS8 | CLOCAL);
-            newtio.c_lflag = 0;
+            // set up the serial port:
+            // * enable the receiver, set 8-bit fields, set local mode, disable hardware flow control
+            // * set non-canonical mode, disable echos, disable signals
+            // * disable all software flow control
+            // * disable all output post-processing
+            newtio.c_cflag &= ((CREAD | CS8 | CLOCAL) & ~(CRTSCTS));
+            newtio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+            newtio.c_iflag &= ~(IXON | IXOFF | IXANY);
+            newtio.c_oflag &= ~OPOST;
 
 #if defined(linux) || defined(__APPLE__)
             // when waiting for responses, wait until we haven't received any
