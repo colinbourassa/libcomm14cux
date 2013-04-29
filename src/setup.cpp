@@ -312,7 +312,10 @@ bool Comm14CUX::openSerial(const char *devPath)
                 dprintf_err("14CUX(error): Unable to set baud rate.\n");
             }
         }
+#else
+        retVal = success;
 #endif
+
         // close the device if it couldn't be configured
         if (retVal == false)
         {
