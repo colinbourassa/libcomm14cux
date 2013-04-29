@@ -65,12 +65,9 @@ elseif (MINGW)
 
   message (STATUS "Found Windows/MinGW platform.")
 
-  find_library (MINGW_LIBGCC libgcc_s_dw2-1)
-  if (MINGW_LIBGCC)
-    message (STATUS "Found MinGW's libgcc is at ${MINGW_LIBGCC}")
-  else ()
-    message (SEND_ERROR "Could not find MinGW's libgcc_s_dw2-1.dll!")
-  endif ()
+  # statically link against the C and C++ MinGW libs
+  # to avoid incurring an additional DLL dependency
+  set (CMAKE_SHARED_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 
   # convert Unix-style newline characters into Windows-style
   file (READ "README" README_CONTENTS)
@@ -100,8 +97,6 @@ elseif (MINGW)
            DESTINATION "doc")
   install (PROGRAMS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/read14cux.exe
            DESTINATION ".")
-  install (PROGRAMS ${MINGW_LIBGCC}
-	   DESTINATION ".")
 
   set (CPACK_GENERATOR "ZIP")
   set (CPACK_PACKAGE_NAME ${PROJECT_NAME})
