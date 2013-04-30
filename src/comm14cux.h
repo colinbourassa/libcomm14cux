@@ -318,6 +318,15 @@ enum Comm14CUXBank
 };
 
 /**
+ * Describes the types of lambda trim for fueling.
+ */
+enum Comm14CUXLambdaTrimType
+{
+    Comm14CUXLambdaTrimType_ShortTerm,
+    Comm14CUXLambdaTrimType_LongTerm
+};
+
+/**
  * Describes the two means of reading a value from the MAF.
  */
 enum Comm14CUXAirflowType
