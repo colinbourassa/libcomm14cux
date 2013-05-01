@@ -68,6 +68,7 @@ elseif (MINGW)
   # statically link against the C and C++ MinGW libs
   # to avoid incurring an additional DLL dependency
   set (CMAKE_SHARED_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+  set (CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 
   # convert Unix-style newline characters into Windows-style
   file (READ "README" README_CONTENTS)
