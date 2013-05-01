@@ -9,3 +9,7 @@ src/comm14cux_version.h
 docs/
 bin/
 install_manifest.txt
+*.deb
+*.gz
+*.tgz
+*.zip
