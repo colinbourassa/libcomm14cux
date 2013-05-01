@@ -40,6 +40,8 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+0.5.5: Updated serial port setup for better cross-platform compatibility
+       Added code for compatibility with Mac OS X >= 10.6
 0.5.4: Added functions to retrieve the idle-mode status and MIL status;
        also miscellaneous cleanup
 0.5.3: Fixed polarity of short-term lambda trim; it was previously reversed
