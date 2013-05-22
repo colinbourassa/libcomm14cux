@@ -214,15 +214,15 @@ bool Comm14CUX::openSerial(const char *devPath)
     // the assignment of the nonstandard baud rate, which is done directly
     // into the termios struct for BSD, but via ioctls for both Linux and OS X.
 
-	struct termios newtio;
+    struct termios newtio;
     bool success = true;
 
     dprintf_info("14CUX(info): Opening the serial device (%s)...\n", devPath);
     sd = open(devPath, O_RDWR | O_NOCTTY);
 
-	if (sd > 0)
-	{
-		dprintf_info("14CUX(info): Opened device successfully.\n");
+    if (sd > 0)
+    {
+        dprintf_info("14CUX(info): Opened device successfully.\n");
 
         if (tcgetattr(sd, &newtio) != 0)
         {
@@ -321,11 +321,11 @@ bool Comm14CUX::openSerial(const char *devPath)
         {
             close(sd);
         }
-	}
-	else // open() returned failure
-	{
-		dprintf_err("14CUX(error): Error opening device (%s)\n", strerror(errno));
-	}
+    }
+    else // open() returned failure
+    {
+        dprintf_err("14CUX(error): Error opening device (%s)\n", strerror(errno));
+    }
 
 #elif defined(WIN32)
 
