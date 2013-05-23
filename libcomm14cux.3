@@ -1,0 +1,36 @@
+.TH LIBCOMM14CUX 3
+.SH libcomm14cux
+libcomm14cux - Serial interface library for Lucas 14CUX engine management computer
+
+.SH SYNOPSIS
+.B #include <comm14cux.h>
+
+.SH NOTES
+Because the 14CUX ECU uses a nonstandard baud rate and signaling characteristics, this library requires a compatible serial device. The recommended device is the FTDI TTL-232R-5V, as it can be configured to invert its RX line and can also set a baud rate close to the required 7812.5 bps. Note that the RX line should also be protected with an attenuation resistor; see the
+.B RESOURCES
+section for more information.
+
+.SH DESCRIPTION
+This library provides an interface to the diagnostic serial port on the Lucas 14CUX engine management computer used with the Rover V8 engine during the 1990s. It is found on vehicles produced by Land Rover as well as some models produced by limited-volume manufacturers such as TVR, Morgan, Ginetta, and Marcos.
+
+The library allows read access to arbitrary memory locations, and also provides a set of functions designed to retrieve specific run-time information such as temperatures, road speed, engine speed, voltage, and fueling values. Additionally, the library allows writing to memory locations in RAM (although this
+.I cannot
+be used to change data stored in the ROM, such as fuel maps.)
+
+.SH EXAMPLE
+Comm14CUX *ecu = new Comm14CUX();
+.br
+.nf
+if (ecu->connect("/dev/ttyUSB0"))
+{
+    uint16_t speedMPH = 0;
+    bool readSuccess = ecu->getRoadSpeed(speedMPH);
+}
+
+.SH RESOURCES
+Information about building and configuring a compatible serial cable is available in the Wiki section of the project's Google Code web site:
+.br
+.I http://code.google.com/p/libcomm14cux/
+
+.SH AUTHOR
+Colin Bourassa <colin.bourassa@gmail.com>
