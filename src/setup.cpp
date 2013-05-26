@@ -8,36 +8,27 @@
 #error "Only one of 'WIN32' or 'linux' may be defined."
 #endif
 
-#if defined(ARDUINO)
-  // Arduino-only includes
-  #include <WProgram.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#if defined(WIN32)
+  #include <windows.h>
 #else
-  // Non-Arduino includes
-  #include <unistd.h>
-  #include <fcntl.h>
+  #include <string.h>
+  #include <sys/ioctl.h>
+  #include <termios.h>
+  #include <arpa/inet.h>
+#endif
 
-  #if defined(WIN32)
-    // Windows-only includes
-    #include <windows.h>
-  #else
-    // Non-Windows, Non-Arduino includes
-    #include <string.h>
-    #include <sys/ioctl.h>
-    #include <termios.h>
-    #include <arpa/inet.h>
-  #endif
-
-  #if defined(linux)
-    // Linux-only includes
-    #include <linux/serial.h>
-  #elif defined(__APPLE__)
-    #include <IOKit/serial/ioss.h>
-  #endif
+#if defined(linux)
+  #include <linux/serial.h>
+#elif defined(__APPLE__)
+  #include <IOKit/serial/ioss.h>
 #endif
 
 #include "comm14cux.h"
 
-#if defined(WIN32) || defined(ARDUINO)
+#if defined(WIN32)
 uint16_t swapShort(const uint16_t source)
 {
     static const uint16_t hibyte = 0xff00;
@@ -65,9 +56,7 @@ Comm14CUX::Comm14CUX() :
     m_voltageFactorB(0),
     m_voltageFactorC(0)
 {
-#if defined(ARDUINO)
-    sd = 0;
-#elif defined(WIN32)
+#if defined(WIN32)
     sd = INVALID_HANDLE_VALUE;
     s_mutex = CreateMutex(NULL, TRUE, NULL);
 #else
@@ -83,9 +72,9 @@ Comm14CUX::~Comm14CUX()
 {
     disconnect();
 
-#if defined(WIN32) && !defined(ARDUINO)
+#if defined(WIN32)
     CloseHandle(s_mutex);
-#elif !defined(ARDUINO)
+#else
     pthread_mutex_destroy(&s_mutex);
 #endif
 }
@@ -109,9 +98,7 @@ Comm14CUXVersion Comm14CUX::getVersion()
  */
 void Comm14CUX::disconnect()
 {
-#if defined(ARDUINO)
-    sd = 0;
-#elif defined(WIN32)
+#if defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
     {
         if (isConnected())
@@ -145,19 +132,7 @@ bool Comm14CUX::connect(const char *devPath)
 {
     bool result = false;
 
-#if defined(ARDUINO)
-
-    result = isConnected() || openSerial(devPath);
-    if result
-    {
-        dprintf_info("14CUX(info): Connected (Arduino)\n");
-    }
-    else
-    {
-        dprintf_err("14CUX(error): Connect failed (Arduino)\n");
-    }
-
-#elif defined(WIN32)
+#if defined(WIN32)
 
     if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
     {
@@ -203,12 +178,7 @@ bool Comm14CUX::openSerial(const char *devPath)
 {
     bool retVal = false;
 
-#ifdef ARDUINO
-
-    sd->begin(Serial14CUXParams::Baud_14CUX);
-    retVal = true;
-
-#elif defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
     // Most UNIXes can handle the serial port in a similar fashion (using
     // the termios interface.) The only major difference between them is
     // the assignment of the nonstandard baud rate, which is done directly
@@ -405,9 +375,7 @@ bool Comm14CUX::openSerial(const char *devPath)
  */
 bool Comm14CUX::isConnected()
 {
-#if defined(ARDUINO)
-    return (sd != 0);
-#elif defined(WIN32)
+#if defined(WIN32)
     return (sd != INVALID_HANDLE_VALUE);
 #else
     return (sd > 0);

@@ -8,19 +8,12 @@
 #error "Only one of 'WIN32' or 'linux' may be defined."
 #endif
 
-#if defined(ARDUINO)
-  // Arduino-only includes
-  #include <WProgram.h>
-#else
-  // Non-Arduino includes
-  #include <unistd.h>
+#include <unistd.h>
 
-  #if defined(WIN32)
-    // Windows-only includes
-    #include <windows.h>
-  #elif defined(__NetBSD__)
-    #include <string.h>
-  #endif
+#if defined(WIN32)
+  #include <windows.h>
+#elif defined(__NetBSD__)
+  #include <string.h>
 #endif
 
 #include "comm14cux.h"
@@ -46,31 +39,7 @@ int16_t Comm14CUX::readSerialBytes(uint8_t* buffer, uint16_t quantity)
 
     if (isConnected())
     {
-#if defined(ARDUINO)
-        char c = -1;
-        unsigned long timeout = millis() + 100;
-
-        while ((millis() < timeout) && (bytesRead < quantity))
-        {
-            // try to read a byte
-            c = sd->read();
-
-            // if a byte was read...
-            if (c != -1)
-            {
-                // indicate that we've received at least one char
-                if (bytesRead < 0)
-                {
-                    bytesRead = 1;
-                }
-
-                // save it to the buffer
-                *buffer = (uint8_t)c;
-                buffer++;
-                bytesRead++;
-            }
-        }
-#elif defined(WIN32)
+#if defined(WIN32)
         DWORD w32BytesRead = 0;
         if ((ReadFile(sd, (UCHAR *) buffer, quantity, &w32BytesRead, NULL) == TRUE) &&
             (w32BytesRead > 0))
@@ -101,15 +70,7 @@ int16_t Comm14CUX::writeSerialBytes(uint8_t* buffer, uint16_t quantity)
 
     if (isConnected())
     {
-#if defined(ARDUINO)
-        bytesWritten = 0;
-        while (bytesWritten < quantity)
-        {
-            sd->print(*buffer);
-            buffer++;
-            bytesWritten++;
-        }
-#elif defined(WIN32)
+#if defined(WIN32)
         DWORD w32BytesWritten = 0;
         if ((WriteFile(sd, (UCHAR *) buffer, quantity, &w32BytesWritten, NULL) == TRUE) &&
             (w32BytesWritten == quantity))
@@ -179,12 +140,12 @@ void Comm14CUX::testWrite(void)
  */
 bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
 {
-#if defined(WIN32) && !defined(ARDUINO)
+#if defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) != WAIT_OBJECT_0)
     {
         return false;
     }
-#elif !defined(ARDUINO)
+#else
     pthread_mutex_lock(&s_mutex);
 #endif
 
@@ -271,9 +232,9 @@ bool Comm14CUX::readMem(uint16_t addr, uint16_t len, uint8_t* buffer)
         m_lastReadQuantity = 0;
     }
 
-#if defined(WIN32) && !defined(ARDUINO)
+#if defined(WIN32)
     ReleaseMutex(s_mutex);
-#elif !defined(ARDUINO)
+#else
     pthread_mutex_unlock(&s_mutex);
 #endif
 
@@ -442,12 +403,12 @@ bool Comm14CUX::setCoarseAddr(uint16_t addr, uint16_t len)
  */
 bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
 {
-#if defined(WIN32) && !defined(ARDUINO)
+#if defined(WIN32)
     if (WaitForSingleObject(s_mutex, INFINITE) != WAIT_OBJECT_0)
     {
         return false;
     }
-#elif !defined(ARDUINO)
+#else
     pthread_mutex_lock(&s_mutex);
 #endif
 
@@ -481,9 +442,9 @@ bool Comm14CUX::writeMem(uint16_t addr, uint8_t val)
         }
     }
 
-#if defined(WIN32) && !defined(ARDUINO)
+#if defined(WIN32)
     ReleaseMutex(s_mutex);
-#elif !defined(ARDUINO)
+#else
     pthread_mutex_unlock(&s_mutex);
 #endif
 

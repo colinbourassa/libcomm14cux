@@ -3,15 +3,11 @@
 
 #include <stdint.h>
 
-#if defined(ARDUINO)
-  #include <SoftwareSerial.h>
+#if defined(WIN32)
+  #include <windows.h>
 #else
-  #if defined(WIN32)
-    #include <windows.h>
-  #else
-    #include <pthread.h>
-    #include <errno.h>
-  #endif
+  #include <pthread.h>
+  #include <errno.h>
 #endif
 
 #include "comm14cux_version.h"
@@ -443,9 +439,7 @@ private:
     //! Factor involved in computations with the main voltage
     uint16_t m_voltageFactorC;
 
-#if defined(ARDUINO)
-    SoftwareSerial *sd;
-#elif defined(WIN32)
+#if defined(WIN32)
     //! Descriptor for the serial port device
     HANDLE sd;
     //! Lock to prevent multiple simultaneous open/close/read/write operations

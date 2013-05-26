@@ -7,20 +7,11 @@
 #error "Only one of 'WIN32' or 'linux' may be defined."
 #endif
 
-// Includes for all platforms
 #include <math.h>
+#include <stdlib.h>
 
-#if defined(ARDUINO)
-  // Arduino-only includes
-  #include <WProgram.h>
-#else
-  // Non-Arduino includes
-  #include <stdlib.h>
-
-  #if defined(WIN32)
-    // Windows-only includes
-    #include <windows.h>
-  #endif
+#if defined(WIN32)
+  #include <windows.h>
 #endif
 
 #include "comm14cux.h"
