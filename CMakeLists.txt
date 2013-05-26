@@ -109,6 +109,26 @@ else()
 
   message (STATUS "Defaulting to UNIX/Linux/BSD build configuration.")
 
+  find_program (GZIP_TOOL
+                NAMES gzip
+                PATHS /bin
+                      /usr/bin
+                      /usr/local/bin)
+
+  if (GZIP_TOOL)
+    set (MAN "libcomm14cux.3")
+    set (MAN-GZ "${MAN}.gz")
+    add_custom_command (OUTPUT ${MAN-GZ}
+                        COMMAND ${GZIP_TOOL} -c ${MAN} > ${MAN-GZ}
+                        DEPENDS ${MAN}
+                        COMMENT "Building ${MAN-GZ}..."
+                        VERBATIM)
+    add_custom_target (man ALL
+                       DEPENDS ${MAN-GZ})
+  else ()
+    message (WARNING "gzip not found! Manual page will not be installed.")
+  endif (GZIP_TOOL)
+
   set (CMAKE_SKIP_RPATH TRUE)
 
   if ((CMAKE_SYSTEM_NAME MATCHES "OpenBSD") OR
@@ -170,6 +190,13 @@ else()
             OWNER_READ OWNER_EXECUTE OWNER_WRITE
             GROUP_READ GROUP_EXECUTE
             WORLD_READ WORLD_EXECUTE)
+
+  if (GZIP_TOOL)
+    install (FILES "${MAN-GZ}"
+             DESTINATION "share/man/man3"
+             PERMISSIONS
+              OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+  endif (GZIP_TOOL)
 
   install (FILES "README"
                  "LICENSE"
