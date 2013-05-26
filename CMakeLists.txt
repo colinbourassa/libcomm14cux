@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 2.8)
 project (libcomm14cux)
 
-set (COMM14CUX_VER_MAJOR 0)
-set (COMM14CUX_VER_MINOR 5)
-set (COMM14CUX_VER_PATCH 5)
+set (COMM14CUX_VER_MAJOR 1)
+set (COMM14CUX_VER_MINOR 0)
+set (COMM14CUX_VER_PATCH 0)
 
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "bin")
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
@@ -38,19 +38,20 @@ configure_file (
   "${SOURCE_SUBDIR}/comm14cux_version.h"
   )
 
-add_library (comm14cux SHARED ${SOURCE_SUBDIR}/setup.cpp
-                              ${SOURCE_SUBDIR}/protocol.cpp
-                              ${SOURCE_SUBDIR}/data.cpp)
-add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.cpp)
+add_library (comm14cux SHARED ${SOURCE_SUBDIR}/setup.c
+                              ${SOURCE_SUBDIR}/protocol.c
+                              ${SOURCE_SUBDIR}/data.c
+                              ${SOURCE_SUBDIR}/constants.c)
+target_link_libraries (comm14cux m)
+add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.c)
 
 if (MINGW)
 
   message (STATUS "Found Windows/MinGW platform.")
 
-  # statically link against the C and C++ MinGW libs
-  # to avoid incurring an additional DLL dependency
-  set (CMAKE_SHARED_LINKER_FLAGS "-static-libgcc -static-libstdc++")
-  set (CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+  # statically link against the C MinGW lib to avoid incurring an additional DLL dependency
+  set (CMAKE_SHARED_LINKER_FLAGS "-static-libgcc")
+  set (CMAKE_EXE_LINKER_FLAGS "-static-libgcc")
 
   # convert Unix-style newline characters into Windows-style
   file (READ "README" README_CONTENTS)
@@ -207,7 +208,7 @@ else()
     set (CPACK_PACKAGE_VERSION_MINOR ${COMM14CUX_VER_MINOR})
     set (CPACK_PACKAGE_VERSION_PATCH ${COMM14CUX_VER_PATCH})
     set (CPACK_DEBIAN_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
-    set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Colin Bourassa <lucas.14cux@gmail.com>")
+    set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Colin Bourassa <colin.bourassa@gmail.com>")
     set (CPACK_DEBIAN_PACKAGE_SECTION "Libraries")
     set (CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.15), libstdc++6 (>= 4.6.3)")
     set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Library supporting serial communication with the Lucas 14CUX engine control module")

@@ -1,4 +1,3 @@
-#include <string>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,49 +8,43 @@ int main(int argc, char** argv)
     uint8_t readBuf[0x10000];
     uint16_t addr;
     uint16_t len;
-    std::string outputFile;
-    Comm14CUX* lucas;
     Comm14CUXVersion ver;
+    cuxinfo info;
     FILE *fp;
-    int retVal;
+    int retVal = 0;
+    int bytePos = 0;
 
-    retVal = 0;
-    ver = Comm14CUX::getVersion();
-    lucas = new Comm14CUX();
+    ver = _14cux_getLibraryVersion();
 
     if (argc < 4)
     {
         printf("read14cux using libcomm14cux v%d.%d.%d\n", ver.major, ver.minor, ver.patch);
         printf("Usage: %s <serial device> <address> <length> [output file]\n", argv[0]);
-        delete lucas;
         return 0;
     }
 
     addr = strtoul(argv[2], NULL, 0);
     len = strtoul(argv[3], NULL, 0);
 
-    if (argc >= 5)
-    {
-        outputFile = argv[4];
-    }
+    _14cux_init(&info);
 
-    if (lucas->connect(argv[1]))
+    if (_14cux_connect(&info, argv[1]))
     {
-        if (lucas->readMem(addr, len, readBuf))
+        if (_14cux_readMem(&info, addr, len, readBuf))
         {
             // if a filename was specified, write to the file rather than STDOUT
-            if (!outputFile.empty())
+            if (argc >= 5)
             {
-                fp = fopen(outputFile.c_str(), "w");
+                fp = fopen(argv[4], "w");
                 if (fp != NULL)
                 {
                     if (fwrite(readBuf, 1, len, fp) == len)
                     {
-                        printf("File '%s' written.\n", outputFile.c_str());
+                        printf("File '%s' written.\n", argv[4]);
                     }
                     else
                     {
-                        printf("Error: failed to write file '%s'.\n", outputFile.c_str());
+                        printf("Error: failed to write file '%s'.\n", argv[4]);
                         retVal = -1;
                     }
 
@@ -66,7 +59,7 @@ int main(int argc, char** argv)
             {
                 // since a filename wasn't specified, simply send a text
                 // representation of the data to STDOUT
-                for (int bytePos = 0; bytePos < len; bytePos++)
+                for (bytePos = 0; bytePos < len; bytePos++)
                 {
                     if ((bytePos != 0) && (bytePos % 16 == 0))
                     {
@@ -83,15 +76,13 @@ int main(int argc, char** argv)
             retVal = -3;
         }
 
-        lucas->disconnect();
+        _14cux_disconnect(info);
     }
     else
     {
         printf("Error: could not open serial device (%s).\n", argv[1]);
         retVal = -4;
     }
-
-    delete lucas;
 
     return retVal;
 }

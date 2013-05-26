@@ -27,6 +27,7 @@
 #endif
 
 #include "comm14cux.h"
+#include "comm14cux_internal.h"
 
 #if defined(WIN32)
 uint16_t swapShort(const uint16_t source)
@@ -43,46 +44,30 @@ uint16_t swapShort(const uint16_t source)
 }
 #endif
 
-/**
- * Constructor. Initializes device handle and mutex.
- */
-Comm14CUX::Comm14CUX() :
-    m_promRev(Comm14CUXDataOffsets_Unset),
-    m_lastReadCoarseAddress(0x0000),
-    m_lastReadQuantity(0x00),
-    m_cancelRead(false),
-    m_lowestThrottleMeasurement(0xffff),
-    m_voltageFactorA(0),
-    m_voltageFactorB(0),
-    m_voltageFactorC(0)
+void _14cux_init(cuxinfo *info)
 {
-#if defined(WIN32)
-    sd = INVALID_HANDLE_VALUE;
-    s_mutex = CreateMutex(NULL, TRUE, NULL);
-#else
-    sd = 0;
-    pthread_mutex_init(&s_mutex, NULL);
-#endif
-}
-
-/**
- * Closes the serial device.
- */
-Comm14CUX::~Comm14CUX()
-{
-    disconnect();
+    info->promRev = Comm14CUXDataOffsets_Unset;
+    info->lastReadCoarseAddress = 0x0000;
+    info->lastReadQuantity = 0x00;
+    info->cancelRead = 0;
+    info->lowestThrottleMeasurement = 0xffff;
+    info->voltageFactorA = 0;
+    info->voltageFactorB = 0;
+    info->voltageFactorC = 0;
 
 #if defined(WIN32)
-    CloseHandle(s_mutex);
+    info->sd = INVALID_HANDLE_VALUE;
+    info->mutex = CreateMutex(NULL, TRUE, NULL);
 #else
-    pthread_mutex_destroy(&s_mutex);
+    info->sd = 0;
+    pthread_mutex_init(&info->mutex, NULL);
 #endif
 }
 
 /**
  * Returns version information for this build of the library.
  */
-Comm14CUXVersion Comm14CUX::getVersion()
+Comm14CUXVersion _14cux_getLibraryVersion()
 {
     Comm14CUXVersion ver;
 
@@ -96,48 +81,48 @@ Comm14CUXVersion Comm14CUX::getVersion()
 /**
  * Closes the serial device.
  */
-void Comm14CUX::disconnect()
+void _14cux_disconnect(cuxinfo *info)
 {
 #if defined(WIN32)
-    if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
+    if (WaitForSingleObject(info->mutex, INFINITE) == WAIT_OBJECT_0)
     {
-        if (isConnected())
+        if (_14cux_isConnected())
         {
-            CloseHandle(sd);
-            sd = INVALID_HANDLE_VALUE;
+            CloseHandle(info->sd);
+            info->sd = INVALID_HANDLE_VALUE;
         }
 
-        ReleaseMutex(s_mutex);
+        ReleaseMutex(info->mutex);
     }
 #else
-    pthread_mutex_lock(&s_mutex);
+    pthread_mutex_lock(&info->mutex);
 
-    if (isConnected())
+    if (_14cux_isConnected())
     {
-        close(sd);
-        sd = 0;
+        close(info->sd);
+        info->sd = 0;
     }
 
-    pthread_mutex_unlock(&s_mutex);
+    pthread_mutex_unlock(&info->mutex);
 #endif
 }
 
 /**
  * Opens the serial port (or returns with success if it is already open.)
  * @param devPath Full path to the serial device (e.g. "/dev/ttyUSB0" or "COM2")
- * @return True if the serial device was successfully opened and its
- *   baud rate was set; false otherwise.
+ * @return 1 if the serial device was successfully opened and its
+ *   baud rate was set; 0 otherwise.
  */
-bool Comm14CUX::connect(const char *devPath)
+uint8_t _14cux_connect(cuxinfo *info, const char *devPath)
 {
-    bool result = false;
+    uint8_t result = 0;
 
 #if defined(WIN32)
 
-    if (WaitForSingleObject(s_mutex, INFINITE) == WAIT_OBJECT_0)
+    if (WaitForSingleObject(info->mutex, INFINITE) == WAIT_OBJECT_0)
     {
-        result = isConnected() || openSerial(devPath);
-        ReleaseMutex(s_mutex);
+        result = _14cux_isConnected(info) || _14cux_openSerial(info, devPath);
+        ReleaseMutex(info->mutex);
         dprintf_info("14CUX(info): Connected (Win32)\n");
     }
     else
@@ -147,9 +132,9 @@ bool Comm14CUX::connect(const char *devPath)
 
 #else // Linux/Unix
 
-    pthread_mutex_lock(&s_mutex);
-    result = isConnected() || openSerial(devPath);
-    pthread_mutex_unlock(&s_mutex);
+    pthread_mutex_lock(&info->mutex);
+    result = _14cux_isConnected(info) || _14cux_openSerial(info, devPath);
+    pthread_mutex_unlock(&info->mutex);
     if (result)
     {
         dprintf_info("14CUX(info): Connected (Linux/Unix)\n");
@@ -172,11 +157,11 @@ bool Comm14CUX::connect(const char *devPath)
  * on the open() call while waiting for a carrier detect line, which
  * will never be asserted. Instead, use the equivalent cuaX device.
  * Example: /dev/cuaU0 (instead of /dev/ttyU0)
- * @return True if the open/setup was successful, false otherwise
+ * @return 1 if the open/setup was successful, 0 otherwise
  */
-bool Comm14CUX::openSerial(const char *devPath)
+uint8_t _14cux_openSerial(cuxinfo *info, const char *devPath)
 {
-    bool retVal = false;
+    uint8_t retVal = 0;
 
 #if defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
     // Most UNIXes can handle the serial port in a similar fashion (using
@@ -185,19 +170,19 @@ bool Comm14CUX::openSerial(const char *devPath)
     // into the termios struct for BSD, but via ioctls for both Linux and OS X.
 
     struct termios newtio;
-    bool success = true;
+    uint8_t success = 1;
 
     dprintf_info("14CUX(info): Opening the serial device (%s)...\n", devPath);
-    sd = open(devPath, O_RDWR | O_NOCTTY);
+    info->sd = open(devPath, O_RDWR | O_NOCTTY);
 
-    if (sd > 0)
+    if (info->sd > 0)
     {
         dprintf_info("14CUX(info): Opened device successfully.\n");
 
-        if (tcgetattr(sd, &newtio) != 0)
+        if (tcgetattr(info->sd, &newtio) != 0)
         {
             dprintf_err("14CUX(error): Unable to read serial port parameters.\n");
-            success = false;
+            success = 0;
         }
 
         if (success)
@@ -233,20 +218,20 @@ bool Comm14CUX::openSerial(const char *devPath)
             newtio.c_cc[VMIN] = 0;
 
             // set the input and output baud rates to 7812
-            cfsetispeed(&newtio, Serial14CUXParams::Baud_14CUX);
-            cfsetospeed(&newtio, Serial14CUXParams::Baud_14CUX);
+            cfsetispeed(&newtio, _14CUX_Baud);
+            cfsetospeed(&newtio, _14CUX_Baud);
 #endif
 
             // attempt to set the termios parameters
             dprintf_info("14CUX(info): Setting serial port parameters...\n");
 
             // flush the serial buffers and set the new parameters
-            if ((tcflush(sd, TCIFLUSH) != 0) ||
-                (tcsetattr(sd, TCSANOW, &newtio) != 0))
+            if ((tcflush(info->sd, TCIFLUSH) != 0) ||
+                (tcsetattr(info->sd, TCSANOW, &newtio) != 0))
             {
                 dprintf_err("14CUX(error): Failure setting up port\n");
-                close(sd);
-                success = false;
+                close(info->sd);
+                success = 0;
             }
         }
 
@@ -256,15 +241,15 @@ bool Comm14CUX::openSerial(const char *devPath)
         {
             struct serial_struct serial_info;
             dprintf_info("14CUX(info): Setting custom baud rate...\n");
-            if (ioctl(sd, TIOCGSERIAL, &serial_info) != -1)
+            if (ioctl(info->sd, TIOCGSERIAL, &serial_info) != -1)
             {
                 serial_info.flags = ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
-                serial_info.custom_divisor = serial_info.baud_base / Serial14CUXParams::Baud_14CUX;
+                serial_info.custom_divisor = serial_info.baud_base / _14CUX_Baud;
 
-                if (ioctl(sd, TIOCSSERIAL, &serial_info) != -1)
+                if (ioctl(info->sd, TIOCSSERIAL, &serial_info) != -1)
                 {
                     dprintf_info("14CUX(info): Baud rate setting successful.\n");
-                    retVal = true;
+                    retVal = 1;
                 }
             }
         }
@@ -272,10 +257,10 @@ bool Comm14CUX::openSerial(const char *devPath)
         // OS X requires an ioctl() to set a nonstandard baud rate
         if (success)
         {
-            speed_t speed = Serial14CUXParams::Baud_14CUX;
-            if (ioctl(sd, IOSSIOSPEED, &speed) != -1)
+            speed_t speed = _14CUX_Baud;
+            if (ioctl(info->sd, IOSSIOSPEED, &speed) != -1)
             {
-                retVal = true;
+                retVal = 1;
             }
             else
             {
@@ -287,9 +272,9 @@ bool Comm14CUX::openSerial(const char *devPath)
 #endif
 
         // close the device if it couldn't be configured
-        if (retVal == false)
+        if (retVal == 0)
         {
-            close(sd);
+            close(info->sd);
         }
     }
     else // open() returned failure
@@ -306,16 +291,16 @@ bool Comm14CUX::openSerial(const char *devPath)
     dprintf_info("14CUX(info): Opening the serial device (Win32) '%s'...\n", devPath);
 
     // open and get a handle to the serial device
-    sd = CreateFile(devPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+    info->sd = CreateFile(devPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     // verify that the serial device was opened
-    if (sd != INVALID_HANDLE_VALUE)
+    if (info->sd != INVALID_HANDLE_VALUE)
     {
-        if (GetCommState(sd, &dcb) == TRUE)
+        if (GetCommState(info->sd, &dcb) == TRUE)
         {
             // set the serial port parameters, including the custom baud rate
-            dcb.BaudRate = Serial14CUXParams::Baud_14CUX;
+            dcb.BaudRate = _14CUX_Baud;
             dcb.fParity = FALSE;
             dcb.fOutxCtsFlow = FALSE;
             dcb.fOutxDsrFlow = FALSE;
@@ -325,17 +310,17 @@ bool Comm14CUX::openSerial(const char *devPath)
             dcb.Parity = 0;
             dcb.StopBits = 0;
 
-            if ((SetCommState(sd, &dcb) == TRUE) &&
-                (GetCommTimeouts(sd, &commTimeouts) == TRUE))
+            if ((SetCommState(info->sd, &dcb) == TRUE) &&
+                (GetCommTimeouts(info->sd, &commTimeouts) == TRUE))
             {
                 // modify the COM port parameters to wait 100 ms before timing out
                 commTimeouts.ReadIntervalTimeout = 100;
                 commTimeouts.ReadTotalTimeoutMultiplier = 0;
                 commTimeouts.ReadTotalTimeoutConstant = 100;
 
-                if (SetCommTimeouts(sd, &commTimeouts) == TRUE)
+                if (SetCommTimeouts(info->sd, &commTimeouts) == TRUE)
                 {
-                    retVal = true;
+                    retVal = 1;
                 }
             }
         }
@@ -345,7 +330,7 @@ bool Comm14CUX::openSerial(const char *devPath)
         if (!retVal)
         {
             dprintf_err("14CUX(error): Failure setting up port; closing serial device...\n");
-            CloseHandle(sd);
+            CloseHandle(info->sd);
         }
     }
     else
@@ -371,14 +356,14 @@ bool Comm14CUX::openSerial(const char *devPath)
 /**
  * Checks the file descriptor for the serial device to determine if it has
  * already been opened.
- * @return True if the serial device is open; false otherwise.
+ * @return 1 if the serial device is open; 0 otherwise.
  */
-bool Comm14CUX::isConnected()
+uint8_t _14cux_isConnected(cuxinfo* info)
 {
 #if defined(WIN32)
-    return (sd != INVALID_HANDLE_VALUE);
+    return (info->sd != INVALID_HANDLE_VALUE);
 #else
-    return (sd > 0);
+    return (info->sd > 0);
 #endif
 }
 

@@ -47,142 +47,139 @@
   #define dprintf_info
 #endif
 
-namespace Serial14CUXParams
-{
-    //! First byte-count threshold for reading
-    const uint16_t ReadCount0 = 0x0010;
-    //! Second byte-count threshold for reading
-    const uint16_t ReadCount1 = 0x0050;
-    //! Third byte-count threshold for reading
-    const uint16_t ReadCount2 = 0x0064;
-    //! Fourth byte-count threshold for reading
-    const uint16_t ReadCount3 = 0x0190;
-    //! Fifth byte-count threshold for reading
-    const uint16_t ReadCount4 = 0x0200;
+//! First byte-count threshold for reading
+extern const uint16_t _14CUX_ReadCount0;
+//! Second byte-count threshold for reading
+extern const uint16_t _14CUX_ReadCount1;
+//! Third byte-count threshold for reading
+extern const uint16_t _14CUX_ReadCount2;
+//! Fourth byte-count threshold for reading
+extern const uint16_t _14CUX_ReadCount3;
+//! Fifth byte-count threshold for reading
+extern const uint16_t _14CUX_ReadCount4;
 
-    //! 14CUX's table index for the ReadCount1 quantity
-    const uint8_t ReadCount1Value = 0x10;
-    //! 14CUX's table index for the ReadCount2 quantity
-    const uint8_t ReadCount2Value = 0x11;
-    //! 14CUX's table index for the ReadCount3 quantity
-    const uint8_t ReadCount3Value = 0x12;
-    //! 14CUX's table index for the ReadCount4 quantity
-    const uint8_t ReadCount4Value = 0x13;
+//! 14CUX's table index for the ReadCount1 quantity
+extern const uint8_t _14CUX_ReadCount1Value;
+//! 14CUX's table index for the ReadCount2 quantity
+extern const uint8_t _14CUX_ReadCount2Value;
+//! 14CUX's table index for the ReadCount3 quantity
+extern const uint8_t _14CUX_ReadCount3Value;
+//! 14CUX's table index for the ReadCount4 quantity
+extern const uint8_t _14CUX_ReadCount4Value;
 
-    //! Baud rate of the 14CUX serial link, rounded down to an integer
-    const int Baud_14CUX = 7812;
+//! Baud rate of the 14CUX serial link, rounded down to an integer
+extern const int _14CUX_Baud;
 
-    //! Starting address of the 14CUX PROM contents in RAM
-    const uint16_t ROMAddress = 0xC000;
-    //! Size of the used portion of the 14CUX PROM
-    const uint16_t ROMSize = 0x4000;
+//! Starting address of the 14CUX PROM contents in RAM
+extern const uint16_t _14CUX_ROMAddress;
+//! Size of the used portion of the 14CUX PROM
+extern const uint16_t _14CUX_ROMSize;
 
-    //! Memory location of Port 1
-    const uint16_t Port1Offset = 0x0002;
-    //! Memory location of left bank long-term lambda fueling trim
-    const uint16_t LongTermLambdaFuelingTrimLeftOffset = 0x0042;
-    //! Memory location of right bank long-term lambda fueling trim
-    const uint16_t LongTermLambdaFuelingTrimRightOffset = 0x0046;
-    //! Memory location of left bank short-term lambda fueling trim
-    const uint16_t ShortTermLambdaFuelingTrimLeftOffset = 0x0065;
-    //! Memory location of right bank short-term lambda fueling trim
-    const uint16_t ShortTermLambdaFuelingTrimRightOffset = 0x0067;
-    //! Memory location of fault code block
-    const uint16_t FaultCodesOffset = 0x0049;
-    //! Memory location of minimum throttle position value
-    const uint16_t ThrottleMinimumPositionOffset = 0x0051;
-    //! Memory location of main voltage value
-    const uint16_t MainVoltageOffset = 0x0055;
-    //! Memory location of (low) airflow mass value
-    const uint16_t MassAirflowDirectOffset = 0x0057;
-    //! Memory location of throttle position value
-    const uint16_t ThrottlePositionOffset = 0x005F;
-    //! Memory location of coolant temperature value
-    const uint16_t CoolantTempOffset = 0x006A;
-    //! Memory location of idle bypass motor position value
-    const uint16_t IdleBypassPositionOffset = 0x006D;
-    //! Memory location of instantaneous engine speed value
-    const uint16_t EngineSpeedInstantaneousOffset = 0x007A;
-    //! Memory location of filtered engine speed value
-    const uint16_t EngineSpeedFilteredOffset = 0x007C;
-    //! Memory location of selected gear value
-    const uint16_t TransmissionGearOffset = 0x2000;
-    //! Memory location of road speed value
-    const uint16_t RoadSpeedOffset = 0x2003;
-    //! Memory location of fuel temperature value
-    const uint16_t FuelTempOffset = 0x2006;
-    //! Memory location of RPM limit (in RAM)
-    const uint16_t RPMLimitOffset = 0x200C;
-    //! Memory location of idle mode bit
-    const uint16_t IdleModeOffset = 0x2047;
-    //! Memory location of linearized MAF reading
-    const uint16_t MassAirflowLinearOffset = 0x204D;
-    //! Memory location of target idle speed
-    const uint16_t TargetIdleSpeedOffset = 0x2051;
+//! Memory location of Port 1
+extern const uint16_t _14CUX_Port1Offset;
+//! Memory location of left bank long-term lambda fueling trim
+extern const uint16_t _14CUX_LongTermLambdaFuelingTrimLeftOffset;
+//! Memory location of right bank long-term lambda fueling trim
+extern const uint16_t _14CUX_LongTermLambdaFuelingTrimRightOffset;
+//! Memory location of left bank short-term lambda fueling trim
+extern const uint16_t _14CUX_ShortTermLambdaFuelingTrimLeftOffset;
+//! Memory location of right bank short-term lambda fueling trim
+extern const uint16_t _14CUX_ShortTermLambdaFuelingTrimRightOffset;
+//! Memory location of fault code block
+extern const uint16_t _14CUX_FaultCodesOffset;
+//! Memory location of minimum throttle position value
+extern const uint16_t _14CUX_ThrottleMinimumPositionOffset;
+//! Memory location of main voltage value
+extern const uint16_t _14CUX_MainVoltageOffset;
+//! Memory location of (low) airflow mass value
+extern const uint16_t _14CUX_MassAirflowDirectOffset;
+//! Memory location of throttle position value
+extern const uint16_t _14CUX_ThrottlePositionOffset;
+//! Memory location of coolant temperature value
+extern const uint16_t _14CUX_CoolantTempOffset;
+//! Memory location of idle bypass motor position value
+extern const uint16_t _14CUX_IdleBypassPositionOffset;
+//! Memory location of instantaneous engine speed value
+extern const uint16_t _14CUX_EngineSpeedInstantaneousOffset;
+//! Memory location of filtered engine speed value
+extern const uint16_t _14CUX_EngineSpeedFilteredOffset;
+//! Memory location of selected gear value
+extern const uint16_t _14CUX_TransmissionGearOffset;
+//! Memory location of road speed value
+extern const uint16_t _14CUX_RoadSpeedOffset;
+//! Memory location of fuel temperature value
+extern const uint16_t _14CUX_FuelTempOffset;
+//! Memory location of RPM limit (in RAM)
+extern const uint16_t _14CUX_RPMLimitOffset;
+//! Memory location of idle mode bit
+extern const uint16_t _14CUX_IdleModeOffset;
+//! Memory location of linearized MAF reading
+extern const uint16_t _14CUX_MassAirflowLinearOffset;
+//! Memory location of target idle speed
+extern const uint16_t _14CUX_TargetIdleSpeedOffset;
 
-    //! Fixed main voltage coefficient 'A' for very old ECUs (<= 1990)
-    const uint8_t RevAMainVoltageFactorA = 0x64;
-    //! Fixed main voltage coefficient 'B' for very old ECUs (<= 1990)
-    const uint8_t RevAMainVoltageFactorB = 0xBD;
-    //! Fixed main voltage coefficient 'C' for very old ECUs (<= 1990)
-    const uint16_t RevAMainVoltageFactorC = 0x6180;
+//! Fixed main voltage coefficient 'A' for very old ECUs (<= 1990)
+extern const uint8_t _14CUX_RevAMainVoltageFactorA;
+//! Fixed main voltage coefficient 'B' for very old ECUs (<= 1990)
+extern const uint8_t _14CUX_RevAMainVoltageFactorB;
+//! Fixed main voltage coefficient 'C' for very old ECUs (<= 1990)
+extern const uint16_t _14CUX_RevAMainVoltageFactorC;
 
-    //! Memory location of first main voltage computation factor
-    const uint16_t RevBMainVoltageFactorAOffset = 0xC79B;
-    //! Memory location of second main voltage computation factor
-    const uint16_t RevBMainVoltageFactorBOffset = 0xC79C;
-    //! Memory location of third main voltage computation factor
-    const uint16_t RevBMainVoltageFactorCOffset = 0xC79D;
+//! Memory location of first main voltage computation factor
+extern const uint16_t _14CUX_RevBMainVoltageFactorAOffset;
+//! Memory location of second main voltage computation factor
+extern const uint16_t _14CUX_RevBMainVoltageFactorBOffset;
+//! Memory location of third main voltage computation factor
+extern const uint16_t _14CUX_RevBMainVoltageFactorCOffset;
 
-    //! Memory location of first main voltage computation factor
-    const uint16_t RevCMainVoltageFactorAOffset = 0xC7C3;
-    //! Memory location of second main voltage computation factor
-    const uint16_t RevCMainVoltageFactorBOffset = 0xC7C4;
-    //! Memory location of third main voltage computation factor
-    const uint16_t RevCMainVoltageFactorCOffset = 0xC7C5;
+//! Memory location of first main voltage computation factor
+extern const uint16_t _14CUX_RevCMainVoltageFactorAOffset;
+//! Memory location of second main voltage computation factor
+extern const uint16_t _14CUX_RevCMainVoltageFactorBOffset;
+//! Memory location of third main voltage computation factor
+extern const uint16_t _14CUX_RevCMainVoltageFactorCOffset;
 
-    //! Memory location of Fuel Map 0
-    const uint16_t FuelMap0Offset = 0xC000;
+//! Memory location of Fuel Map 0
+extern const uint16_t _14CUX_FuelMap0Offset;
 
-    //! Memory location of Fuel Map 1
-    const uint16_t NewFuelMap1Offset = 0xC267;
-    //! Memory location of Fuel Map 2
-    const uint16_t NewFuelMap2Offset = 0xC379;
-    //! Memory location of Fuel Map 3
-    const uint16_t NewFuelMap3Offset = 0xC48B;
-    //! Memory location of Fuel Map 4
-    const uint16_t NewFuelMap4Offset = 0xC59D;
-    //! Memory location of Fuel Map 5
-    const uint16_t NewFuelMap5Offset = 0xC6AF;
+//! Memory location of Fuel Map 1
+extern const uint16_t _14CUX_NewFuelMap1Offset;
+//! Memory location of Fuel Map 2
+extern const uint16_t _14CUX_NewFuelMap2Offset;
+//! Memory location of Fuel Map 3
+extern const uint16_t _14CUX_NewFuelMap3Offset;
+//! Memory location of Fuel Map 4
+extern const uint16_t _14CUX_NewFuelMap4Offset;
+//! Memory location of Fuel Map 5
+extern const uint16_t _14CUX_NewFuelMap5Offset;
 
-    //! Memory location of Fuel Map 1
-    const uint16_t OldFuelMap1Offset = 0xC23F;
-    //! Memory location of Fuel Map 2
-    const uint16_t OldFuelMap2Offset = 0xC351;
-    //! Memory location of Fuel Map 3
-    const uint16_t OldFuelMap3Offset = 0xC463;
-    //! Memory location of Fuel Map 4
-    const uint16_t OldFuelMap4Offset = 0xC575;
-    //! Memory location of Fuel Map 5
-    const uint16_t OldFuelMap5Offset = 0xC687;
+//! Memory location of Fuel Map 1
+extern const uint16_t _14CUX_OldFuelMap1Offset;
+//! Memory location of Fuel Map 2
+extern const uint16_t _14CUX_OldFuelMap2Offset;
+//! Memory location of Fuel Map 3
+extern const uint16_t _14CUX_OldFuelMap3Offset;
+//! Memory location of Fuel Map 4
+extern const uint16_t _14CUX_OldFuelMap4Offset;
+//! Memory location of Fuel Map 5
+extern const uint16_t _14CUX_OldFuelMap5Offset;
 
-    //! Memory location of the tune number (code revision) in BCD
-    const uint16_t TuneRevisionOffset = 0xFFE9;
+//! Memory location of the tune number (code revision) in BCD
+extern const uint16_t _14CUX_TuneRevisionOffset;
 
-    //! Size of each fuel map, in bytes
-    const uint16_t FuelMapSize = 0x80;
-    //! Memory location of the current fuel map ID
-    const uint16_t CurrentFuelMapIdOffset = 0x202C;
-    //! Memory location of the current fuel map row index
-    const uint16_t FuelMapRowIndexOffset = 0x005B;
-    //! Memory location of the current fuel map column index
-    const uint16_t FuelMapColumnIndexOffset = 0x005C;
+//! Size of each fuel map, in bytes
+extern const uint16_t _14CUX_FuelMapSize;
+//! Memory location of the current fuel map ID
+extern const uint16_t _14CUX_CurrentFuelMapIdOffset;
+//! Memory location of the current fuel map row index
+extern const uint16_t _14CUX_FuelMapRowIndexOffset;
+//! Memory location of the current fuel map column index
+extern const uint16_t _14CUX_FuelMapColumnIndexOffset;
 
-    //! Memory location of the idle air control motor step count
-    const uint16_t IdleAirControlStepCountOffset = 0x0075;
-    //! Memory location of the fuel pump timer
-    const uint16_t FuelPumpTimerOffset = 0x00AF;
-}
+//! Memory location of the idle air control motor step count
+extern const uint16_t _14CUX_IdleAirControlStepCountOffset;
+//! Memory location of the fuel pump timer
+extern const uint16_t _14CUX_FuelPumpTimerOffset;
 
 /**
  * Defines the bit-level contents of the memory locations that
@@ -356,88 +353,24 @@ enum Comm14CUXDataOffsets
     Comm14CUXDataOffsets_RevC = 0x03
 };
 
-uint16_t swapShort(const uint16_t source);
-
-/**
- * Allows communications with a 14CUX ECU via its 7812.5bps serial link.
- * This requires a serial device capable of setting a baud rate close to the
- * desired 7812.5.
- */
-class Comm14CUX
+typedef struct
 {
-public:
-    Comm14CUX();
-    ~Comm14CUX();
-
-    bool connect(const char *devPath);
-    void disconnect();
-    bool isConnected();
-    bool readMem(uint16_t addr, uint16_t len, uint8_t* buffer);
-    bool writeMem(uint16_t addr, uint8_t val);
-    bool dumpROM(uint8_t* buffer);
-    bool getFaultCodes(Comm14CUXFaultCodes &faultCodes);
-    static Comm14CUXVersion getVersion();
-
-    bool getRoadSpeed(uint16_t &roadSpeed);
-    bool getCoolantTemp(int16_t &coolantTemp);
-    bool getFuelTemp(int16_t &fuelTemp);
-    bool getMAFReading(Comm14CUXAirflowType type, float &mafReading);
-    bool getEngineRPM(uint16_t &engineRPM);
-    bool getRPMLimit(uint16_t &rpmLimit);
-    bool getTargetIdle(uint16_t &targetIdleRPM);
-    bool getThrottlePosition(Comm14CUXThrottlePosType type, float &throttlePos);
-    bool getGearSelection(Comm14CUXGear &gear);
-    bool getMainVoltage(float &voltage);
-    bool getFuelMap(uint8_t fuelMapId, uint16_t &adjustmentFactor, uint8_t *buffer);
-    bool getCurrentFuelMap(uint8_t &fuelMapId);
-    bool getFuelMapRowIndex(uint8_t &fuelMapRowIndex);
-    bool getFuelMapColumnIndex(uint8_t &fuelMapColIndex);
-    bool getLambdaTrimShort(Comm14CUXBank bank, int16_t &lambdaTrim);
-    bool getLambdaTrimLong(Comm14CUXBank bank, int16_t &lambdaTrim);
-    bool getIdleBypassMotorPosition(float &bypassMotorPos);
-    bool getFuelPumpRelayState(bool &fuelPumpRelayState);
-    bool getTuneRevision(uint16_t &tuneNumber);
-    bool getIdleMode(bool &idleMode);
-    bool isMILOn(bool &milOn);
-
-    bool clearFaultCodes();
-    bool runFuelPump();
-    bool driveIdleAirControlMotor(uint8_t direction, uint8_t steps);
-
-    void cancelRead();
-
-#if 0
-    void testWrite();
-#endif
-
-private:
-    int16_t readSerialBytes(uint8_t *buffer, uint16_t quantity);
-    int16_t writeSerialBytes(uint8_t *buffer, uint16_t quantity);
-    bool setReadCoarseAddr(uint16_t addr, uint16_t len);
-    bool setWriteCoarseAddr(uint16_t addr);
-    bool setCoarseAddr(uint16_t addr, uint16_t len);
-    uint16_t getByteCountForNextRead(uint16_t len, uint16_t bytesRead);
-    bool sendReadCmd(uint16_t addr, uint16_t len, bool lastByteOnly);
-    bool openSerial(const char *devPath);
-    double hyperbolicOffsetModel(double count);
-    void determineDataOffsets();
-
     //! Revision of the connected ECU (affecting fuel map locations)
-    Comm14CUXDataOffsets m_promRev;
+    enum Comm14CUXDataOffsets promRev;
     //! The coarse address set during the last read operation
-    uint16_t m_lastReadCoarseAddress;
+    uint16_t lastReadCoarseAddress;
     //! The number of bytes read during the last read operation
-    uint8_t m_lastReadQuantity;
+    uint8_t lastReadQuantity;
     //! Flag set when the user wishes to cancel a read operation
-    bool m_cancelRead;
+    uint8_t cancelRead;
     //! Lowest throttle measurement seen so far
-    uint16_t m_lowestThrottleMeasurement;
+    uint16_t lowestThrottleMeasurement;
     //! Factor involved in computations with the main voltage
-    uint8_t m_voltageFactorA;
+    uint8_t voltageFactorA;
     //! Factor involved in computations with the main voltage
-    uint8_t m_voltageFactorB;
+    uint8_t voltageFactorB;
     //! Factor involved in computations with the main voltage
-    uint16_t m_voltageFactorC;
+    uint16_t voltageFactorC;
 
 #if defined(WIN32)
     //! Descriptor for the serial port device
@@ -448,10 +381,54 @@ private:
     //! Descriptor for the serial port device
     int sd;
     //! Lock to prevent multiple simultaneous open/close/read/write operations
-    pthread_mutex_t s_mutex;
+    pthread_mutex_t mutex;
 #endif
 
-};
+} cuxinfo;
+
+uint16_t swapShort(const uint16_t source);
+
+uint8_t _14cux_connect(cuxinfo *info, const char *devPath);
+   void _14cux_disconnect();
+uint8_t _14cux_isConnected();
+uint8_t _14cux_readMem(cuxinfo *info, uint16_t addr, uint16_t len, uint8_t* buffer);
+uint8_t _14cux_writeMem(cuxinfo *info, uint16_t addr, uint8_t val);
+uint8_t _14cux_dumpROM(cuxinfo *info, uint8_t* buffer);
+uint8_t _14cux_getFaultCodes(cuxinfo *info, Comm14CUXFaultCodes *faultCodes);
+
+Comm14CUXVersion _14cux_getLibraryVersion();
+
+uint8_t _14cux_getRoadSpeed(cuxinfo *info, uint16_t *roadSpeed);
+uint8_t _14cux_getCoolantTemp(cuxinfo *info, int16_t *coolantTemp);
+uint8_t _14cux_getFuelTemp(cuxinfo *info, int16_t *fuelTemp);
+uint8_t _14cux_getMAFReading(cuxinfo *info, const enum Comm14CUXAirflowType type, float *mafReading);
+uint8_t _14cux_getEngineRPM(cuxinfo *info, uint16_t *engineRPM);
+uint8_t _14cux_getRPMLimit(cuxinfo *info, uint16_t *rpmLimit);
+uint8_t _14cux_getTargetIdle(cuxinfo *info, uint16_t *targetIdleRPM);
+uint8_t _14cux_getThrottlePosition(cuxinfo *info, const enum Comm14CUXThrottlePosType type, float *throttlePos);
+uint8_t _14cux_getGearSelection(cuxinfo *info, enum Comm14CUXGear *gear);
+uint8_t _14cux_getMainVoltage(cuxinfo *info, float *voltage);
+uint8_t _14cux_getFuelMap(cuxinfo *info, uint8_t fuelMapId, uint16_t *adjustmentFactor, uint8_t *buffer);
+uint8_t _14cux_getCurrentFuelMap(cuxinfo *info, uint8_t *fuelMapId);
+uint8_t _14cux_getFuelMapRowIndex(cuxinfo *info, uint8_t *fuelMapRowIndex);
+uint8_t _14cux_getFuelMapColumnIndex(cuxinfo *info, uint8_t *fuelMapColIndex);
+uint8_t _14cux_getLambdaTrimShort(cuxinfo *info, const enum Comm14CUXBank bank, int16_t *lambdaTrim);
+uint8_t _14cux_getLambdaTrimLong(cuxinfo *info, const enum Comm14CUXBank bank, int16_t *lambdaTrim);
+uint8_t _14cux_getIdleBypassMotorPosition(cuxinfo *info, float *bypassMotorPos);
+uint8_t _14cux_getFuelPumpRelayState(cuxinfo *info, uint8_t *fuelPumpRelayState);
+uint8_t _14cux_getTuneRevision(cuxinfo *info, uint16_t *tuneNumber);
+uint8_t _14cux_getIdleMode(cuxinfo *info, uint8_t *idleMode);
+uint8_t _14cux_isMILOn(cuxinfo *info, uint8_t *milOn);
+
+uint8_t _14cux_clearFaultCodes(cuxinfo *info);
+uint8_t _14cux_runFuelPump(cuxinfo *info);
+uint8_t _14cux_driveIdleAirControlMotor(cuxinfo *info, uint8_t direction, uint8_t steps);
+
+void _14cux_cancelRead(cuxinfo *info);
+
+#if 0
+    void testWrite();
+#endif
 
 #endif // COMM14CUX_H
 
