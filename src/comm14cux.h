@@ -388,6 +388,7 @@ typedef struct
 
 uint16_t swapShort(const uint16_t source);
 
+   void _14cux_init(cuxinfo *info);
 uint8_t _14cux_connect(cuxinfo *info, const char *devPath);
    void _14cux_disconnect();
 uint8_t _14cux_isConnected();
