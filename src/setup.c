@@ -86,7 +86,7 @@ void _14cux_disconnect(cuxinfo *info)
 #if defined(WIN32)
     if (WaitForSingleObject(info->mutex, INFINITE) == WAIT_OBJECT_0)
     {
-        if (_14cux_isConnected())
+        if (_14cux_isConnected(info))
         {
             CloseHandle(info->sd);
             info->sd = INVALID_HANDLE_VALUE;
@@ -97,7 +97,7 @@ void _14cux_disconnect(cuxinfo *info)
 #else
     pthread_mutex_lock(&info->mutex);
 
-    if (_14cux_isConnected())
+    if (_14cux_isConnected(info))
     {
         close(info->sd);
         info->sd = 0;

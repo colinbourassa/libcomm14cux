@@ -38,7 +38,7 @@ int16_t _14cux_readSerialBytes(cuxinfo* info, uint8_t* buffer, uint16_t quantity
 {
     int16_t bytesRead = -1;
 
-    if (_14cux_isConnected())
+    if (_14cux_isConnected(info))
     {
 #if defined(WIN32)
         DWORD w32BytesRead = 0;
@@ -69,7 +69,7 @@ int16_t _14cux_writeSerialBytes(cuxinfo* info, uint8_t* buffer, uint16_t quantit
 {
     int16_t bytesWritten = -1;
 
-    if (_14cux_isConnected())
+    if (_14cux_isConnected(info))
     {
 #if defined(WIN32)
         DWORD w32BytesWritten = 0;
@@ -159,7 +159,7 @@ uint8_t _14cux_readMem(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t* buff
 
     info->cancelRead = 0;
 
-    if (_14cux_isConnected())
+    if (_14cux_isConnected(info))
     {
         // loop until we've read all the bytes, or we experienced a read error
         while ((totalBytesRead < len) && (readCallBytesRead > 0) && (info->cancelRead == 0))

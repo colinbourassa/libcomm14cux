@@ -76,7 +76,7 @@ int main(int argc, char** argv)
             retVal = -3;
         }
 
-        _14cux_disconnect(info);
+        _14cux_disconnect(&info);
     }
     else
     {
