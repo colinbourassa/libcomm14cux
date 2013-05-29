@@ -72,7 +72,6 @@ if (MINGW)
   target_link_libraries (read14cux comm14cux)
 
   install (FILES ${SOURCE_SUBDIR}/comm14cux.h
-                 ${SOURCE_SUBDIR}/comm14cux_version.h
            DESTINATION "include")
   install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.dll
            DESTINATION ".")
@@ -139,7 +138,6 @@ else()
   # set the installation destinations for the header files,
   # shared library binaries, and reference utility
   install (FILES ${SOURCE_SUBDIR}/comm14cux.h
-                 ${SOURCE_SUBDIR}/comm14cux_version.h
            DESTINATION "include"
            PERMISSIONS
             OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
