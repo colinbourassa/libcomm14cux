@@ -49,7 +49,7 @@ void _14cux_init(cuxinfo *info)
     info->promRev = Comm14CUXDataOffsets_Unset;
     info->lastReadCoarseAddress = 0x0000;
     info->lastReadQuantity = 0x00;
-    info->cancelRead = 0;
+    info->cancelRead = false;
     info->lowestThrottleMeasurement = 0xffff;
     info->voltageFactorA = 0;
     info->voltageFactorB = 0;
@@ -113,9 +113,9 @@ void _14cux_disconnect(cuxinfo *info)
  * @return 1 if the serial device was successfully opened and its
  *   baud rate was set; 0 otherwise.
  */
-uint8_t _14cux_connect(cuxinfo *info, const char *devPath)
+bool _14cux_connect(cuxinfo *info, const char *devPath)
 {
-    uint8_t result = 0;
+    bool result = false;
 
 #if defined(WIN32)
 
@@ -159,9 +159,9 @@ uint8_t _14cux_connect(cuxinfo *info, const char *devPath)
  * Example: /dev/cuaU0 (instead of /dev/ttyU0)
  * @return 1 if the open/setup was successful, 0 otherwise
  */
-uint8_t _14cux_openSerial(cuxinfo *info, const char *devPath)
+bool _14cux_openSerial(cuxinfo *info, const char *devPath)
 {
-    uint8_t retVal = 0;
+    bool retVal = false;
 
 #if defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
     // Most UNIXes can handle the serial port in a similar fashion (using
@@ -249,7 +249,7 @@ uint8_t _14cux_openSerial(cuxinfo *info, const char *devPath)
                 if (ioctl(info->sd, TIOCSSERIAL, &serial_info) != -1)
                 {
                     dprintf_info("14CUX(info): Baud rate setting successful.\n");
-                    retVal = 1;
+                    retVal = true;
                 }
             }
         }
@@ -260,7 +260,7 @@ uint8_t _14cux_openSerial(cuxinfo *info, const char *devPath)
             speed_t speed = _14CUX_Baud;
             if (ioctl(info->sd, IOSSIOSPEED, &speed) != -1)
             {
-                retVal = 1;
+                retVal = true;
             }
             else
             {
@@ -272,7 +272,7 @@ uint8_t _14cux_openSerial(cuxinfo *info, const char *devPath)
 #endif
 
         // close the device if it couldn't be configured
-        if (retVal == 0)
+        if (retVal == false)
         {
             close(info->sd);
         }
@@ -320,7 +320,7 @@ uint8_t _14cux_openSerial(cuxinfo *info, const char *devPath)
 
                 if (SetCommTimeouts(info->sd, &commTimeouts) == TRUE)
                 {
-                    retVal = 1;
+                    retVal = true;
                 }
             }
         }
@@ -356,9 +356,9 @@ uint8_t _14cux_openSerial(cuxinfo *info, const char *devPath)
 /**
  * Checks the file descriptor for the serial device to determine if it has
  * already been opened.
- * @return 1 if the serial device is open; 0 otherwise.
+ * @return True if the serial device is open; false otherwise.
  */
-uint8_t _14cux_isConnected(cuxinfo* info)
+bool _14cux_isConnected(cuxinfo* info)
 {
 #if defined(WIN32)
     return (info->sd != INVALID_HANDLE_VALUE);

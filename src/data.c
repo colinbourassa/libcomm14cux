@@ -20,10 +20,10 @@
 /**
  * Dumps the entire contents of the 14CUX PROM and places it in a buffer.
  * @param buffer Buffer of at least 16KB.
- * @return 1 when the PROM was read and the buffer was successfully
- *   populated; 0 otherwise.
+ * @return True when the PROM was read and the buffer was successfully
+ *   populated; false otherwise.
  */
-uint8_t _14cux_dumpROM(cuxinfo* info, uint8_t* buffer)
+bool _14cux_dumpROM(cuxinfo* info, uint8_t* buffer)
 {
     return _14cux_readMem(info, _14CUX_ROMAddress, _14CUX_ROMSize, buffer);
 }
@@ -31,20 +31,20 @@ uint8_t _14cux_dumpROM(cuxinfo* info, uint8_t* buffer)
 /**
  * Gets the measured road speed of the vehicle in miles per hour.
  * @param roadSpeed Set to road speed in miles per hour (if read successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getRoadSpeed(cuxinfo* info, uint16_t* roadSpeed)
+bool _14cux_getRoadSpeed(cuxinfo* info, uint16_t* roadSpeed)
 {
     uint8_t speed = 0;
     float floatSpeed = 0.0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_RoadSpeedOffset, 1, &speed))
     {
         // convert KPH to MPH
         floatSpeed = speed * 0.621371192;
         *roadSpeed = (uint16_t)floatSpeed;
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -53,17 +53,17 @@ uint8_t _14cux_getRoadSpeed(cuxinfo* info, uint16_t* roadSpeed)
 /**
  * Gets the temperature of the engine coolant in degrees Fahrenheit.
  * @param coolantTemp Set to the coolant temperature (if read successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getCoolantTemp(cuxinfo* info, int16_t* coolantTemp)
+bool _14cux_getCoolantTemp(cuxinfo* info, int16_t* coolantTemp)
 {
     uint8_t count = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_CoolantTempOffset, 1, &count))
     {
         *coolantTemp = (int16_t)(_14cux_hyperbolicOffsetModel(count));
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -72,17 +72,17 @@ uint8_t _14cux_getCoolantTemp(cuxinfo* info, int16_t* coolantTemp)
 /**
  * Gets the temperature of the fuel in degrees Fahrenheit.
  * @param fuelTemp Set to the fuel temperature (if read successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getFuelTemp(cuxinfo* info, int16_t* fuelTemp)
+bool _14cux_getFuelTemp(cuxinfo* info, int16_t* fuelTemp)
 {
     uint8_t count = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_FuelTempOffset, 1, &count))
     {
         *fuelTemp = (int16_t)(_14cux_hyperbolicOffsetModel(count));
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -95,24 +95,24 @@ uint8_t _14cux_getFuelTemp(cuxinfo* info, int16_t* fuelTemp)
  *   linearly with airflow.
  * @param mafReading Set to MAF measurement as a percentage of the highest
  *   possible measurement (if read successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getMAFReading(cuxinfo* info, const enum Comm14CUXAirflowType type, float *mafReading)
+bool _14cux_getMAFReading(cuxinfo* info, const enum Comm14CUXAirflowType type, float *mafReading)
 {
     uint16_t maf = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if ((type == Comm14CUXAirflowType_Direct) &&
         _14cux_readMem(info, _14CUX_MassAirflowDirectOffset, 2, (uint8_t*)&maf))
     {
         *mafReading = swapShort(maf) / 1023.0;
-        retVal = 1;
+        retVal = true;
     }
     else if ((type == Comm14CUXAirflowType_Linearized) &&
              _14cux_readMem(info, _14CUX_MassAirflowLinearOffset, 2, (uint8_t*)&maf))
     {
         *mafReading = swapShort(maf) / 17290.0;
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -123,12 +123,12 @@ uint8_t _14cux_getMAFReading(cuxinfo* info, const enum Comm14CUXAirflowType type
  * opening.
  * @param bypassMotorPos Set to the idle bypass position as a percentage of
  *   wide-open
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getIdleBypassMotorPosition(cuxinfo* info, float* bypassMotorPos)
+bool _14cux_getIdleBypassMotorPosition(cuxinfo* info, float* bypassMotorPos)
 {
     uint8_t pos = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_IdleBypassPositionOffset, 1, &pos))
     {
@@ -139,7 +139,7 @@ uint8_t _14cux_getIdleBypassMotorPosition(cuxinfo* info, float* bypassMotorPos)
         }
 
         *bypassMotorPos = (180 - pos) / 180.0;
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -148,12 +148,12 @@ uint8_t _14cux_getIdleBypassMotorPosition(cuxinfo* info, float* bypassMotorPos)
 /**
  * Gets the engine (crankshaft) speed in revolutions per minute.
  * @param engineRPM Set to engine speed in RPM (if read successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getEngineRPM(cuxinfo* info, uint16_t* engineRPM)
+bool _14cux_getEngineRPM(cuxinfo* info, uint16_t* engineRPM)
 {
     uint16_t pulseWidth = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_EngineSpeedFilteredOffset, 2, (uint8_t*)&pulseWidth))
     {
@@ -168,7 +168,7 @@ uint8_t _14cux_getEngineRPM(cuxinfo* info, uint16_t* engineRPM)
         {
             *engineRPM = 7500000 / swapShort(pulseWidth);
         }
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -177,17 +177,17 @@ uint8_t _14cux_getEngineRPM(cuxinfo* info, uint16_t* engineRPM)
 /**
  * Gets the RPM limit in revolutions per minute.
  * @param rpmLimit Set to the RPM limit if read successfully
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getRPMLimit(cuxinfo* info, uint16_t* rpmLimit)
+bool _14cux_getRPMLimit(cuxinfo* info, uint16_t* rpmLimit)
 {
     uint16_t pulseWidth = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_RPMLimitOffset, 2, (uint8_t*)&pulseWidth))
     {
         *rpmLimit = 7500000 / swapShort(pulseWidth);
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -196,17 +196,17 @@ uint8_t _14cux_getRPMLimit(cuxinfo* info, uint16_t* rpmLimit)
 /**
  * Gets the current target idle speed.
  * @param targetIdleRPM Set to the current target idle speed (if read successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getTargetIdle(cuxinfo* info, uint16_t* targetIdleRPM)
+bool _14cux_getTargetIdle(cuxinfo* info, uint16_t* targetIdleRPM)
 {
     uint16_t targetIdle = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_TargetIdleSpeedOffset, 2, (uint8_t*)&targetIdle))
     {
         *targetIdleRPM = swapShort(targetIdle);
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -218,14 +218,14 @@ uint8_t _14cux_getTargetIdle(cuxinfo* info, uint16_t* targetIdleRPM)
  *   of the maximum reading of 1023), or a 'corrected' throttle reading (which is
  *   adjusted so that the lowest value read is shown as 0%)
  * @param throttlePos Set to throttle position as a percentage (if read successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getThrottlePosition(cuxinfo* info, const enum Comm14CUXThrottlePosType type, float* throttlePos)
+bool _14cux_getThrottlePosition(cuxinfo* info, const enum Comm14CUXThrottlePosType type, float* throttlePos)
 {
     uint16_t throttle = 0;
     uint16_t throttleMinPos = 0;
     uint16_t correctionOffset = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_ThrottlePositionOffset, 2, (uint8_t*)&throttle))
     {
@@ -258,12 +258,12 @@ uint8_t _14cux_getThrottlePosition(cuxinfo* info, const enum Comm14CUXThrottlePo
                     correctionOffset = throttleMinPos;
                 }
 
-                retVal = 1;
+                retVal = true;
             }
         }
         else
         {
-            retVal = 1;
+            retVal = true;
         }
 
         // subtract off the base offset (which is zero for an absolute reading, or
@@ -278,12 +278,12 @@ uint8_t _14cux_getThrottlePosition(cuxinfo* info, const enum Comm14CUXThrottlePo
  * Gets the transmission gear selection (neutral or drive).
  * @param gear Set to the currently-selected gear (park/neutral, drive/reverse,
  *   or manual gearbox.)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getGearSelection(cuxinfo* info, enum Comm14CUXGear* gear)
+bool _14cux_getGearSelection(cuxinfo* info, enum Comm14CUXGear* gear)
 {
     uint8_t nSwitch = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_TransmissionGearOffset, 1, &nSwitch))
     {
@@ -302,7 +302,7 @@ uint8_t _14cux_getGearSelection(cuxinfo* info, enum Comm14CUXGear* gear)
             *gear = Comm14CUXGear_ManualGearbox;
         }
 
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -376,13 +376,13 @@ void _14cux_determineDataOffsets(cuxinfo *info)
 /**
  * Gets the main voltage being supplied to the ECU.
  * @param mainVoltage Set to the main relay voltage (if read successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getMainVoltage(cuxinfo* info, float* mainVoltage)
+bool _14cux_getMainVoltage(cuxinfo* info, float* mainVoltage)
 {
     uint16_t storedVal = 0;
     uint16_t adcCount = 0;
-    uint8_t retVal = 0;
+    bool retVal = false;
     uint8_t readCoefficients = 0;
 
     if ((info->voltageFactorA != 0) &&
@@ -440,7 +440,7 @@ uint8_t _14cux_getMainVoltage(cuxinfo* info, float* mainVoltage)
         // follow the linear mapping between ADC and voltage to get the main voltage
         *mainVoltage = (0.07 * adcCount) - 0.09;
 
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -451,12 +451,12 @@ uint8_t _14cux_getMainVoltage(cuxinfo* info, float* mainVoltage)
  * @param fuelMapId ID of the fuel map, from 0 to 5
  * @param adjustmentFactor Set to the adjustment factor read at the end of the map
  * @param buffer Buffer of at least 128 bytes (16 cols x 8 rows)
- * @return 1 if the fuel map was successfully read; 0 if an invalid
+ * @return True if the fuel map was successfully read; 0 if an invalid
  *   fuel map ID was given or if reading failed
  */
-uint8_t _14cux_getFuelMap(cuxinfo* info, const uint8_t fuelMapId, uint16_t* adjustmentFactor, uint8_t* buffer)
+bool _14cux_getFuelMap(cuxinfo* info, const uint8_t fuelMapId, uint16_t* adjustmentFactor, uint8_t* buffer)
 {
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     // check that the map ID is valid
     if (fuelMapId <= 5)
@@ -529,7 +529,7 @@ uint8_t _14cux_getFuelMap(cuxinfo* info, const uint8_t fuelMapId, uint16_t* adju
                 _14cux_readMem(info, offset + _14CUX_FuelMapSize, 2, (uint8_t*)&adjFactor))
             {
                 *adjustmentFactor = swapShort(adjFactor);
-                retVal = 1;
+                retVal = true;
             }
         }
     }
@@ -544,17 +544,17 @@ uint8_t _14cux_getFuelMap(cuxinfo* info, const uint8_t fuelMapId, uint16_t* adju
  * lockout that prevents the selection of any map other than Map 5.
  * @param fuelMapId Set to the index of the fuel map currently in use (if read
  *  successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getCurrentFuelMap(cuxinfo* info, uint8_t* fuelMapId)
+bool _14cux_getCurrentFuelMap(cuxinfo* info, uint8_t* fuelMapId)
 {
     uint8_t id = 0xff;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_CurrentFuelMapIdOffset, 1, &id))
     {
         *fuelMapId = id;
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -564,12 +564,12 @@ uint8_t _14cux_getCurrentFuelMap(cuxinfo* info, uint8_t* fuelMapId)
  * Gets the current fuel map row index.
  * @param fuelMapRowIndex Set to the row index of the fuel map (if read
  *  successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getFuelMapRowIndex(cuxinfo* info, uint8_t* fuelMapRowIndex)
+bool _14cux_getFuelMapRowIndex(cuxinfo* info, uint8_t* fuelMapRowIndex)
 {
     uint8_t rowIndex = 0xff;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_FuelMapRowIndexOffset, 1, &rowIndex))
     {
@@ -586,7 +586,7 @@ uint8_t _14cux_getFuelMapRowIndex(cuxinfo* info, uint8_t* fuelMapRowIndex)
         {
             *fuelMapRowIndex += 1;
         }
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -596,12 +596,12 @@ uint8_t _14cux_getFuelMapRowIndex(cuxinfo* info, uint8_t* fuelMapRowIndex)
  * Gets the current fuel map column index.
  * @param fuelMapColIndex Set to the column index of the fuel map (if read
  *  successfully)
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getFuelMapColumnIndex(cuxinfo* info, uint8_t* fuelMapColIndex)
+bool _14cux_getFuelMapColumnIndex(cuxinfo* info, uint8_t* fuelMapColIndex)
 {
     uint8_t colIndex = 0xff;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_FuelMapColumnIndexOffset, 1, &colIndex))
     {
@@ -618,7 +618,7 @@ uint8_t _14cux_getFuelMapColumnIndex(cuxinfo* info, uint8_t* fuelMapColIndex)
         {
             *fuelMapColIndex += 1;
         }
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -630,11 +630,11 @@ uint8_t _14cux_getFuelMapColumnIndex(cuxinfo* info, uint8_t* fuelMapColIndex)
  * @param bank Bank of the engine (left or right)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getLambdaTrimShort(cuxinfo* info, const enum Comm14CUXBank bank, int16_t* lambdaTrim)
+bool _14cux_getLambdaTrimShort(cuxinfo* info, const enum Comm14CUXBank bank, int16_t* lambdaTrim)
 {
-    uint8_t retVal = 0;
+    bool retVal = false;
     uint16_t fuelTrimRaw = 0;
     uint16_t offset = 0;
 
@@ -651,7 +651,7 @@ uint8_t _14cux_getLambdaTrimShort(cuxinfo* info, const enum Comm14CUXBank bank, 
     {
         // compute the number of "fueling counts" (will be between -256 and +255)
         *lambdaTrim = ((swapShort(fuelTrimRaw) / 0x80) - 0x100);
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -664,11 +664,11 @@ uint8_t _14cux_getLambdaTrimShort(cuxinfo* info, const enum Comm14CUXBank bank, 
  * @param bank Bank of the engine (left or right)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
- * @return 1 if successfully read; 0 otherwise
+ * @return True if successfully read; false otherwise
  */
-uint8_t _14cux_getLambdaTrimLong(cuxinfo* info, const enum Comm14CUXBank bank, int16_t* lambdaTrim)
+bool _14cux_getLambdaTrimLong(cuxinfo* info, const enum Comm14CUXBank bank, int16_t* lambdaTrim)
 {
-    uint8_t retVal = 0;
+    bool retVal = false;
     uint16_t fuelTrimRaw = 0;
     uint16_t offset = 0;
 
@@ -685,7 +685,7 @@ uint8_t _14cux_getLambdaTrimLong(cuxinfo* info, const enum Comm14CUXBank bank, i
     {
         // compute the number of "fueling counts" (will be between -256 and +255),
         *lambdaTrim = (swapShort(fuelTrimRaw) / 0x80) - 0x100;
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -694,20 +694,20 @@ uint8_t _14cux_getLambdaTrimLong(cuxinfo* info, const enum Comm14CUXBank bank, i
 /**
  * Populates the supplied struct with fault code data read from the ECU.
  * @param faultCodes Struct to populate with current fault code data
- * @return 1 when the fault code data was successfully read and
+ * @return True when the fault code data was successfully read and
  *   the struct populated; 0 when an error occurred
  */
-uint8_t _14cux_getFaultCodes(cuxinfo* info, Comm14CUXFaultCodes *faultCodes)
+bool _14cux_getFaultCodes(cuxinfo* info, Comm14CUXFaultCodes *faultCodes)
 {
     return _14cux_readMem(info, _14CUX_FaultCodesOffset, sizeof(Comm14CUXFaultCodes), (uint8_t*)faultCodes);
 }
 
 /**
  * Clears the stored fault codes in the ECU
- * @return 1 when the fault code data was successfully cleared;
+ * @return True when the fault code data was successfully cleared;
  *   0 when an error occurred
  */
-uint8_t _14cux_clearFaultCodes(cuxinfo* info)
+bool _14cux_clearFaultCodes(cuxinfo* info)
 {
     uint8_t writeSuccess = 1;
     int faultCodeBlockSize = sizeof(Comm14CUXFaultCodes);
@@ -732,17 +732,17 @@ uint8_t _14cux_clearFaultCodes(cuxinfo* info)
  * Gets the state of the line driving the fuel pump relay.
  * @param fuelPumpRelayState Set to 1 when the fuel pump relay is closed,
  *  or 0 when it's open
- * @return 1 when the relay state was successfully read; 0 otherwise
+ * @return True when the relay state was successfully read; false otherwise
  */
-uint8_t _14cux_getFuelPumpRelayState(cuxinfo* info, uint8_t* fuelPumpRelayState)
+bool _14cux_getFuelPumpRelayState(cuxinfo* info, bool* fuelPumpRelayState)
 {
     uint8_t port1Data = 0x00;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_Port1Offset, 1, &port1Data))
     {
         *fuelPumpRelayState = !(port1Data & 0x40);
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -751,13 +751,13 @@ uint8_t _14cux_getFuelPumpRelayState(cuxinfo* info, uint8_t* fuelPumpRelayState)
 /**
  * Gets the tune revision of the code in the PROM.
  * @param tuneRevision Decimal representation of the tune revision
- * @return 1 when the read was successful, 0 otherwise
+ * @return True when the read was successful, false otherwise
  */
-uint8_t _14cux_getTuneRevision(cuxinfo* info, uint16_t* tuneRevision)
+bool _14cux_getTuneRevision(cuxinfo* info, uint16_t* tuneRevision)
 {
     uint8_t tuneRevHex[2];
     char tuneRevStr[4];
-    uint8_t retVal = 0;
+    bool retVal = false;
     int byteIdx = 0;
 
     if (_14cux_readMem(info, _14CUX_TuneRevisionOffset, 2, tuneRevHex))
@@ -769,7 +769,7 @@ uint8_t _14cux_getTuneRevision(cuxinfo* info, uint16_t* tuneRevision)
                             (((tuneRevHex[byteIdx] >> 4) * 10) + // high nibble of current byte
                             (tuneRevHex[byteIdx] & 0x0F));       // low nibble of current byte
         }
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -777,19 +777,19 @@ uint8_t _14cux_getTuneRevision(cuxinfo* info, uint16_t* tuneRevision)
 
 /**
  * Gets a flag indicating whether the ECU is in "idle mode"
- * @param idleMode Set to 1 when the ECU is driving an idle speed,
- *   0 otherwise
- * @return 1 when the read was successful, 0 otherwise
+ * @param idleMode Set to true when the ECU is driving an idle speed,
+ *   false otherwise
+ * @return True when the read was successful, false otherwise
  */
-uint8_t _14cux_getIdleMode(cuxinfo* info, uint8_t* idleMode)
+bool _14cux_getIdleMode(cuxinfo* info, bool* idleMode)
 {
     uint8_t idleModeByte;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_IdleModeOffset, 1, &idleModeByte))
     {
         *idleMode = ((idleModeByte & 0x01) == 0x01);
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -799,18 +799,18 @@ uint8_t _14cux_getIdleMode(cuxinfo* info, uint8_t* idleMode)
  * Gets the state of the Malfunction Indicator Lamp (MIL). Note that
  * a MIL implies that at least one fault code is set, but not every
  * fault code will trigger a MIL.
- * @param milOn Set to 1 when the MIL is lit, 0 otherwise
- * @return 1 when the read was successful, 0 otherwise
+ * @param milOn Set to true when the MIL is lit, false otherwise
+ * @return True when the read was successful, false otherwise
  */
-uint8_t _14cux_isMILOn(cuxinfo* info, uint8_t* milOn)
+bool _14cux_isMILOn(cuxinfo* info, bool* milOn)
 {
     uint8_t portData;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     if (_14cux_readMem(info, _14CUX_Port1Offset, 1, &portData))
     {
         *milOn = !(portData & 0x01);
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -819,19 +819,19 @@ uint8_t _14cux_isMILOn(cuxinfo* info, uint8_t* milOn)
 /**
  * Closes the fuel pump relay to run the pump for a single timeout period
  * (approximately two seconds).
- * @return 1 when the port and timer were written correctly; 0
+ * @return True when the port and timer were written correctly; 0
  *   otherwise.
  */
-uint8_t _14cux_runFuelPump(cuxinfo* info)
+bool _14cux_runFuelPump(cuxinfo* info)
 {
-    uint8_t retVal = 0;
+    bool retVal = false;
     uint8_t port1State = 0x00;
 
     if (_14cux_readMem(info, _14CUX_Port1Offset, 1, &port1State) &&
         _14cux_writeMem(info, _14CUX_FuelPumpTimerOffset, 0xFF) &&
         _14cux_writeMem(info, _14CUX_Port1Offset, port1State & 0xBF))
     {
-        retVal = 1;
+        retVal = true;
     }
 
     return retVal;
@@ -842,14 +842,14 @@ uint8_t _14cux_runFuelPump(cuxinfo* info)
  * @param direction Direction of travel for the motor; 0 opens the valve
  *  and 1 closes it
  * @param steps Number of steps to travel in the specified direction
- * @return 1 when the command was written successfully; 0 otherwise
+ * @return True when the command was written successfully; false otherwise
  */
-uint8_t _14cux_driveIdleAirControlMotor(cuxinfo* info, const uint8_t direction, const uint8_t steps)
+bool _14cux_driveIdleAirControlMotor(cuxinfo* info, const uint8_t direction, const uint8_t steps)
 {
     // Bit 0 in 0x008A determines the direction of motion;
     //  0 opens the valve and 1 closes it
 
-    uint8_t retVal = 0;
+    bool retVal = false;
     uint8_t iacDirection = 0x00;
 
     if (_14cux_readMem(info, 0x008A, 1, &iacDirection))

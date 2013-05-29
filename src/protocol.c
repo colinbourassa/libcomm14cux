@@ -139,7 +139,7 @@ void _14cux_testWrite(void)
  * @param buffer Pointer to a buffer of at least len bytes
  * @return 1 when the operation was successful; 0 otherwise
  */
-uint8_t _14cux_readMem(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t* buffer)
+bool _14cux_readMem(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t* buffer)
 {
 #if defined(WIN32)
     if (WaitForSingleObject(info->mutex, INFINITE) != WAIT_OBJECT_0)
@@ -153,9 +153,9 @@ uint8_t _14cux_readMem(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t* buff
     uint16_t totalBytesRead = 0;
     uint16_t singleReqQuantity = 0;
     uint16_t singleReqBytesRead = 0;
-    uint8_t readSuccess = 0;
+    bool readSuccess = false;
     int16_t readCallBytesRead = 1;
-    uint8_t sendLastByteOnly = 0;
+    bool sendLastByteOnly = false;
 
     info->cancelRead = 0;
 
@@ -225,7 +225,7 @@ uint8_t _14cux_readMem(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t* buff
     if (totalBytesRead == len)
     {
         dprintf_info("14CUX(info): Successfully read all requested bytes.\n");
-        readSuccess = 1;
+        readSuccess = true;
     }
     else
     {
@@ -248,11 +248,11 @@ uint8_t _14cux_readMem(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t* buff
  * @param len Number of bytes to read
  * @param lastByteOnly Send only the last byte of the read command; this will
  *      work only if the coarse address was previously set.
- * @return 1 when the read command is successfully sent; 0 otherwise
+ * @return True when the read command is successfully sent; false otherwise
  */
-uint8_t _14cux_sendReadCmd(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t lastByteOnly)
+bool _14cux_sendReadCmd(cuxinfo* info, uint16_t addr, uint16_t len, bool lastByteOnly)
 {
-    uint8_t success = 0;
+    bool success = 0;
     uint8_t cmdByte = 0;
 
     // do the command-agnostic coarse address setup
@@ -276,7 +276,7 @@ uint8_t _14cux_sendReadCmd(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t l
             // Because of this, we can consider the command
             // successfully sent without checking for an echo
             // of the last byte.
-            success = 1;
+            success = true;
         }
         else
         {
@@ -293,11 +293,11 @@ uint8_t _14cux_sendReadCmd(cuxinfo* info, uint16_t addr, uint16_t len, uint8_t l
  * the 16-bit address.
  * @param addr Memory address at which the read will occur.
  * @param len Number of bytes to retrieve when the read operation is executed.
- * @return 1 when a valid read length was supplied, the bytes were
+ * @return True when a valid read length was supplied, the bytes were
  *   successfully sent to the 14CUX, and the same bytes were echoed in reply;
- *   0 otherwise.
+ *   false otherwise.
  */
-uint8_t _14cux_setReadCoarseAddr(cuxinfo* info, uint16_t addr, uint16_t len)
+bool _14cux_setReadCoarseAddr(cuxinfo* info, uint16_t addr, uint16_t len)
 {
     return _14cux_setCoarseAddr(info, addr, len);
 }
@@ -310,7 +310,7 @@ uint8_t _14cux_setReadCoarseAddr(cuxinfo* info, uint16_t addr, uint16_t len)
  * @return 1 when the bytes were successfully sent to the 14CUX and the
  *   same bytes were echoed in reply; 0 otherwise.
  */
-uint8_t _14cux_setWriteCoarseAddr(cuxinfo* info, uint16_t addr)
+bool _14cux_setWriteCoarseAddr(cuxinfo* info, uint16_t addr)
 {
     return _14cux_setCoarseAddr(info, addr, 0x00);
 }
@@ -321,14 +321,14 @@ uint8_t _14cux_setWriteCoarseAddr(cuxinfo* info, uint16_t addr)
  * the 14CUX will ignore the length.
  * @param addr Memory address at which the read or write will occur.
  * @param len Number of bytes to retrieve when the read operation is executed.
- * @return 1 when the command bytes were sent and echoed properly; 0 otherwise
+ * @return True when the command bytes were sent and echoed properly; false otherwise
  */
-uint8_t _14cux_setCoarseAddr(cuxinfo* info, uint16_t addr, uint16_t len)
+bool _14cux_setCoarseAddr(cuxinfo* info, uint16_t addr, uint16_t len)
 {
     uint8_t firstByte = 0x00;
     uint8_t secondByte = 0x00;
     uint8_t readByte = 0x00;
-    uint8_t retVal = 0;
+    bool retVal = false;
 
     dprintf_info("14CUX(info): Sending command to set coarse address...\n");
 
@@ -392,7 +392,7 @@ uint8_t _14cux_setCoarseAddr(cuxinfo* info, uint16_t addr, uint16_t len)
             (_14cux_readSerialBytes(info, &readByte, 1) == 1) &&
             (readByte == secondByte))
         {
-            retVal = 1;
+            retVal = true;
         }
     }
 
@@ -403,9 +403,9 @@ uint8_t _14cux_setCoarseAddr(cuxinfo* info, uint16_t addr, uint16_t len)
  * Writes the specified byte to the specified location in memory.
  * @param addr 16-bit address at which to write
  * @param val 8-bit value to write at specified location
- * @return 1 when byte was written successfully; 0 otherwise
+ * @return True when byte was written successfully; false otherwise
  */
-uint8_t _14cux_writeMem(cuxinfo *info, uint16_t addr, uint8_t val)
+bool _14cux_writeMem(cuxinfo *info, uint16_t addr, uint8_t val)
 {
 #if defined(WIN32)
     if (WaitForSingleObject(info->mutex, INFINITE) != WAIT_OBJECT_0)
@@ -416,7 +416,7 @@ uint8_t _14cux_writeMem(cuxinfo *info, uint16_t addr, uint8_t val)
     pthread_mutex_lock(&info->mutex);
 #endif
 
-    uint8_t retVal = 0;
+    bool retVal = false;
     uint8_t cmdByte = 0x00;
     uint8_t readByte = 0x00;
 
@@ -441,7 +441,7 @@ uint8_t _14cux_writeMem(cuxinfo *info, uint16_t addr, uint8_t val)
                 (_14cux_readSerialBytes(info, &readByte, 1) == 1) &&
                 (readByte == val))
             {
-                retVal = 1;
+                retVal = false;
             }
         }
     }
