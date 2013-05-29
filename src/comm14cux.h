@@ -47,6 +47,10 @@
   #define dprintf_info
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //! First byte-count threshold for reading
 extern const uint16_t _14CUX_ReadCount0;
 //! Second byte-count threshold for reading
@@ -429,6 +433,11 @@ void _14cux_cancelRead(cuxinfo* info);
 
 #if 0
     void testWrite();
+#endif
+
+/* Closing brace for 'extern "C"' */
+#ifdef __cplusplus
+}
 #endif
 
 #endif // COMM14CUX_H
