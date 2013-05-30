@@ -28,6 +28,7 @@
 
 #include "comm14cux.h"
 #include "comm14cux_internal.h"
+#include "comm14cux_version.h"
 
 #if defined(WIN32)
 uint16_t swapShort(const uint16_t source)
@@ -44,9 +45,9 @@ uint16_t swapShort(const uint16_t source)
 }
 #endif
 
-void _14cux_init(cuxinfo *info)
+void c14cux_init(c14cux_info *info)
 {
-    info->promRev = Comm14CUXDataOffsets_Unset;
+    info->promRev = C14CUX_DataOffsets_Unset;
     info->lastReadCoarseAddress = 0x0000;
     info->lastReadQuantity = 0x00;
     info->cancelRead = false;
@@ -67,9 +68,9 @@ void _14cux_init(cuxinfo *info)
 /**
  * Returns version information for this build of the library.
  */
-Comm14CUXVersion _14cux_getLibraryVersion()
+c14cux_version c14cux_getLibraryVersion()
 {
-    Comm14CUXVersion ver;
+    c14cux_version ver;
 
     ver.major = COMM14CUX_VER_MAJOR;
     ver.minor = COMM14CUX_VER_MINOR;
@@ -81,12 +82,12 @@ Comm14CUXVersion _14cux_getLibraryVersion()
 /**
  * Closes the serial device.
  */
-void _14cux_disconnect(cuxinfo *info)
+void c14cux_disconnect(c14cux_info *info)
 {
 #if defined(WIN32)
     if (WaitForSingleObject(info->mutex, INFINITE) == WAIT_OBJECT_0)
     {
-        if (_14cux_isConnected(info))
+        if (c14cux_isConnected(info))
         {
             CloseHandle(info->sd);
             info->sd = INVALID_HANDLE_VALUE;
@@ -97,7 +98,7 @@ void _14cux_disconnect(cuxinfo *info)
 #else
     pthread_mutex_lock(&info->mutex);
 
-    if (_14cux_isConnected(info))
+    if (c14cux_isConnected(info))
     {
         close(info->sd);
         info->sd = 0;
@@ -110,10 +111,10 @@ void _14cux_disconnect(cuxinfo *info)
 /**
  * Opens the serial port (or returns with success if it is already open.)
  * @param devPath Full path to the serial device (e.g. "/dev/ttyUSB0" or "COM2")
- * @return 1 if the serial device was successfully opened and its
- *   baud rate was set; 0 otherwise.
+ * @return True if the serial device was successfully opened and its
+ *   baud rate was set; false otherwise.
  */
-bool _14cux_connect(cuxinfo *info, const char *devPath)
+bool c14cux_connect(c14cux_info *info, const char *devPath)
 {
     bool result = false;
 
@@ -121,7 +122,7 @@ bool _14cux_connect(cuxinfo *info, const char *devPath)
 
     if (WaitForSingleObject(info->mutex, INFINITE) == WAIT_OBJECT_0)
     {
-        result = _14cux_isConnected(info) || _14cux_openSerial(info, devPath);
+        result = c14cux_isConnected(info) || c14cux_openSerial(info, devPath);
         ReleaseMutex(info->mutex);
         dprintf_info("14CUX(info): Connected (Win32)\n");
     }
@@ -133,7 +134,7 @@ bool _14cux_connect(cuxinfo *info, const char *devPath)
 #else // Linux/Unix
 
     pthread_mutex_lock(&info->mutex);
-    result = _14cux_isConnected(info) || _14cux_openSerial(info, devPath);
+    result = c14cux_isConnected(info) || c14cux_openSerial(info, devPath);
     pthread_mutex_unlock(&info->mutex);
     if (result)
     {
@@ -157,9 +158,9 @@ bool _14cux_connect(cuxinfo *info, const char *devPath)
  * on the open() call while waiting for a carrier detect line, which
  * will never be asserted. Instead, use the equivalent cuaX device.
  * Example: /dev/cuaU0 (instead of /dev/ttyU0)
- * @return 1 if the open/setup was successful, 0 otherwise
+ * @return True if the open/setup was successful, false otherwise
  */
-bool _14cux_openSerial(cuxinfo *info, const char *devPath)
+bool c14cux_openSerial(c14cux_info *info, const char *devPath)
 {
     bool retVal = false;
 
@@ -244,7 +245,7 @@ bool _14cux_openSerial(cuxinfo *info, const char *devPath)
             if (ioctl(info->sd, TIOCGSERIAL, &serial_info) != -1)
             {
                 serial_info.flags = ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
-                serial_info.custom_divisor = serial_info.baud_base / _14CUX_Baud;
+                serial_info.custom_divisor = serial_info.baud_base / C14CUX_BAUD;
 
                 if (ioctl(info->sd, TIOCSSERIAL, &serial_info) != -1)
                 {
@@ -257,7 +258,7 @@ bool _14cux_openSerial(cuxinfo *info, const char *devPath)
         // OS X requires an ioctl() to set a nonstandard baud rate
         if (success)
         {
-            speed_t speed = _14CUX_Baud;
+            speed_t speed = C14CUX_BAUD;
             if (ioctl(info->sd, IOSSIOSPEED, &speed) != -1)
             {
                 retVal = true;
@@ -300,7 +301,7 @@ bool _14cux_openSerial(cuxinfo *info, const char *devPath)
         if (GetCommState(info->sd, &dcb) == TRUE)
         {
             // set the serial port parameters, including the custom baud rate
-            dcb.BaudRate = _14CUX_Baud;
+            dcb.BaudRate = C14CUX_BAUD;
             dcb.fParity = FALSE;
             dcb.fOutxCtsFlow = FALSE;
             dcb.fOutxDsrFlow = FALSE;
@@ -358,7 +359,7 @@ bool _14cux_openSerial(cuxinfo *info, const char *devPath)
  * already been opened.
  * @return True if the serial device is open; false otherwise.
  */
-bool _14cux_isConnected(cuxinfo* info)
+bool c14cux_isConnected(c14cux_info* info)
 {
 #if defined(WIN32)
     return (info->sd != INVALID_HANDLE_VALUE);

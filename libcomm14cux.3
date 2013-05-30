@@ -18,13 +18,15 @@ The library allows read access to arbitrary memory locations, and also provides 
 be used to change data stored in the ROM, such as fuel maps.)
 
 .SH EXAMPLE
-Comm14CUX *ecu = new Comm14CUX();
+c14cux_info info;
+.br
+c14cux_init(&info);
 .br
 .nf
-if (ecu->connect("/dev/ttyUSB0"))
+if (c14cux_connect(&info, "/dev/ttyUSB0"))
 {
     uint16_t speedMPH = 0;
-    bool readSuccess = ecu->getRoadSpeed(speedMPH);
+    bool readSuccess = c14cux_getRoadSpeed(&info, &speedMPH);
 }
 
 .SH RESOURCES

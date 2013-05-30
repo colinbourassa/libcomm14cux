@@ -40,8 +40,7 @@ configure_file (
 
 add_library (comm14cux SHARED ${SOURCE_SUBDIR}/setup.c
                               ${SOURCE_SUBDIR}/protocol.c
-                              ${SOURCE_SUBDIR}/data.c
-                              ${SOURCE_SUBDIR}/constants.c)
+                              ${SOURCE_SUBDIR}/data.c)
 target_link_libraries (comm14cux m)
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.c)
 

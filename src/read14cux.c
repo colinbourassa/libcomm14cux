@@ -8,13 +8,13 @@ int main(int argc, char** argv)
     uint8_t readBuf[0x10000];
     uint16_t addr;
     uint16_t len;
-    Comm14CUXVersion ver;
-    cuxinfo info;
+    c14cux_version ver;
+    c14cux_info info;
     FILE *fp;
     int retVal = 0;
     int bytePos = 0;
 
-    ver = _14cux_getLibraryVersion();
+    ver = c14cux_getLibraryVersion();
 
     if (argc < 4)
     {
@@ -26,11 +26,11 @@ int main(int argc, char** argv)
     addr = strtoul(argv[2], NULL, 0);
     len = strtoul(argv[3], NULL, 0);
 
-    _14cux_init(&info);
+    c14cux_init(&info);
 
-    if (_14cux_connect(&info, argv[1]))
+    if (c14cux_connect(&info, argv[1]))
     {
-        if (_14cux_readMem(&info, addr, len, readBuf))
+        if (c14cux_readMem(&info, addr, len, readBuf))
         {
             // if a filename was specified, write to the file rather than STDOUT
             if (argc >= 5)
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
             retVal = -3;
         }
 
-        _14cux_disconnect(&info);
+        c14cux_disconnect(&info);
     }
     else
     {
