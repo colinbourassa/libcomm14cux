@@ -1,6 +1,10 @@
 #ifndef COMM14CUX_H
 #define COMM14CUX_H
 
+/** \file comm14cux.h
+ * Header file defining the libcomm14cux functions, structs, and enums.
+ */
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -11,12 +15,14 @@
   #include <errno.h>
 #endif
 
-// Enhanced debug (bit masks)
-#define DEBUG_ERR  1            // print errors
-#define DEBUG_WARN 2            // print warnings
-#define DEBUG_INFO 4            // information
-
-#define DEBUG_ALL  7            // all
+/** Flag used to enable logging (to stdio) of error conditions */
+#define DEBUG_ERR  1
+/** Flag used to enable logging (to stdio) of warning conditions */
+#define DEBUG_WARN 2
+/** Flag used to enable logging (to stdio) of information */
+#define DEBUG_INFO 4
+/** Combination of all the available debug flags */
+#define DEBUG_ALL  7
 
 //#define DEBUG_P DEBUG_ALL
 
@@ -41,8 +47,11 @@
     #define dprintf_info
   #endif
 #else
+  /** Placeholder macro for error-condition debug logging */
   #define dprintf_err
+  /** Placeholder macro for warning-condition debug logging */
   #define dprintf_warn
+  /** Placeholder macro for informational debug logging */
   #define dprintf_info
 #endif
 
@@ -50,8 +59,13 @@
 extern "C" {
 #endif
 
+/** Baud rate of the 14CUX serial port */
 #define C14CUX_BAUD 7812
 
+/**
+ * Defines the possible byte quantities that may be requested
+ * via the serial protocol.
+ */
 enum c14cux_readcount
 {
     //! First byte-count threshold for reading
@@ -66,6 +80,10 @@ enum c14cux_readcount
     C14CUX_ReadCount4 = 0x0200
 };
 
+/**
+ * Defines the software values that correspond to the possible
+ * byte quantities that may be requested via the serial protocol.
+ */
 enum c14cux_readcount_value
 {
     //! 14CUX's table index for the ReadCount1 quantity
@@ -78,6 +96,9 @@ enum c14cux_readcount_value
     C14CUX_ReadCount4Value = 0x13
 };
 
+/**
+ * Sizes in bytes of certain fixed-size data structures within the ROM.
+ */
 enum c14cux_data_size
 {
     //! Size of the used portion of the 14CUX PROM
@@ -86,6 +107,9 @@ enum c14cux_data_size
     C14CUX_FuelMapSize = 0x80
 };
 
+/**
+ * Important memory offsets in the ECU's address space.
+ */
 enum c14cux_memory_offset
 {
     //! Starting address of the 14CUX PROM contents in RAM
@@ -188,7 +212,8 @@ enum c14cux_memory_offset
 };
 
 /**
- * 
+ * Hardcoded coefficients that are used in calculations based on the
+ * measured main voltage.
  */
 enum c14cux_main_voltage_factor
 {
@@ -372,6 +397,9 @@ enum c14cux_data_offset_rev
     C14CUX_DataOffsets_RevC = 0x03
 };
 
+/**
+ * Contains information about the state of the current connection to the ECU.
+ */
 typedef struct
 {
     //! Revision of the connected ECU (affecting fuel map locations)

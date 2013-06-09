@@ -30,6 +30,9 @@
 #include "comm14cux_internal.h"
 #include "comm14cux_version.h"
 
+/**
+ * Swaps multibyte big-endian data (from the ECU) into the local endianness.
+ */
 #if defined(WIN32)
 uint16_t swapShort(const uint16_t source)
 {
@@ -45,6 +48,11 @@ uint16_t swapShort(const uint16_t source)
 }
 #endif
 
+/**
+ * Sets initial values in the state-info struct.
+ * Note that this routine does not actually open the serial port or attempt
+ * to connect to the ECU; that requires c14cux_connect().
+ */
 void c14cux_init(c14cux_info *info)
 {
     info->promRev = C14CUX_DataOffsets_Unset;
@@ -110,6 +118,7 @@ void c14cux_disconnect(c14cux_info *info)
 
 /**
  * Opens the serial port (or returns with success if it is already open.)
+ * @param info State information for the current connection.
  * @param devPath Full path to the serial device (e.g. "/dev/ttyUSB0" or "COM2")
  * @return True if the serial device was successfully opened and its
  *   baud rate was set; false otherwise.

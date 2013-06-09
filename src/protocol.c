@@ -134,6 +134,7 @@ void c14cux_testWrite(void)
 
 /**
  * Reads the specified number of bytes from memory at the specified address.
+ * @param info State information for the active connection.
  * @param addr Address at which memory should be read.
  * @param len Number of bytes to read.
  * @param buffer Pointer to a buffer of at least len bytes
@@ -401,6 +402,7 @@ bool c14cux_setCoarseAddr(c14cux_info* info, uint16_t addr, uint16_t len)
 
 /**
  * Writes the specified byte to the specified location in memory.
+ * @param info State information for the active connection.
  * @param addr 16-bit address at which to write
  * @param val 8-bit value to write at specified location
  * @return True when byte was written successfully; false otherwise

@@ -19,6 +19,7 @@
 
 /**
  * Dumps the entire contents of the 14CUX PROM and places it in a buffer.
+ * @param info State information for the active connection.
  * @param buffer Buffer of at least 16KB.
  * @return True when the PROM was read and the buffer was successfully
  *   populated; false otherwise.
@@ -30,6 +31,7 @@ bool c14cux_dumpROM(c14cux_info* info, uint8_t* buffer)
 
 /**
  * Gets the measured road speed of the vehicle in miles per hour.
+ * @param info State information for the active connection.
  * @param roadSpeed Set to road speed in miles per hour (if read successfully)
  * @return True if successfully read; false otherwise
  */
@@ -52,6 +54,7 @@ bool c14cux_getRoadSpeed(c14cux_info* info, uint16_t* roadSpeed)
 
 /**
  * Gets the temperature of the engine coolant in degrees Fahrenheit.
+ * @param info State information for the active connection.
  * @param coolantTemp Set to the coolant temperature (if read successfully)
  * @return True if successfully read; false otherwise
  */
@@ -71,6 +74,7 @@ bool c14cux_getCoolantTemp(c14cux_info* info, int16_t* coolantTemp)
 
 /**
  * Gets the temperature of the fuel in degrees Fahrenheit.
+ * @param info State information for the active connection.
  * @param fuelTemp Set to the fuel temperature (if read successfully)
  * @return True if successfully read; false otherwise
  */
@@ -90,6 +94,7 @@ bool c14cux_getFuelTemp(c14cux_info* info, int16_t* fuelTemp)
 
 /**
  * Gets the mass airflow reading at the intake.
+ * @param info State information for the active connection.
  * @param type Type of reading to take. A "Direct" reading changes linearly
  *   with voltage but logarithmically with airflow, and "Linearized" changes
  *   linearly with airflow.
@@ -121,6 +126,7 @@ bool c14cux_getMAFReading(c14cux_info* info, const enum c14cux_airflow_type type
 /**
  * Gets the idle bypass motor position as a percentage of the widest possible
  * opening.
+ * @param info State information for the active connection.
  * @param bypassMotorPos Set to the idle bypass position as a percentage of
  *   wide-open
  * @return True if successfully read; false otherwise
@@ -147,6 +153,7 @@ bool c14cux_getIdleBypassMotorPosition(c14cux_info* info, float* bypassMotorPos)
 
 /**
  * Gets the engine (crankshaft) speed in revolutions per minute.
+ * @param info State information for the active connection.
  * @param engineRPM Set to engine speed in RPM (if read successfully)
  * @return True if successfully read; false otherwise
  */
@@ -176,6 +183,7 @@ bool c14cux_getEngineRPM(c14cux_info* info, uint16_t* engineRPM)
 
 /**
  * Gets the RPM limit in revolutions per minute.
+ * @param info State information for the active connection.
  * @param rpmLimit Set to the RPM limit if read successfully
  * @return True if successfully read; false otherwise
  */
@@ -195,6 +203,7 @@ bool c14cux_getRPMLimit(c14cux_info* info, uint16_t* rpmLimit)
 
 /**
  * Gets the current target idle speed.
+ * @param info State information for the active connection.
  * @param targetIdleRPM Set to the current target idle speed (if read successfully)
  * @return True if successfully read; false otherwise
  */
@@ -214,6 +223,7 @@ bool c14cux_getTargetIdle(c14cux_info* info, uint16_t* targetIdleRPM)
 
 /**
  * Gets the throttle position as a percentage of WOT.
+ * @param info State information for the active connection.
  * @param type Selects either an 'absolute' throttle reading (a simple percentage
  *   of the maximum reading of 1023), or a 'corrected' throttle reading (which is
  *   adjusted so that the lowest value read is shown as 0%)
@@ -276,6 +286,7 @@ bool c14cux_getThrottlePosition(c14cux_info* info, const enum c14cux_throttle_po
 
 /**
  * Gets the transmission gear selection (neutral or drive).
+ * @param info State information for the active connection.
  * @param gear Set to the currently-selected gear (park/neutral, drive/reverse,
  *   or manual gearbox.)
  * @return True if successfully read; false otherwise
@@ -311,6 +322,7 @@ bool c14cux_getGearSelection(c14cux_info* info, enum c14cux_gear* gear)
 /**
  * Determines the revision of the code in the connected ECU based on the
  * position of the first fuel map.
+ * @param info State information for the active connection.
  */
 void c14cux_determineDataOffsets(c14cux_info *info)
 {
@@ -375,6 +387,7 @@ void c14cux_determineDataOffsets(c14cux_info *info)
 
 /**
  * Gets the main voltage being supplied to the ECU.
+ * @param info State information for the active connection.
  * @param mainVoltage Set to the main relay voltage (if read successfully)
  * @return True if successfully read; false otherwise
  */
@@ -448,6 +461,7 @@ bool c14cux_getMainVoltage(c14cux_info* info, float* mainVoltage)
 
 /**
  * Gets the contents of the specified fuel map.
+ * @param info State information for the active connection.
  * @param fuelMapId ID of the fuel map, from 0 to 5
  * @param adjustmentFactor Set to the adjustment factor read at the end of the map
  * @param buffer Buffer of at least 128 bytes (16 cols x 8 rows)
@@ -542,6 +556,7 @@ bool c14cux_getFuelMap(c14cux_info* info, const uint8_t fuelMapId, uint16_t* adj
  * 0 and 5. The fuel map can be determined by a tune resistor in the wiring
  * harness for non-NAS Land Rovers; unmodified NAS LRs have a software
  * lockout that prevents the selection of any map other than Map 5.
+ * @param info State information for the active connection.
  * @param fuelMapId Set to the index of the fuel map currently in use (if read
  *  successfully)
  * @return True if successfully read; false otherwise
@@ -562,6 +577,7 @@ bool c14cux_getCurrentFuelMap(c14cux_info* info, uint8_t* fuelMapId)
 
 /**
  * Gets the current fuel map row index.
+ * @param info State information for the active connection.
  * @param fuelMapRowIndex Set to the row index of the fuel map (if read
  *  successfully)
  * @return True if successfully read; false otherwise
@@ -594,6 +610,7 @@ bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex)
 
 /**
  * Gets the current fuel map column index.
+ * @param info State information for the active connection.
  * @param fuelMapColIndex Set to the column index of the fuel map (if read
  *  successfully)
  * @return True if successfully read; false otherwise
@@ -627,6 +644,7 @@ bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex)
 /**
  * Gets the current short-term lambda-based fueling trim for the specified engine bank.
  * A larger number indicates more fuel being delivered.
+ * @param info State information for the active connection.
  * @param bank Bank of the engine (left or right)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
@@ -661,6 +679,7 @@ bool c14cux_getLambdaTrimShort(c14cux_info* info, const enum c14cux_bank bank, i
 /**
  * Gets the current long-term lambda-based fueling trim for the specified engine bank.
  * A larger number indicates more fuel being delivered.
+ * @param info State information for the active connection.
  * @param bank Bank of the engine (left or right)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
@@ -693,6 +712,7 @@ bool c14cux_getLambdaTrimLong(c14cux_info* info, const enum c14cux_bank bank, in
 
 /**
  * Populates the supplied struct with fault code data read from the ECU.
+ * @param info State information for the active connection.
  * @param faultCodes Struct to populate with current fault code data
  * @return True when the fault code data was successfully read and
  *   the struct populated; 0 when an error occurred
@@ -704,8 +724,9 @@ bool c14cux_getFaultCodes(c14cux_info* info, c14cux_faultcodes *faultCodes)
 
 /**
  * Clears the stored fault codes in the ECU
+ * @param info State information for the active connection.
  * @return True when the fault code data was successfully cleared;
- *   0 when an error occurred
+ *   false when an error occurred
  */
 bool c14cux_clearFaultCodes(c14cux_info* info)
 {
@@ -730,6 +751,7 @@ bool c14cux_clearFaultCodes(c14cux_info* info)
 
 /**
  * Gets the state of the line driving the fuel pump relay.
+ * @param info State information for the active connection.
  * @param fuelPumpRelayState Set to 1 when the fuel pump relay is closed,
  *  or 0 when it's open
  * @return True when the relay state was successfully read; false otherwise
@@ -750,6 +772,7 @@ bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState)
 
 /**
  * Gets the tune revision of the code in the PROM.
+ * @param info State information for the active connection.
  * @param tuneRevision Decimal representation of the tune revision
  * @return True when the read was successful, false otherwise
  */
@@ -777,6 +800,7 @@ bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneRevision)
 
 /**
  * Gets a flag indicating whether the ECU is in "idle mode"
+ * @param info State information for the active connection.
  * @param idleMode Set to true when the ECU is driving an idle speed,
  *   false otherwise
  * @return True when the read was successful, false otherwise
@@ -799,6 +823,7 @@ bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode)
  * Gets the state of the Malfunction Indicator Lamp (MIL). Note that
  * a MIL implies that at least one fault code is set, but not every
  * fault code will trigger a MIL.
+ * @param info State information for the active connection.
  * @param milOn Set to true when the MIL is lit, false otherwise
  * @return True when the read was successful, false otherwise
  */
@@ -819,6 +844,7 @@ bool c14cux_isMILOn(c14cux_info* info, bool* milOn)
 /**
  * Closes the fuel pump relay to run the pump for a single timeout period
  * (approximately two seconds).
+ * @param info State information for the active connection.
  * @return True when the port and timer were written correctly; 0
  *   otherwise.
  */
@@ -839,6 +865,7 @@ bool c14cux_runFuelPump(c14cux_info* info)
 
 /**
  * Commands the idle air control motor to move.
+ * @param info State information for the active connection.
  * @param direction Direction of travel for the motor; 0 opens the valve
  *  and 1 closes it
  * @param steps Number of steps to travel in the specified direction
