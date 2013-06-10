@@ -248,26 +248,6 @@ bool c14cux_getThrottlePosition(c14cux_info* info, const enum c14cux_throttle_po
             if (c14cux_readMem(info, C14CUX_ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos))
             {
                 throttleMinPos = swapShort(throttleMinPos);
-
-                // if the throttle is currently showing a lower measurement than we've yet seen,
-                // update the locally stored measurement with this new one
-                if (throttle < info->lowestThrottleMeasurement)
-                {
-                    info->lowestThrottleMeasurement = throttle;
-                }
-
-                // if this library has seen a lower throttle measurement than the one stored in
-                // the ECU as the minimum position, use the lower measurement as the minimum
-                if (info->lowestThrottleMeasurement < throttleMinPos)
-                {
-                    correctionOffset = info->lowestThrottleMeasurement;
-                }
-                // otherwise, use the ECU's stored minimum
-                else
-                {
-                    correctionOffset = throttleMinPos;
-                }
-
                 retVal = true;
             }
         }
@@ -276,9 +256,18 @@ bool c14cux_getThrottlePosition(c14cux_info* info, const enum c14cux_throttle_po
             retVal = true;
         }
 
-        // subtract off the base offset (which is zero for an absolute reading, or
-        // the minimum throttle position reading for a corrected reading)
-        *throttlePos = (throttle - correctionOffset) / (1023.0 - correctionOffset);
+        if (throttle >= throttleMinPos)
+        {
+            // subtract off the base offset (which is zero for an absolute reading, or
+            // the minimum throttle position reading for a corrected reading)
+            *throttlePos = (throttle - throttleMinPos) / (1023.0 - throttleMinPos);
+        }
+        else
+        {
+            // if, because of some glitch, the current throttle reading is lower than the
+            // lowest reading that the ECU has stored, just report the position to zero
+            *throttlePos = 0;
+        }
     }
 
     return retVal;

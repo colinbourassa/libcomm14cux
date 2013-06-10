@@ -59,7 +59,6 @@ void c14cux_init(c14cux_info *info)
     info->lastReadCoarseAddress = 0x0000;
     info->lastReadQuantity = 0x00;
     info->cancelRead = false;
-    info->lowestThrottleMeasurement = 0xffff;
     info->voltageFactorA = 0;
     info->voltageFactorB = 0;
     info->voltageFactorC = 0;

@@ -410,8 +410,6 @@ typedef struct
     uint8_t lastReadQuantity;
     //! Flag set when the user wishes to cancel a read operation
     bool cancelRead;
-    //! Lowest throttle measurement seen so far
-    uint16_t lowestThrottleMeasurement;
     //! Factor involved in computations with the main voltage
     uint8_t voltageFactorA;
     //! Factor involved in computations with the main voltage
