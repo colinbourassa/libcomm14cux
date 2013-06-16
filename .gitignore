@@ -13,3 +13,5 @@ install_manifest.txt
 *.gz
 *.tgz
 *.zip
+LICENSE.TXT
+README.TXT
