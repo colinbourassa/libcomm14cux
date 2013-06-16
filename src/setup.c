@@ -227,8 +227,8 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
             newtio.c_cc[VMIN] = 0;
 
             // set the input and output baud rates to 7812
-            cfsetispeed(&newtio, _14CUX_Baud);
-            cfsetospeed(&newtio, _14CUX_Baud);
+            cfsetispeed(&newtio, C14CUX_BAUD);
+            cfsetospeed(&newtio, C14CUX_BAUD);
 #endif
 
             // attempt to set the termios parameters
