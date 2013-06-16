@@ -421,7 +421,7 @@ typedef struct
     //! Descriptor for the serial port device
     HANDLE sd;
     //! Lock to prevent multiple simultaneous open/close/read/write operations
-    HANDLE s_mutex;
+    HANDLE mutex;
 #else
     //! Descriptor for the serial port device
     int sd;
