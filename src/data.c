@@ -719,11 +719,11 @@ bool c14cux_getFaultCodes(c14cux_info* info, c14cux_faultcodes *faultCodes)
  */
 bool c14cux_clearFaultCodes(c14cux_info* info)
 {
-    uint8_t writeSuccess = 1;
+    bool writeSuccess = true;
     int faultCodeBlockSize = sizeof(c14cux_faultcodes);
     int bytesWritten = 0;
 
-    while ((writeSuccess == 1) && (bytesWritten < faultCodeBlockSize))
+    while (writeSuccess && (bytesWritten < faultCodeBlockSize))
     {
         if (c14cux_writeMem(info, C14CUX_FaultCodesOffset + bytesWritten, 0x00))
         {
@@ -731,7 +731,7 @@ bool c14cux_clearFaultCodes(c14cux_info* info)
         }
         else
         {
-            writeSuccess = 0;
+            writeSuccess = false;
         }
     }
 

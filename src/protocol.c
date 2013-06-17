@@ -443,7 +443,7 @@ bool c14cux_writeMem(c14cux_info *info, uint16_t addr, uint8_t val)
                 (c14cux_readSerialBytes(info, &readByte, 1) == 1) &&
                 (readByte == val))
             {
-                retVal = false;
+                retVal = true;
             }
         }
     }
