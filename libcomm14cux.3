@@ -28,6 +28,8 @@ if (c14cux_connect(&info, "/dev/ttyUSB0"))
     uint16_t speedMPH = 0;
     bool readSuccess = c14cux_getRoadSpeed(&info, &speedMPH);
 }
+.br
+c14cux_cleanup(&info);
 
 .SH RESOURCES
 Information about building and configuring a compatible serial cable is available in the Wiki section of the project's Google Code web site:

@@ -52,6 +52,7 @@ uint16_t swapShort(const uint16_t source)
  * Sets initial values in the state-info struct.
  * Note that this routine does not actually open the serial port or attempt
  * to connect to the ECU; that requires c14cux_connect().
+ * @param info 
  */
 void c14cux_init(c14cux_info *info)
 {
@@ -73,7 +74,31 @@ void c14cux_init(c14cux_info *info)
 }
 
 /**
+ * Disconnects (if necessary) and closes the mutex handle.
+ * @param info State information for the current connection.
+ */
+void c14cux_cleanup(c14cux_info *info)
+{
+#if defined(WIN32)
+    if (c14cux_isConnected(info))
+    {
+        CloseHandle(info->sd);
+        info->sd = INVALID_HANDLE_VALUE;
+    }
+    CloseHandle(info->mutex);
+#else
+    if (c14cux_isConnected(info))
+    {
+        close(info->sd);
+        info->sd = 0;
+    }
+    pthread_mutex_destroy(&info->mutex);
+#endif
+}
+
+/**
  * Returns version information for this build of the library.
+ * @return Version of this build of libcomm14cux
  */
 c14cux_version c14cux_getLibraryVersion()
 {
@@ -88,6 +113,7 @@ c14cux_version c14cux_getLibraryVersion()
 
 /**
  * Closes the serial device.
+ * @param info State information for the current connection.
  */
 void c14cux_disconnect(c14cux_info *info)
 {

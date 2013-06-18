@@ -434,6 +434,7 @@ typedef struct
 uint16_t swapShort(const uint16_t source);
 
 void c14cux_init(c14cux_info* info);
+void c14cux_cleanup(c14cux_info* info);
 bool c14cux_connect(c14cux_info* info, const char *devPath);
 void c14cux_disconnect(c14cux_info* info);
 bool c14cux_isConnected(c14cux_info* info);
