@@ -824,15 +824,15 @@ bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state*
         purgeValveState = swapShort(purgeValveState);
         if (purgeValveState < 4000)
         {
-            state = C14CUX_PurgeValveState_Closed;
+            *state = C14CUX_PurgeValveState_Closed;
         }
         else if (purgeValveState < 29000)
         {
-            state = C14CUX_PurgeValveState_Toggling;
+            *state = C14CUX_PurgeValveState_Toggling;
         }
         else
         {
-            state = C14CUX_PurgeValveState_Open;
+            *state = C14CUX_PurgeValveState_Open;
         }
         retVal = true;
     }
