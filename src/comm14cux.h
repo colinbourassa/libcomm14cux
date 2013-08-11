@@ -142,6 +142,8 @@ enum c14cux_memory_offset
     C14CUX_EngineSpeedInstantaneousOffset = 0x007A,
     //! Memory location of filtered engine speed value
     C14CUX_EngineSpeedFilteredOffset = 0x007C,
+    //! Memory location of purge valve timer value
+    C14CUX_PurgeValveStateOffset = 0x0096,
     //! Memory location of selected gear value
     C14CUX_TransmissionGearOffset = 0x2000,
     //! Memory location of road speed value
@@ -398,6 +400,16 @@ enum c14cux_data_offset_rev
 };
 
 /**
+ * Enumerates the three possible states of the carbon canister purge valve.
+ */
+enum c14cux_purge_valve_state
+{
+    C14CUX_PurgeValveState_Closed = 0,
+    C14CUX_PurgeValveState_Toggling = 1,
+    C14CUX_PurgeValveState_Open = 2
+};
+
+/**
  * Contains information about the state of the current connection to the ECU.
  */
 typedef struct
@@ -465,6 +477,7 @@ bool c14cux_getIdleBypassMotorPosition(c14cux_info* info, float* bypassMotorPos)
 bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState);
 bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber);
 bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode);
+bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state);
 bool c14cux_isMILOn(c14cux_info* info, bool* milOn);
 
 bool c14cux_clearFaultCodes(c14cux_info* info);

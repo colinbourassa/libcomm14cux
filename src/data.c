@@ -809,6 +809,38 @@ bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode)
 }
 
 /**
+ * Gets the state of the purge valve.
+ * @param info State information for the active connection.
+ * @param state State of the purge valve (closed, toggling, or open)
+ * @return True when the read was successful, false otherwise
+ */
+bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state)
+{
+    uint16_t purgeValveState;
+    bool retVal = false;
+
+    if (c14cux_readMem(info, C14CUX_PurgeValveStateOffset, 2, (uint8_t*)&purgeValveState))
+    {
+        purgeValveState = swapShort(purgeValveState);
+        if (purgeValveState < 4000)
+        {
+            state = C14CUX_PurgeValveState_Closed;
+        }
+        else if (purgeValveState < 29000)
+        {
+            state = C14CUX_PurgeValveState_Toggling;
+        }
+        else
+        {
+            state = C14CUX_PurgeValveState_Open;
+        }
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * Gets the state of the Malfunction Indicator Lamp (MIL). Note that
  * a MIL implies that at least one fault code is set, but not every
  * fault code will trigger a MIL.
