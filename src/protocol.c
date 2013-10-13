@@ -1,8 +1,8 @@
 // libcomm14cux - a communications library for the Lucas 14CUX ECU
 //
-// protocol.cpp: This file contains routines specific to handling
-//               the software protocol used by the ECU over its
-//               serial link.
+// protocol.c: This file contains routines specific to handling
+//             the software protocol used by the ECU over its
+//             serial link.
 
 #if defined(WIN32) && defined(linux)
 #error "Only one of 'WIN32' or 'linux' may be defined."
@@ -85,52 +85,6 @@ int16_t c14cux_writeSerialBytes(c14cux_info* info, uint8_t* buffer, uint16_t qua
 
     return bytesWritten;
 }
-
-
-#if 0
-/**
- * Writes a test pattern so the baud rate can be validated on an oscilloscope
- */
-void c14cux_testWrite(void)
-{
-    // Serial Comms:-
-    // On RS232 data lines, Mark is negative, Space is positive Voltage
-    // RS232 controll line, ON is positive, OFF is negative
-    // RS232 drivers are usually inverting.
-    // UART and other serial ICs like MCUs are designed to work with inverting drivers
-    //
-    // The 14CUX uses levels between 0 and approximatly 12V
-    // The output from the 14CUX MCU is inverting
-    // The input to the MCU is direct with voltage limiting (non-inverting)
-    //
-    // Notation:-
-    //     Md = data mark
-    //     Sd = data space
-    //     Ss = Start space
-    //     Ms = Stop mark
-    //     Mi = Idle mark (often a 0 or variable length, can be a large multiple of 16 (or 8) x UART BRG clock
-    //     PB = Parity Bit
-    // Useful patterns:-
-    //     0x55     [Mi] Ss Md Sd Md Sd Md Sd Md Sd Ms [Mi]
-    //     0xFF     [Mi] Ss Md Md Md Md Md Md Md Md Ms [Mi]
-    //
-    // Each character is 10 bits.
-    // bit time is 1/7812
-    // 781.2 characters will last 1 second
-    // 3906 will last 5 seconds
-    uint8_t c = 0xff;
-    int i;
-
-    for (i = 0; i < 3906; i++)
-    {
-        if (writeSerialBytes(&c, 1) != 1)
-        {
-            dprintf_err("14CUX(error): Failed to write test pattern. cnt=%d\n", i);
-            return;
-        }
-    }
-}
-#endif
 
 /**
  * Reads the specified number of bytes from memory at the specified address.

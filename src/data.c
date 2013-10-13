@@ -1,7 +1,7 @@
 // libcomm14cux - a communications library for the Lucas 14CUX ECU
 //
-// data.cpp: This file contains routines that fetch and format data
-//           from the ECU.
+// data.c: This file contains routines that fetch and format data
+//         from the ECU.
 
 #if defined(WIN32) && defined(linux)
 #error "Only one of 'WIN32' or 'linux' may be defined."
@@ -385,13 +385,13 @@ bool c14cux_getMainVoltage(c14cux_info* info, float* mainVoltage)
     uint16_t storedVal = 0;
     uint16_t adcCount = 0;
     bool retVal = false;
-    uint8_t readCoefficients = 0;
+    bool readCoefficients = false;
 
     if ((info->voltageFactorA != 0) &&
         (info->voltageFactorB != 0) &&
         (info->voltageFactorC != 0))
     {
-        readCoefficients = 1;
+        readCoefficients = true;
     }
     else
     {
@@ -403,7 +403,7 @@ bool c14cux_getMainVoltage(c14cux_info* info, float* mainVoltage)
             info->voltageFactorA = C14CUX_RevAMainVoltageFactorA;
             info->voltageFactorB = C14CUX_RevAMainVoltageFactorB;
             info->voltageFactorC = C14CUX_RevAMainVoltageFactorC;
-            readCoefficients = 1;
+            readCoefficients = true;
         }
         else if (info->promRev == C14CUX_DataOffsets_RevB)
         {
@@ -412,7 +412,7 @@ bool c14cux_getMainVoltage(c14cux_info* info, float* mainVoltage)
                 c14cux_readMem(info, C14CUX_RevBMainVoltageFactorCOffset, 2, (uint8_t*)&info->voltageFactorC))
             {
                 info->voltageFactorC = swapShort(info->voltageFactorC);
-                readCoefficients = 1;
+                readCoefficients = true;
             }
         }
         else if (info->promRev == C14CUX_DataOffsets_RevC)
@@ -422,7 +422,7 @@ bool c14cux_getMainVoltage(c14cux_info* info, float* mainVoltage)
                 c14cux_readMem(info, C14CUX_RevCMainVoltageFactorCOffset, 2, (uint8_t*)&info->voltageFactorC))
             {
                 info->voltageFactorC = swapShort(info->voltageFactorC);
-                readCoefficients = 1;
+                readCoefficients = true;
             }
         }
     }

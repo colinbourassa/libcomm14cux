@@ -486,10 +486,6 @@ bool c14cux_driveIdleAirControlMotor(c14cux_info* info, uint8_t direction, uint8
 
 void c14cux_cancelRead(c14cux_info* info);
 
-#if 0
-    void testWrite();
-#endif
-
 /* Closing brace for 'extern "C"' */
 #ifdef __cplusplus
 }

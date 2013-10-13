@@ -1,8 +1,8 @@
 // libcomm14cux - a communications library for the Lucas 14CUX ECU
 //
-// setup.cpp: This file contains routines that perform the
-//            setup/initialization of the library and the
-//            serial port.
+// setup.c: This file contains routines that perform the
+//          setup/initialization of the library and the
+//          serial port.
 
 #if defined(WIN32) && defined(linux)
 #error "Only one of 'WIN32' or 'linux' may be defined."
@@ -205,7 +205,7 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
     // into the termios struct for BSD, but via ioctls for both Linux and OS X.
 
     struct termios newtio;
-    uint8_t success = 1;
+    bool success = true;
 
     dprintf_info("14CUX(info): Opening the serial device (%s)...\n", devPath);
     info->sd = open(devPath, O_RDWR | O_NOCTTY);
@@ -217,7 +217,7 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
         if (tcgetattr(info->sd, &newtio) != 0)
         {
             dprintf_err("14CUX(error): Unable to read serial port parameters.\n");
-            success = 0;
+            success = false;
         }
 
         if (success)
@@ -266,7 +266,7 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
             {
                 dprintf_err("14CUX(error): Failure setting up port\n");
                 close(info->sd);
-                success = 0;
+                success = false;
             }
         }
 
@@ -375,16 +375,6 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
 
 #endif
 
-// Send the serial test pattern shortly after attempting a connection
-// Enable this when debugging the serial port speed and operation
-#if 0
-    if (retVal)
-    {
-        dprintf_warn("14CUX(warn): Sending serial test pattern.\n");
-        testWrite(); // send the pattern
-        dprintf_warn("14CUX(warn): Serial test pattern done.\n");
-    }
-#endif
     return retVal;
 }
 
