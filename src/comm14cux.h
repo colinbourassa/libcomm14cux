@@ -62,6 +62,9 @@ extern "C" {
 /** Baud rate of the 14CUX serial port */
 #define C14CUX_BAUD 7812
 
+/** Number of engine speed ranges in the fuel maps */
+#define FUEL_MAP_COLUMNS 16
+
 /**
  * Defines the possible byte quantities that may be requested
  * via the serial protocol.
@@ -114,6 +117,8 @@ enum c14cux_memory_offset
 {
     //! Starting address of the 14CUX PROM contents in RAM
     C14CUX_ROMAddress = 0xC000,
+    //! Memory location of the RPM table used to bracket engine speed
+    C14CUX_RPMTableOffset = 0xC800,
     //! Memory location of Port 1
     C14CUX_Port1Offset = 0x0002,
     //! Memory location of left bank long-term lambda fueling trim
@@ -321,6 +326,14 @@ typedef struct
 } c14cux_faultcodes;
 
 /**
+ * Table of RPM thresholds for each of the sixteen fuel map columns
+ */
+typedef struct
+{
+  uint16_t rpm[FUEL_MAP_COLUMNS];
+} c14cux_rpmtable;
+
+/**
  * Major/minor/patch version numbers for this build of the library
  */
 typedef struct
@@ -479,6 +492,7 @@ bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber);
 bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode);
 bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state);
 bool c14cux_isMILOn(c14cux_info* info, bool* milOn);
+bool c14cux_getRpmTable(c14cux_info* info, c14cux_rpmtable* table);
 
 bool c14cux_clearFaultCodes(c14cux_info* info);
 bool c14cux_runFuelPump(c14cux_info* info);

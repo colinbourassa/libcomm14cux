@@ -863,6 +863,33 @@ bool c14cux_isMILOn(c14cux_info* info, bool* milOn)
 }
 
 /**
+ * Reads the table of RPM thresholds that are used to separate engine speeds
+ * into the sixteen ranges indexed for fueling.
+ * @param info State information for the active connection.
+ * @param table Pointer to RPM table structure
+ * @return True when the read was successful, false otherwise
+ */
+bool c14cux_getRpmTable(c14cux_info* info, c14cux_rpmtable *table)
+{
+  bool success = false;
+  uint8_t column = 0;
+  uint16_t pw = 0;
+
+  do
+  {
+    success = c14cux_readMem(info, C14CUX_RPMTableOffset + (column * 4), 2, (uint8_t*)&pw);
+    if (success)
+    {
+      table->rpm[FUEL_MAP_COLUMNS - column - 1] = 7500000 / swapShort(pw);
+    }
+    column += 1;
+
+  } while (success && (column < FUEL_MAP_COLUMNS));
+
+  return success;
+}
+
+/**
  * Closes the fuel pump relay to run the pump for a single timeout period
  * (approximately two seconds).
  * @param info State information for the active connection.
