@@ -46,7 +46,7 @@ add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.c)
 
 if (MINGW)
 
-  message (STATUS "Found Windows/MinGW platform.")
+  message (STATUS "Found Windows/MinGW platform. (${CMAKE_SYSTEM_PROCESSOR})")
 
   # statically link against the C MinGW lib to avoid incurring an additional DLL dependency
   set (CMAKE_SHARED_LINKER_FLAGS "-static-libgcc")
@@ -83,7 +83,7 @@ if (MINGW)
   set (CPACK_GENERATOR "ZIP")
   set (CPACK_PACKAGE_NAME ${PROJECT_NAME})
   set (CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
-  set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}-${CMAKE_SYSTEM_NAME}")
+  set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
   include (CPack)
 
 else()
