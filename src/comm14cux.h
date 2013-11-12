@@ -330,6 +330,7 @@ typedef struct
  */
 typedef struct
 {
+  //! RPM threshold for each of the fuel map columns
   uint16_t rpm[FUEL_MAP_COLUMNS];
 } c14cux_rpmtable;
 
