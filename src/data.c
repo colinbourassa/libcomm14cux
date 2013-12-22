@@ -634,7 +634,7 @@ bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex)
  * Gets the current short-term lambda-based fueling trim for the specified engine bank.
  * A larger number indicates more fuel being delivered.
  * @param info State information for the active connection.
- * @param bank Bank of the engine (left or right)
+ * @param bank Bank of the engine (odd or even)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
  * @return True if successfully read; false otherwise
@@ -645,13 +645,13 @@ bool c14cux_getLambdaTrimShort(c14cux_info* info, const enum c14cux_bank bank, i
     uint16_t fuelTrimRaw = 0;
     uint16_t offset = 0;
 
-    if (bank == C14CUX_Bank_Left)
+    if (bank == C14CUX_Bank_Odd)
     {
-        offset = C14CUX_ShortTermLambdaFuelingTrimLeftOffset;
+        offset = C14CUX_ShortTermLambdaFuelingTrimOddOffset;
     }
-    else if (bank == C14CUX_Bank_Right)
+    else if (bank == C14CUX_Bank_Even)
     {
-        offset = C14CUX_ShortTermLambdaFuelingTrimRightOffset;
+        offset = C14CUX_ShortTermLambdaFuelingTrimEvenOffset;
     }
 
     if ((offset != 0) && c14cux_readMem(info, offset, 2, (uint8_t*)&fuelTrimRaw))
@@ -669,7 +669,7 @@ bool c14cux_getLambdaTrimShort(c14cux_info* info, const enum c14cux_bank bank, i
  * Gets the current long-term lambda-based fueling trim for the specified engine bank.
  * A larger number indicates more fuel being delivered.
  * @param info State information for the active connection.
- * @param bank Bank of the engine (left or right)
+ * @param bank Bank of the engine (odd or even)
  * @param lambdaTrim Set to the number of counts of lambda-based fueling trim
  *   for the specified bank, from -256 to 255.
  * @return True if successfully read; false otherwise
@@ -680,13 +680,13 @@ bool c14cux_getLambdaTrimLong(c14cux_info* info, const enum c14cux_bank bank, in
     uint16_t fuelTrimRaw = 0;
     uint16_t offset = 0;
 
-    if (bank == C14CUX_Bank_Left)
+    if (bank == C14CUX_Bank_Odd)
     {
-        offset = C14CUX_LongTermLambdaFuelingTrimLeftOffset;
+        offset = C14CUX_LongTermLambdaFuelingTrimOddOffset;
     }
-    else if (bank == C14CUX_Bank_Right)
+    else if (bank == C14CUX_Bank_Even)
     {
-        offset = C14CUX_LongTermLambdaFuelingTrimRightOffset;
+        offset = C14CUX_LongTermLambdaFuelingTrimEvenOffset;
     }
 
     if ((offset != 0) && c14cux_readMem(info, offset, 2, (uint8_t*)&fuelTrimRaw))

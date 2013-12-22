@@ -121,14 +121,14 @@ enum c14cux_memory_offset
     C14CUX_RPMTableOffset = 0xC800,
     //! Memory location of Port 1
     C14CUX_Port1Offset = 0x0002,
-    //! Memory location of left bank long-term lambda fueling trim
-    C14CUX_LongTermLambdaFuelingTrimLeftOffset = 0x0042,
-    //! Memory location of right bank long-term lambda fueling trim
-    C14CUX_LongTermLambdaFuelingTrimRightOffset = 0x0046,
-    //! Memory location of left bank short-term lambda fueling trim
-    C14CUX_ShortTermLambdaFuelingTrimLeftOffset = 0x0065,
-    //! Memory location of right bank short-term lambda fueling trim
-    C14CUX_ShortTermLambdaFuelingTrimRightOffset = 0x0067,
+    //! Memory location of even bank long-term lambda fueling trim
+    C14CUX_LongTermLambdaFuelingTrimEvenOffset = 0x0042,
+    //! Memory location of odd bank long-term lambda fueling trim
+    C14CUX_LongTermLambdaFuelingTrimOddOffset = 0x0046,
+    //! Memory location of even bank short-term lambda fueling trim
+    C14CUX_ShortTermLambdaFuelingTrimEvenOffset = 0x0065,
+    //! Memory location of odd bank short-term lambda fueling trim
+    C14CUX_ShortTermLambdaFuelingTrimOddOffset = 0x0067,
     //! Memory location of fault code block
     C14CUX_FaultCodesOffset = 0x0049,
     //! Memory location of minimum throttle position value
@@ -241,16 +241,16 @@ typedef struct
   // Location 0x0049, mask 0x77
   //! Indicates fault with the ECU memory checksum
   uint8_t PROM_Checksum_Failure : 1;
-  //! Indicates fault with the left oxygen sensor
-  uint8_t Lambda_Sensor_Left  : 1;
-  //! Indicates fault with the right oxygen sensor
-  uint8_t Lambda_Sensor_Right : 1;
+  //! Indicates fault with the odd-bank oxygen sensor
+  uint8_t Lambda_Sensor_Odd  : 1;
+  //! Indicates fault with the even-bank oxygen sensor
+  uint8_t Lambda_Sensor_Even : 1;
   //! (Unused)
   uint8_t Spare0              : 1;
-  //! Indicates a misfire in the left bank
-  uint8_t Misfire_Left_Bank   : 1;
-  //! Indicates a misfire in the right bank
-  uint8_t Misfire_Right_Bank  : 1;
+  //! Indicates a misfire in the odd bank
+  uint8_t Misfire_Odd_Bank   : 1;
+  //! Indicates a misfire in the even bank
+  uint8_t Misfire_Even_Bank  : 1;
   //! Indicates a fault with the airflow meter
   uint8_t Airflow_Meter       : 1;
   //! Indicates that the tune resistor is out of range
@@ -258,12 +258,12 @@ typedef struct
 
 
   // Location 0x004A, mask 0xFD
-  //! Indicates fault in the left bank of fuel injectors
-  uint8_t Injector_Left_Bank     : 1;
+  //! Indicates fault in the odd bank of fuel injectors
+  uint8_t Injector_Odd_Bank     : 1;
   //! (Unused) */
   uint8_t Spare2                 : 1;
-  //! Indicates fault in the right bank of fuel injectors
-  uint8_t Injector_Right_Bank    : 1;
+  //! Indicates fault in the even bank of fuel injectors
+  uint8_t Injector_Even_Bank    : 1;
   //! Indicates fault with the coolant temperature sensor
   uint8_t Coolant_Temp_Sensor    : 1;
   //! Indicates fault with the throttle potentiometer
@@ -366,8 +366,8 @@ enum c14cux_gear
  */
 enum c14cux_bank
 {
-    C14CUX_Bank_Left = 0x0,
-    C14CUX_Bank_Right = 0x1
+    C14CUX_Bank_Odd = 0x0,
+    C14CUX_Bank_Even = 0x1
 };
 
 /**
