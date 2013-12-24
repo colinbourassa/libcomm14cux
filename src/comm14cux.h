@@ -240,30 +240,30 @@ typedef struct
 {
   // Location 0x0049, mask 0x77
   //! Indicates fault with the ECU memory checksum
-  uint8_t PROM_Checksum_Failure : 1;
-  //! Indicates fault with the odd-bank oxygen sensor
-  uint8_t Lambda_Sensor_Odd  : 1;
+  uint8_t PROM_Checksum_Failure      : 1;
   //! Indicates fault with the even-bank oxygen sensor
-  uint8_t Lambda_Sensor_Even : 1;
+  uint8_t Lambda_Sensor_Even         : 1;
+  //! Indicates fault with the odd-bank oxygen sensor
+  uint8_t Lambda_Sensor_Odd          : 1;
   //! (Unused)
-  uint8_t Spare0              : 1;
-  //! Indicates a misfire in the odd bank
-  uint8_t Misfire_Odd_Bank   : 1;
+  uint8_t Spare0                     : 1;
   //! Indicates a misfire in the even bank
-  uint8_t Misfire_Even_Bank  : 1;
+  uint8_t Misfire_Even_Bank          : 1;
+  //! Indicates a misfire in the odd bank
+  uint8_t Misfire_Odd_Bank           : 1;
   //! Indicates a fault with the airflow meter
-  uint8_t Airflow_Meter       : 1;
+  uint8_t Airflow_Meter              : 1;
   //! Indicates that the tune resistor is out of range
   uint8_t Tune_Resistor_Out_of_Range : 1;
 
 
   // Location 0x004A, mask 0xFD
   //! Indicates fault in the odd bank of fuel injectors
-  uint8_t Injector_Odd_Bank     : 1;
-  //! (Unused) */
+  uint8_t Injector_Odd_Bank      : 1;
+  //! (Unused)
   uint8_t Spare2                 : 1;
   //! Indicates fault in the even bank of fuel injectors
-  uint8_t Injector_Even_Bank    : 1;
+  uint8_t Injector_Even_Bank     : 1;
   //! Indicates fault with the coolant temperature sensor
   uint8_t Coolant_Temp_Sensor    : 1;
   //! Indicates fault with the throttle potentiometer
