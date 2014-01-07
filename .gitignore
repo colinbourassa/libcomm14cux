@@ -13,5 +13,6 @@ install_manifest.txt
 *.gz
 *.tgz
 *.zip
+*.dll.a
 LICENSE.TXT
 README.TXT
