@@ -763,16 +763,20 @@ bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState)
  * Gets the tune revision of the code in the PROM.
  * @param info State information for the active connection.
  * @param tuneRevision Decimal representation of the tune revision
+ * @param chksumFixer Checksum fixer byte value
+ * @param tuneIdent Tune 'Ident' byte value (provides further differentiation after tune revision number)
  * @return True when the read was successful, false otherwise
  */
-bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneRevision)
+bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneRevision, uint8_t* chksumFixer, uint8_t* tuneIdent)
 {
     uint8_t tuneRevHex[2];
     char tuneRevStr[4];
     bool retVal = false;
     int byteIdx = 0;
 
-    if (c14cux_readMem(info, C14CUX_TuneRevisionOffset, 2, tuneRevHex))
+    if (c14cux_readMem(info, C14CUX_TuneRevisionOffset, 2, tuneRevHex) &&
+        c14cux_readMem(info, C14CUX_ChecksumFixerOffset, 1, chksumFixer) &&
+        c14cux_readMem(info, C14CUX_TuneIdentOffset, 1, tuneIdent))
     {
         *tuneRevision = 0;
         for (byteIdx = 0; byteIdx < 2; ++byteIdx)

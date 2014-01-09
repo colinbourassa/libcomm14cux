@@ -205,6 +205,10 @@ enum c14cux_memory_offset
 
     //! Memory location of the tune number (code revision) in BCD
     C14CUX_TuneRevisionOffset = 0xFFE9,
+    //! Memory location of the checksum fixer byte
+    C14CUX_ChecksumFixerOffset = 0xFFEB,
+    //! Memory location of the tune 'Ident" byte
+    C14CUX_TuneIdentOffset = 0xFFEC,
     //! Memory location of the current fuel map ID
     C14CUX_CurrentFuelMapIdOffset = 0x202C,
     //! Memory location of the current fuel map row index
@@ -489,7 +493,7 @@ bool c14cux_getLambdaTrimShort(c14cux_info* info, const enum c14cux_bank bank, i
 bool c14cux_getLambdaTrimLong(c14cux_info* info, const enum c14cux_bank bank, int16_t* lambdaTrim);
 bool c14cux_getIdleBypassMotorPosition(c14cux_info* info, float* bypassMotorPos);
 bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState);
-bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber);
+bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber, uint8_t* chksumFixer, uint8_t* tuneIdent);
 bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode);
 bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state);
 bool c14cux_isMILOn(c14cux_info* info, bool* milOn);
