@@ -769,22 +769,27 @@ bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState)
  */
 bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneRevision, uint8_t* chksumFixer, uint8_t* tuneIdent)
 {
-    uint8_t tuneRevHex[2];
-    char tuneRevStr[4];
+    uint8_t idinfo[4];
     bool retVal = false;
     int byteIdx = 0;
 
-    if (c14cux_readMem(info, C14CUX_TuneRevisionOffset, 2, tuneRevHex) &&
-        c14cux_readMem(info, C14CUX_ChecksumFixerOffset, 1, chksumFixer) &&
-        c14cux_readMem(info, C14CUX_TuneIdentOffset, 1, tuneIdent))
+    if (c14cux_readMem(info, C14CUX_TuneRevisionOffset, 4, idinfo))
     {
+        // first two bytes in the 4-byte array represent a BCD tune revision number
         *tuneRevision = 0;
         for (byteIdx = 0; byteIdx < 2; ++byteIdx)
         {
-            *tuneRevision = (*tuneRevision * 100) +              // from the previous byte
-                            (((tuneRevHex[byteIdx] >> 4) * 10) + // high nibble of current byte
-                            (tuneRevHex[byteIdx] & 0x0F));       // low nibble of current byte
+            *tuneRevision = (*tuneRevision * 100) +          // from the previous byte
+                            (((idinfo[byteIdx] >> 4) * 10) + // high nibble of current byte
+                            (idinfo[byteIdx] & 0x0F));       // low nibble of current byte
         }
+
+        // the next byte is the checksum fixer
+        *chksumFixer = idinfo[2];
+
+        // and the final is the "Ident" byte
+        *tuneIdent = idinfo[3];
+
         retVal = true;
     }
 
