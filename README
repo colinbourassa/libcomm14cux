@@ -41,6 +41,7 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 Changelog
 ---------
 1.1.0: Fixed bug with left/right bank confusion
+       Modified getTuneRevision() to also return Ident byte and checksum fixer
 1.0.0: Converted the interface from C++ to pure C
 0.5.5: Updated serial port setup for better cross-platform compatibility
        Added code for compatibility with Mac OS X >= 10.6
@@ -124,7 +125,7 @@ Issues with writing to memory in the 14CUX
 Although libcomm14cux provides a function for writing values to memory, the
 'read14cux' utility does not support write operations. In fact, write operations
 are of limited usefulness; fuel maps cannot be changed in this way because they
-are read from the PROM, and sensor readings are continually updated by the ECU
+are read from the ROM, and sensor readings are continually updated by the ECU
 (meaning that any change to the memory location of a sensor value would almost
 immediately be overwritten.)
 
