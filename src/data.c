@@ -18,10 +18,10 @@
 #include "comm14cux_internal.h"
 
 /**
- * Dumps the entire contents of the 14CUX PROM and places it in a buffer.
+ * Dumps the entire contents of the 14CUX ROM and places it in a buffer.
  * @param info State information for the active connection.
  * @param buffer Buffer of at least 16KB.
- * @return True when the PROM was read and the buffer was successfully
+ * @return True when the ROM was read and the buffer was successfully
  *   populated; false otherwise.
  */
 bool c14cux_dumpROM(c14cux_info* info, uint8_t* buffer)
@@ -315,7 +315,7 @@ bool c14cux_getGearSelection(c14cux_info* info, enum c14cux_gear* gear)
  */
 void c14cux_determineDataOffsets(c14cux_info *info)
 {
-    // if the revision of the PROM hasn't yet been determined...
+    // if the revision of the ROM hasn't yet been determined...
     if (info->promRev == C14CUX_DataOffsets_Unset)
     {
         uint8_t maxByteToByteChangeOld = 0;
@@ -397,7 +397,7 @@ bool c14cux_getMainVoltage(c14cux_info* info, float* mainVoltage)
     {
         c14cux_determineDataOffsets(info);
 
-        // read the coefficients from the PROM so that we can reverse the ADC computation
+        // read the coefficients from the ROM so that we can reverse the ADC computation
         if (info->promRev == C14CUX_DataOffsets_RevA)
         {
             info->voltageFactorA = C14CUX_RevAMainVoltageFactorA;
@@ -469,7 +469,7 @@ bool c14cux_getFuelMap(c14cux_info* info, const uint8_t fuelMapId, uint16_t* adj
         c14cux_determineDataOffsets(info);
 
         // Fuel Map 0 is stored at the same location in both
-        // the old and new PROM layouts
+        // the old and new ROM layouts
         if (fuelMapId == 0)
         {
             offset = C14CUX_FuelMap0Offset;
@@ -760,7 +760,7 @@ bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState)
 }
 
 /**
- * Gets the tune revision of the code in the PROM.
+ * Gets the tune revision of the code in the ROM.
  * @param info State information for the active connection.
  * @param tuneRevision Decimal representation of the tune revision
  * @param chksumFixer Checksum fixer byte value

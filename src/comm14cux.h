@@ -104,7 +104,7 @@ enum c14cux_readcount_value
  */
 enum c14cux_data_size
 {
-    //! Size of the used portion of the 14CUX PROM
+    //! Size of the used portion of the 14CUX ROM
     C14CUX_ROMSize = 0x4000,
     //! Size of each fuel map, in bytes
     C14CUX_FuelMapSize = 0x80
@@ -115,7 +115,7 @@ enum c14cux_data_size
  */
 enum c14cux_memory_offset
 {
-    //! Starting address of the 14CUX PROM contents in RAM
+    //! Starting address of the 14CUX ROM contents in RAM
     C14CUX_ROMAddress = 0xC000,
     //! Memory location of the RPM table used to bracket engine speed
     C14CUX_RPMTableOffset = 0xC800,
@@ -244,7 +244,7 @@ typedef struct
 {
   // Location 0x0049, mask 0x77
   //! Indicates fault with the ECU memory checksum
-  uint8_t PROM_Checksum_Failure      : 1;
+  uint8_t ROM_Checksum_Failure       : 1;
   //! Indicates fault with the even-bank oxygen sensor
   uint8_t Lambda_Sensor_Even         : 1;
   //! Indicates fault with the odd-bank oxygen sensor
@@ -402,7 +402,7 @@ enum c14cux_throttle_pos_type
 };
 
 /**
- * Enumerates the revisions of the PROMs, which can have different data
+ * Enumerates the revisions of the ROMs, which can have different data
  * offsets (which affects reading the fuel maps.
  */
 enum c14cux_data_offset_rev
