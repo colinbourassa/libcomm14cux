@@ -55,8 +55,8 @@ if (MINGW)
   # convert Unix-style newline characters into Windows-style
   file (READ "README" README_CONTENTS)
   file (READ "LICENSE" LICENSE_CONTENTS)
-  file (WRITE "README.TXT" ${README_CONTENTS})
-  file (WRITE "LICENSE.TXT" ${LICENSE_CONTENTS})
+  file (WRITE "README.txt" ${README_CONTENTS})
+  file (WRITE "LICENSE.txt" ${LICENSE_CONTENTS})
 
   message (STATUS "Defaulting installation path to: $ENV{SystemDrive}/comm14cux")
   set (CMAKE_INSTALL_PREFIX "$ENV{SystemDrive}/comm14cux")
