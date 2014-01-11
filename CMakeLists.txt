@@ -45,21 +45,25 @@ target_link_libraries (comm14cux m)
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.c)
 
 if (MINGW)
-
-  message (STATUS "Found Windows/MinGW platform. (${CMAKE_SYSTEM_PROCESSOR})")
+  message (STATUS "Found Windows/MinGW platform.")
 
   # statically link against the C MinGW lib to avoid incurring an additional DLL dependency
   set (CMAKE_SHARED_LINKER_FLAGS "-static-libgcc")
   set (CMAKE_EXE_LINKER_FLAGS "-static-libgcc")
 
-  # convert Unix-style newline characters into Windows-style
+  # convert proper Unix-style newline characters into Windows-style
   file (READ "README" README_CONTENTS)
   file (READ "LICENSE" LICENSE_CONTENTS)
   file (WRITE "README.txt" ${README_CONTENTS})
   file (WRITE "LICENSE.txt" ${LICENSE_CONTENTS})
 
-  message (STATUS "Defaulting installation path to: $ENV{SystemDrive}/comm14cux")
-  set (CMAKE_INSTALL_PREFIX "$ENV{SystemDrive}/comm14cux")
+  if ("$ENV{SystemDrive}" STREQUAL "")
+    message (STATUS "Windows system drive not found; creating 'install' directory under current directory...")
+    set (CMAKE_INSTALL_PREFIX "./install")
+  else()
+    message (STATUS "Defaulting installation path to: $ENV{SystemDrive}/comm14cux")
+    set (CMAKE_INSTALL_PREFIX "$ENV{SystemDrive}/comm14cux")
+  endif()
 
   set_target_properties (
     comm14cux
@@ -83,7 +87,11 @@ if (MINGW)
   set (CPACK_GENERATOR "ZIP")
   set (CPACK_PACKAGE_NAME ${PROJECT_NAME})
   set (CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
-  set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "")
+    set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}-${CMAKE_SYSTEM_NAME}")
+  else()
+    set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  endif()
   include (CPack)
 
 else()
