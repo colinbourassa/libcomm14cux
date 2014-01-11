@@ -15,3 +15,9 @@ Of course, this prevents the system from setting up the port correctly.
 
 OS X (/dev/cu.usbserial*): Working as of OS X 10.6.
 
+
+To build Win32 binaries from a Linux environment using an
+M Cross Environment (MXE) installation:
+
+ cmake . -DCMAKE_TOOLCHAIN_FILE=/<path to mxe>/usr/i686-pc-mingw32/share/cmake/mxe-conf.cmake
+
