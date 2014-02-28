@@ -380,7 +380,9 @@ enum c14cux_bank
 enum c14cux_lambda_trim_type
 {
     C14CUX_LambdaTrimType_ShortTerm,
-    C14CUX_LambdaTrimType_LongTerm
+    /** This value is used for two purposes (long term trim and open-loop CO trim)
+     *  because the two values are stored at the same location. */
+    C14CUX_LambdaTrimType_LongTermOrOpenLoop
 };
 
 /**
