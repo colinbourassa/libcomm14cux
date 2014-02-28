@@ -31,6 +31,7 @@ set (CPACK_SOURCE_IGNORE_FILES
       "Makefile"
       "bin/lib.*"
       "bin/read14cux"
+      "bin/write14cux"
       "src/comm14cux_version.h$")
 
 configure_file (
@@ -43,6 +44,7 @@ add_library (comm14cux SHARED ${SOURCE_SUBDIR}/setup.c
                               ${SOURCE_SUBDIR}/data.c)
 target_link_libraries (comm14cux m)
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.c)
+add_executable (write14cux ${SOURCE_SUBDIR}/write14cux.c)
 
 if (MINGW)
   message (STATUS "Found Windows/MinGW platform.")
@@ -73,6 +75,7 @@ if (MINGW)
   )
 
   target_link_libraries (read14cux comm14cux)
+  target_link_libraries (write14cux comm14cux)
 
   install (FILES ${SOURCE_SUBDIR}/comm14cux.h
            DESTINATION "include")
@@ -82,6 +85,8 @@ if (MINGW)
                  "LICENSE.txt"
            DESTINATION "doc")
   install (PROGRAMS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/read14cux.exe
+           DESTINATION ".")
+  install (PROGRAMS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/write14cux.exe
            DESTINATION ".")
 
   set (CPACK_GENERATOR "ZIP")
@@ -141,6 +146,7 @@ else()
   )
 
   target_link_libraries (read14cux comm14cux pthread)
+  target_link_libraries (write14cux comm14cux pthread)
 
   # set the installation destinations for the header files,
   # shared library binaries, and reference utility
@@ -193,6 +199,13 @@ else()
             OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
   install (PROGRAMS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/read14cux
+           DESTINATION "bin"
+           PERMISSIONS
+            OWNER_READ OWNER_EXECUTE OWNER_WRITE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE)
+
+  install (PROGRAMS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/write14cux
            DESTINATION "bin"
            PERMISSIONS
             OWNER_READ OWNER_EXECUTE OWNER_WRITE
