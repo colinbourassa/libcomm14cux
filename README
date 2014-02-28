@@ -42,6 +42,7 @@ Changelog
 ---------
 1.1.0: Fixed bug with left/right bank confusion
        Modified getTuneRevision() to also return Ident byte and checksum fixer
+       Added function to retrieve MAF CO trim voltage
 1.0.0: Converted the interface from C++ to pure C
 0.5.5: Updated serial port setup for better cross-platform compatibility
        Added code for compatibility with Mac OS X >= 10.6
