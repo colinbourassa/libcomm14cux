@@ -700,11 +700,32 @@ bool c14cux_getLambdaTrimLong(c14cux_info* info, const enum c14cux_bank bank, in
 }
 
 /**
+ * Gets the measured MAF CO trim voltage.
+ * @param info State information for the active connection.
+ * @param coTrimVoltage Measured CO trim in volts.
+ * @return True when the value was successfully read; false otherwise
+ */
+bool c14cux_getCOTrimVoltage(c14cux_info* info, float* coTrimVoltage)
+{
+    bool retVal = false;
+    uint16_t rawcount = 0;
+
+    if (c14cux_readMem(info, C14CUX_LongTermLambdaFuelingTrimEvenOffset, 2, (uint8_t*)&rawcount))
+    {
+        rawcount = swapShort(rawcount);
+        *coTrimVoltage = 5.0 * ((float)(rawcount >> 7)) / 1024.0;
+        retVal = true;
+    }
+
+    return retVal;
+}
+
+/**
  * Populates the supplied struct with fault code data read from the ECU.
  * @param info State information for the active connection.
  * @param faultCodes Struct to populate with current fault code data
  * @return True when the fault code data was successfully read and
- *   the struct populated; 0 when an error occurred
+ *   the struct populated; false when an error occurred
  */
 bool c14cux_getFaultCodes(c14cux_info* info, c14cux_faultcodes *faultCodes)
 {
@@ -741,8 +762,8 @@ bool c14cux_clearFaultCodes(c14cux_info* info)
 /**
  * Gets the state of the line driving the fuel pump relay.
  * @param info State information for the active connection.
- * @param fuelPumpRelayState Set to 1 when the fuel pump relay is closed,
- *  or 0 when it's open
+ * @param fuelPumpRelayState Set to true when the fuel pump relay is closed,
+ *  or false when it's open
  * @return True when the relay state was successfully read; false otherwise
  */
 bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState)

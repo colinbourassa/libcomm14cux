@@ -493,6 +493,7 @@ bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex);
 bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex);
 bool c14cux_getLambdaTrimShort(c14cux_info* info, const enum c14cux_bank bank, int16_t* lambdaTrim);
 bool c14cux_getLambdaTrimLong(c14cux_info* info, const enum c14cux_bank bank, int16_t* lambdaTrim);
+bool c14cux_getCOTrimVoltage(c14cux_info* info, float* coTrimVoltage);
 bool c14cux_getIdleBypassMotorPosition(c14cux_info* info, float* bypassMotorPos);
 bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState);
 bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber, uint8_t* chksumFixer, uint8_t* tuneIdent);
