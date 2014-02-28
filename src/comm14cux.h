@@ -380,9 +380,16 @@ enum c14cux_bank
 enum c14cux_lambda_trim_type
 {
     C14CUX_LambdaTrimType_ShortTerm,
-    /** This value is used for two purposes (long term trim and open-loop CO trim)
-     *  because the two values are stored at the same location. */
-    C14CUX_LambdaTrimType_LongTermOrOpenLoop
+    C14CUX_LambdaTrimType_LongTerm
+};
+
+/**
+ * Describes the types of fueling feedback modes.
+ */
+enum c14cux_feedback_mode
+{
+    C14CUX_FeedbackMode_ClosedLoop,
+    C14CUX_FeedbackMode_OpenLoop
 };
 
 /**
