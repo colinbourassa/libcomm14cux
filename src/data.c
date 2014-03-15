@@ -35,17 +35,17 @@ bool c14cux_dumpROM(c14cux_info* info, uint8_t* buffer)
  * @param roadSpeed Set to road speed in miles per hour (if read successfully)
  * @return True if successfully read; false otherwise
  */
-bool c14cux_getRoadSpeed(c14cux_info* info, uint16_t* roadSpeed)
+bool c14cux_getRoadSpeed(c14cux_info* info, uint8_t* roadSpeed)
 {
-    uint8_t speed = 0;
+    uint8_t kphSpeed = 0;
     float floatSpeed = 0.0;
     bool retVal = false;
 
-    if (c14cux_readMem(info, C14CUX_RoadSpeedOffset, 1, &speed))
+    if (c14cux_readMem(info, C14CUX_RoadSpeedOffset, 1, &kphSpeed))
     {
         // convert KPH to MPH
-        floatSpeed = speed * 0.621371192;
-        *roadSpeed = (uint16_t)floatSpeed;
+        floatSpeed = kphSpeed * 0.621371192;
+        *roadSpeed = (uint8_t)floatSpeed;
         retVal = true;
     }
 
@@ -110,14 +110,26 @@ bool c14cux_getMAFReading(c14cux_info* info, const enum c14cux_airflow_type type
     if ((type == C14CUX_AirflowType_Direct) &&
         c14cux_readMem(info, C14CUX_MassAirflowDirectOffset, 2, (uint8_t*)&maf))
     {
-        *mafReading = swapShort(maf) / 1023.0;
-        retVal = true;
+        maf = swapShort(maf);
+
+        // sanity check the reading
+        if (maf <= 1023)
+        {
+            *mafReading = maf / 1023.0;
+            retVal = true;
+        }
     }
     else if ((type == C14CUX_AirflowType_Linearized) &&
              c14cux_readMem(info, C14CUX_MassAirflowLinearOffset, 2, (uint8_t*)&maf))
     {
-        *mafReading = swapShort(maf) / 17290.0;
-        retVal = true;
+        maf = swapShort(maf);
+
+        // sanity check the reading
+        if (maf <= 17290)
+        {
+            *mafReading = maf / 17290.0;
+            retVal = true;
+        }
     }
 
     return retVal;
@@ -241,32 +253,36 @@ bool c14cux_getThrottlePosition(c14cux_info* info, const enum c14cux_throttle_po
     {
         throttle = swapShort(throttle);
 
-        // if we're being asked to correct the measured value (so that the lowest
-        // actual measurement is shown as 0%), then read the stored minimum position
-        if (type == C14CUX_ThrottlePosType_Corrected)
+        // sanity check the reading
+        if (throttle <= 1023)
         {
-            if (c14cux_readMem(info, C14CUX_ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos))
+            // if we're being asked to correct the measured value (so that the lowest
+            // actual measurement is shown as 0%), then read the stored minimum position
+            if (type == C14CUX_ThrottlePosType_Corrected)
             {
-                throttleMinPos = swapShort(throttleMinPos);
+                if (c14cux_readMem(info, C14CUX_ThrottleMinimumPositionOffset, 2, (uint8_t*)&throttleMinPos))
+                {
+                    throttleMinPos = swapShort(throttleMinPos);
+                    retVal = true;
+                }
+            }
+            else
+            {
                 retVal = true;
             }
-        }
-        else
-        {
-            retVal = true;
-        }
 
-        if (throttle >= throttleMinPos)
-        {
-            // subtract off the base offset (which is zero for an absolute reading, or
-            // the minimum throttle position reading for a corrected reading)
-            *throttlePos = (throttle - throttleMinPos) / (1023.0 - throttleMinPos);
-        }
-        else
-        {
-            // if, because of some glitch, the current throttle reading is lower than the
-            // lowest reading that the ECU has stored, just report the position to zero
-            *throttlePos = 0;
+            if (throttle >= throttleMinPos)
+            {
+                // subtract off the base offset (which is zero for an absolute reading, or
+                // the minimum throttle position reading for a corrected reading)
+                *throttlePos = (throttle - throttleMinPos) / (1023.0 - throttleMinPos);
+            }
+            else
+            {
+                // if, because of some glitch, the current throttle reading is lower than the
+                // lowest reading that the ECU has stored, just report the position to zero
+                *throttlePos = 0;
+            }
         }
     }
 
@@ -287,12 +303,18 @@ bool c14cux_getGearSelection(c14cux_info* info, enum c14cux_gear* gear)
 
     if (c14cux_readMem(info, C14CUX_TransmissionGearOffset, 1, &nSwitch))
     {
+        // Note that the comparison values used below are the same as those used
+        // in the ECU's firmware (at least in tune R3652). Because they're used
+        // inline in the firmware rather than being stored at fixed offsets in
+        // the data segment, we don't attempt to read them out and instead just
+        // hardcode them here as well.
+
         // if the ADC reading is fairly low, it's indicating park/neutral
-        if (nSwitch < 0x30)
+        if (nSwitch < 0x4D)
         {
             *gear = C14CUX_Gear_ParkOrNeutral;
         }
-        else if (nSwitch > 0xD0)    // if the reading is fairly high, it's drive/reverse
+        else if (nSwitch > 0xB3) // if the reading is fairly high, it's drive/reverse
         {
             *gear = C14CUX_Gear_DriveOrReverse;
         }
@@ -320,17 +342,17 @@ void c14cux_determineDataOffsets(c14cux_info *info)
     {
         uint8_t maxByteToByteChangeOld = 0;
         uint8_t maxByteToByteChangeNew = 0;
-        uint8_t testBufferOld[16];
-        uint8_t testBufferNew[16];
+        uint8_t testBufferOld[FUEL_MAP_COLUMNS];
+        uint8_t testBufferNew[FUEL_MAP_COLUMNS];
         uint8_t voltageOffsetA;
         int firstRowOffset = 1;
 
         // read the first row of fuel map data at each of its two (?) possible locations
-        if (c14cux_readMem(info, C14CUX_OldFuelMap1Offset, 16, &testBufferOld[0]) &&
-            c14cux_readMem(info, C14CUX_NewFuelMap1Offset, 16, &testBufferNew[0]))
+        if (c14cux_readMem(info, C14CUX_OldFuelMap1Offset, FUEL_MAP_COLUMNS, &testBufferOld[0]) &&
+            c14cux_readMem(info, C14CUX_NewFuelMap1Offset, FUEL_MAP_COLUMNS, &testBufferNew[0]))
         {
             // find the greatest byte-to-byte difference in each set of data
-            for (firstRowOffset = 1; firstRowOffset < 16; firstRowOffset++)
+            for (firstRowOffset = 1; firstRowOffset < FUEL_MAP_COLUMNS; firstRowOffset++)
             {
                 if (maxByteToByteChangeOld <
                         abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1])))
@@ -555,7 +577,8 @@ bool c14cux_getCurrentFuelMap(c14cux_info* info, uint8_t* fuelMapId)
     uint8_t id = 0xff;
     bool retVal = false;
 
-    if (c14cux_readMem(info, C14CUX_CurrentFuelMapIdOffset, 1, &id))
+    if (c14cux_readMem(info, C14CUX_CurrentFuelMapIdOffset, 1, &id) &&
+        (id <= 5))
     {
         *fuelMapId = id;
         retVal = true;
@@ -578,20 +601,24 @@ bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex)
 
     if (c14cux_readMem(info, C14CUX_FuelMapRowIndexOffset, 1, &rowIndex))
     {
-        // fuel map starting row index is stored in the high nibble
-        *fuelMapRowIndex = (rowIndex >> 4);
-
-        // The 'fuzzy' nature of the fuel map means that the value selected
-        // by the upper nibbles of the row-column pair is actually just the
-        // upper-left corner of a square of four values, which are partially
-        // combined by using the lower nibbles of the row-column indicies as
-        // weights. To provide a simple index here, we simply round up to the
-        // next row if the lower nibble is >= 8.
-        if (((rowIndex & 0x0F) >= 0x08) && (*fuelMapRowIndex < 0x07))
+        // sanity check the row index
+        if ((rowIndex >> 4) < FUEL_MAP_ROWS)
         {
-            *fuelMapRowIndex += 1;
+            // fuel map starting row index is stored in the high nibble
+            *fuelMapRowIndex = (rowIndex >> 4);
+
+            // The 'fuzzy' nature of the fuel map means that the value selected
+            // by the upper nibbles of the row-column pair is actually just the
+            // upper-left corner of a square of four values, which are partially
+            // combined by using the lower nibbles of the row-column indicies as
+            // weights. To provide a simple index here, we simply round up to the
+            // next row if the lower nibble is >= 8.
+            if ((rowIndex & 0x08) && (*fuelMapRowIndex < (FUEL_MAP_ROWS - 1)))
+            {
+                *fuelMapRowIndex += 1;
+            }
+            retVal = true;
         }
-        retVal = true;
     }
 
     return retVal;
@@ -611,20 +638,24 @@ bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex)
 
     if (c14cux_readMem(info, C14CUX_FuelMapColumnIndexOffset, 1, &colIndex))
     {
-        // fuel map starting column index is stored in the high nibble
-        *fuelMapColIndex = (colIndex >> 4);
-
-        // The 'fuzzy' nature of the fuel map means that the value selected
-        // by the upper nibbles of the row-column pair is actually just the
-        // upper-left corner of a square of four values, which are partially
-        // combined by using the lower nibbles of the row-column indicies as
-        // weights. To provide a simple index here, we simply round up to the
-        // next column if the lower nibble is >= 8.
-        if (((colIndex & 0x0F) >= 0x08) && (*fuelMapColIndex < 0x0F))
+        // sanity check the column index
+        if ((colIndex >> 4) < FUEL_MAP_COLUMNS)
         {
-            *fuelMapColIndex += 1;
+            // fuel map starting column index is stored in the high nibble
+            *fuelMapColIndex = (colIndex >> 4);
+
+            // The 'fuzzy' nature of the fuel map means that the value selected
+            // by the upper nibbles of the row-column pair is actually just the
+            // upper-left corner of a square of four values, which are partially
+            // combined by using the lower nibbles of the row-column indicies as
+            // weights. To provide a simple index here, we simply round up to the
+            // next column if the lower nibble is >= 8.
+            if ((colIndex & 0x0F) && (*fuelMapColIndex < (FUEL_MAP_COLUMNS - 1)))
+            {
+                *fuelMapColIndex += 1;
+            }
+            retVal = true;
         }
-        retVal = true;
     }
 
     return retVal;
@@ -852,11 +883,11 @@ bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state*
     if (c14cux_readMem(info, C14CUX_PurgeValveStateOffset, 2, (uint8_t*)&purgeValveState))
     {
         purgeValveState = swapShort(purgeValveState);
-        if (purgeValveState < 4000)
+        if (purgeValveState < 4000) // threshold used by the ECU
         {
             *state = C14CUX_PurgeValveState_Closed;
         }
-        else if (purgeValveState < 29000)
+        else if (purgeValveState < 29000) // threshold used by the ECU
         {
             *state = C14CUX_PurgeValveState_Toggling;
         }

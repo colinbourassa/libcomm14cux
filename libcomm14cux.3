@@ -25,8 +25,8 @@ c14cux_init(&info);
 .nf
 if (c14cux_connect(&info, "/dev/ttyUSB0"))
 {
-    uint16_t speedMPH = 0;
-    bool readSuccess = c14cux_getRoadSpeed(&info, &speedMPH);
+    uint8_t speed_mph = 0;
+    bool status = c14cux_getRoadSpeed(&info, &speed_mph);
 }
 .br
 c14cux_cleanup(&info);

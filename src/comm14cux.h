@@ -65,6 +65,9 @@ extern "C" {
 /** Number of engine speed ranges in the fuel maps */
 #define FUEL_MAP_COLUMNS 16
 
+/** Number of engine load ranges in the fuel maps */
+#define FUEL_MAP_ROWS 8
+
 /**
  * Defines the possible byte quantities that may be requested
  * via the serial protocol.
@@ -484,7 +487,7 @@ bool c14cux_getFaultCodes(c14cux_info* info, c14cux_faultcodes* faultCodes);
 
 c14cux_version c14cux_getLibraryVersion();
 
-bool c14cux_getRoadSpeed(c14cux_info* info, uint16_t* roadSpeed);
+bool c14cux_getRoadSpeed(c14cux_info* info, uint8_t* roadSpeed);
 bool c14cux_getCoolantTemp(c14cux_info* info, int16_t* coolantTemp);
 bool c14cux_getFuelTemp(c14cux_info* info, int16_t* fuelTemp);
 bool c14cux_getMAFReading(c14cux_info* info, const enum c14cux_airflow_type type, float* mafReading);

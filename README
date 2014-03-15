@@ -40,6 +40,8 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+1.2.0: Added sanity checking for several readings
+       Changed function signature for getRoadSpeed to use a smaller type
 1.1.0: Fixed bug with left/right bank confusion
        Modified getTuneRevision() to also return Ident byte and checksum fixer
        Added function to retrieve MAF CO trim voltage
