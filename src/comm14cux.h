@@ -150,6 +150,8 @@ enum c14cux_memory_offset
     C14CUX_EngineSpeedInstantaneousOffset = 0x007A,
     //! Memory location of filtered engine speed value
     C14CUX_EngineSpeedFilteredOffset = 0x007C,
+    //! Memory location of final fueling value
+    C14CUX_FinalFuelingValueOffset = 0x0082,
     //! Memory location of purge valve timer value
     C14CUX_PurgeValveStateOffset = 0x0096,
     //! Memory location of selected gear value
@@ -511,6 +513,7 @@ bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode);
 bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state);
 bool c14cux_isMILOn(c14cux_info* info, bool* milOn);
 bool c14cux_getRpmTable(c14cux_info* info, c14cux_rpmtable* table);
+bool c14cux_getFinalFuelingValue(c14cux_info* info, uint16_t *fuelingVal);
 
 bool c14cux_clearFaultCodes(c14cux_info* info);
 bool c14cux_runFuelPump(c14cux_info* info);

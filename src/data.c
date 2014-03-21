@@ -951,6 +951,29 @@ bool c14cux_getRpmTable(c14cux_info* info, c14cux_rpmtable *table)
 }
 
 /**
+ * Reads the final fueling value that is computed based on all the
+ * environmental factors. The location at which it is stored is used for both
+ * banks, and the bank being serviced at the time the value is read is
+ * nondeterministic. Therefore, this value is probably most useful when running
+ * in open-loop mode, because it should be the same for both banks.
+ * @param info State information for the active connection.
+ * @param fuelingVal Set to the fueling value
+ * @return True when the read was successful, false otherwise
+ */
+bool c14cux_getFinalFuelingValue(c14cux_info* info, uint16_t* fuelingVal)
+{
+    bool status = false;
+
+    if (c14cux_readMem(info, C14CUX_FinalFuelingValueOffset, 2, (uint8_t*)fuelingVal))
+    {
+        *fuelingVal = swapShort(*fuelingVal);
+        status = true;
+    }
+
+    return status;
+}
+
+/**
  * Closes the fuel pump relay to run the pump for a single timeout period
  * (approximately two seconds).
  * @param info State information for the active connection.
