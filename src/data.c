@@ -590,35 +590,25 @@ bool c14cux_getCurrentFuelMap(c14cux_info* info, uint8_t* fuelMapId)
 /**
  * Gets the current fuel map row index.
  * @param info State information for the active connection.
- * @param fuelMapRowIndex Set to the row index of the fuel map (if read
- *  successfully)
+ * @param fuelMapRowIndex Set to the row index of the fuel map
+ * @param rowWeighting Set to the row weighting value
  * @return True if successfully read; false otherwise
  */
-bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex)
+bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex, uint8_t* rowWeighting)
 {
     uint8_t rowIndex = 0xff;
     bool retVal = false;
 
-    if (c14cux_readMem(info, C14CUX_FuelMapRowIndexOffset, 1, &rowIndex))
+    if (c14cux_readMem(info, C14CUX_FuelMapRowIndexOffset, 1, &rowIndex) &&
+        ((rowIndex >> 4) < FUEL_MAP_ROWS))
     {
-        // sanity check the row index
-        if ((rowIndex >> 4) < FUEL_MAP_ROWS)
-        {
-            // fuel map starting row index is stored in the high nibble
-            *fuelMapRowIndex = (rowIndex >> 4);
+        // fuel map starting row index is stored in the high nibble
+        *fuelMapRowIndex = (rowIndex >> 4);
 
-            // The 'fuzzy' nature of the fuel map means that the value selected
-            // by the upper nibbles of the row-column pair is actually just the
-            // upper-left corner of a square of four values, which are partially
-            // combined by using the lower nibbles of the row-column indicies as
-            // weights. To provide a simple index here, we simply round up to the
-            // next row if the lower nibble is >= 8.
-            if ((rowIndex & 0x08) && (*fuelMapRowIndex < (FUEL_MAP_ROWS - 1)))
-            {
-                *fuelMapRowIndex += 1;
-            }
-            retVal = true;
-        }
+        // row weighting in stored in the low nibble
+        *rowWeighting = rowIndex & 0x0F;
+
+        retVal = true;
     }
 
     return retVal;
@@ -627,35 +617,25 @@ bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex)
 /**
  * Gets the current fuel map column index.
  * @param info State information for the active connection.
- * @param fuelMapColIndex Set to the column index of the fuel map (if read
- *  successfully)
+ * @param fuelMapColIndex Set to the column index of the fuel map
+ * @param colWeighting Set to the column weighting value
  * @return True if successfully read; false otherwise
  */
-bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex)
+bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex, uint8_t* colWeighting)
 {
     uint8_t colIndex = 0xff;
     bool retVal = false;
 
-    if (c14cux_readMem(info, C14CUX_FuelMapColumnIndexOffset, 1, &colIndex))
+    if (c14cux_readMem(info, C14CUX_FuelMapColumnIndexOffset, 1, &colIndex) &&
+        ((colIndex >> 4) < FUEL_MAP_COLUMNS))
     {
-        // sanity check the column index
-        if ((colIndex >> 4) < FUEL_MAP_COLUMNS)
-        {
-            // fuel map starting column index is stored in the high nibble
-            *fuelMapColIndex = (colIndex >> 4);
+        // fuel map starting column index is stored in the high nibble
+        *fuelMapColIndex = (colIndex >> 4);
 
-            // The 'fuzzy' nature of the fuel map means that the value selected
-            // by the upper nibbles of the row-column pair is actually just the
-            // upper-left corner of a square of four values, which are partially
-            // combined by using the lower nibbles of the row-column indicies as
-            // weights. To provide a simple index here, we simply round up to the
-            // next column if the lower nibble is >= 8.
-            if ((colIndex & 0x0F) && (*fuelMapColIndex < (FUEL_MAP_COLUMNS - 1)))
-            {
-                *fuelMapColIndex += 1;
-            }
-            retVal = true;
-        }
+        // column weighting in stored in the low nibble
+        *colWeighting = colIndex & 0x0F;
+
+        retVal = true;
     }
 
     return retVal;

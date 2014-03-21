@@ -42,6 +42,7 @@ Changelog
 ---------
 1.2.0: Added function to retrieve final fueling value
        Added sanity checking for several readings
+       Changed functions that retrieve fuel map row/col to return weighting
        Changed function signature for getRoadSpeed to use a smaller type
 1.1.0: Fixed bug with left/right bank confusion
        Modified getTuneRevision() to also return Ident byte and checksum fixer
