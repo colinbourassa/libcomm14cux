@@ -340,39 +340,27 @@ void c14cux_determineDataOffsets(c14cux_info *info)
     // if the revision of the ROM hasn't yet been determined...
     if (info->promRev == C14CUX_DataOffsets_Unset)
     {
-        uint8_t maxByteToByteChangeOld = 0;
-        uint8_t maxByteToByteChangeNew = 0;
-        uint8_t testBufferOld[FUEL_MAP_COLUMNS];
-        uint8_t testBufferNew[FUEL_MAP_COLUMNS];
+        uint8_t fuelMapRowData[FUEL_MAP_COLUMNS];
         uint8_t voltageOffsetA;
-        int firstRowOffset = 1;
+        int firstRowOffset = 0;
+        bool oldRev = true;
 
         // read the first row of fuel map data at each of its two (?) possible locations
-        if (c14cux_readMem(info, C14CUX_OldFuelMap1Offset, FUEL_MAP_COLUMNS, &testBufferOld[0]) &&
-            c14cux_readMem(info, C14CUX_NewFuelMap1Offset, FUEL_MAP_COLUMNS, &testBufferNew[0]))
+        if (c14cux_readMem(info, C14CUX_OldFuelMap1Offset, FUEL_MAP_COLUMNS, &fuelMapRowData[0]))
         {
-            // find the greatest byte-to-byte difference in each set of data
-            for (firstRowOffset = 1; firstRowOffset < FUEL_MAP_COLUMNS; firstRowOffset++)
+            while ((firstRowOffset < FUEL_MAP_COLUMNS) && oldRev)
             {
-                if (maxByteToByteChangeOld <
-                        abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1])))
+                // the first row of fuel map data should never contain values as high
+                // as 0x30, so if this data (read from the old Map 1 location) only
+                // contains low values, we decide that it must represent real map data
+                if (fuelMapRowData[firstRowOffset] > 0x30)
                 {
-                    maxByteToByteChangeOld =
-                        abs((testBufferOld[firstRowOffset] - testBufferOld[firstRowOffset - 1]));
+                    oldRev = false;
                 }
-
-                if (maxByteToByteChangeNew <
-                        abs((testBufferNew[firstRowOffset] - testBufferNew[firstRowOffset - 1])))
-                {
-                    maxByteToByteChangeNew =
-                        abs((testBufferNew[firstRowOffset] - testBufferNew[firstRowOffset - 1]));
-                }
+                firstRowOffset += 1;
             }
 
-            // real fuel map data will only have small changes between
-            // consecutive values, so the run of data with the smallest
-            // byte-to-byte changes is probably the real fuel map
-            if (maxByteToByteChangeOld < maxByteToByteChangeNew)
+            if (oldRev)
             {
                 // very old 14CU(X) units (1990ish and earlier) have some of the main-voltage
                 // computation factors hardcoded, so we need to check for that as well
