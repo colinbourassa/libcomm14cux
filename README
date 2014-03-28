@@ -46,6 +46,7 @@ Changelog
        Changed function signature for getRoadSpeed to use a smaller type
        Fixed Unix/Linux bug that resulted in reads failing if one of the
         command bytes was CR or NL
+       Changed algorithm to detect new vs. old data offsets
 1.1.0: Fixed bug with left/right bank confusion
        Modified getTuneRevision() to also return Ident byte and checksum fixer
        Added function to retrieve MAF CO trim voltage
