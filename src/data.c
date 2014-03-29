@@ -919,22 +919,22 @@ bool c14cux_getRpmTable(c14cux_info* info, c14cux_rpmtable *table)
 }
 
 /**
- * Reads the final fueling value that is computed based on all the
+ * Reads the injector pulse width that is computed based on all the
  * environmental factors. The location at which it is stored is used for both
  * banks, and the bank being serviced at the time the value is read is
  * nondeterministic. Therefore, this value is probably most useful when running
  * in open-loop mode, because it should be the same for both banks.
  * @param info State information for the active connection.
- * @param fuelingVal Set to the fueling value
+ * @param pulseWidth Injector pulse width in microseconds
  * @return True when the read was successful, false otherwise
  */
-bool c14cux_getFinalFuelingValue(c14cux_info* info, uint16_t* fuelingVal)
+bool c14cux_getInjectorPulseWidth(c14cux_info* info, uint16_t* pulseWidth)
 {
     bool status = false;
 
-    if (c14cux_readMem(info, C14CUX_FinalFuelingValueOffset, 2, (uint8_t*)fuelingVal))
+    if (c14cux_readMem(info, C14CUX_InjectorPulseWidthOffset, 2, (uint8_t*)pulseWidth))
     {
-        *fuelingVal = swapShort(*fuelingVal);
+        *pulseWidth = swapShort(*pulseWidth);
         status = true;
     }
 
