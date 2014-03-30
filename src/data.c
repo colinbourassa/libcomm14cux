@@ -44,7 +44,7 @@ bool c14cux_getRoadSpeed(c14cux_info* info, uint8_t* roadSpeed)
     if (c14cux_readMem(info, C14CUX_RoadSpeedOffset, 1, &kphSpeed))
     {
         // convert KPH to MPH
-        floatSpeed = kphSpeed * 0.621371192;
+        floatSpeed = (float)kphSpeed * 0.621371192;
         *roadSpeed = (uint8_t)floatSpeed;
         retVal = true;
     }
