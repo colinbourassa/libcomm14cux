@@ -593,7 +593,7 @@ bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex, uint
         // fuel map starting row index is stored in the high nibble
         *fuelMapRowIndex = (rowIndex >> 4);
 
-        // row weighting in stored in the low nibble
+        // row weighting is stored in the low nibble
         *rowWeighting = rowIndex & 0x0F;
 
         retVal = true;
@@ -620,7 +620,7 @@ bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex, u
         // fuel map starting column index is stored in the high nibble
         *fuelMapColIndex = (colIndex >> 4);
 
-        // column weighting in stored in the low nibble
+        // column weighting is stored in the low nibble
         *colWeighting = colIndex & 0x0F;
 
         retVal = true;
