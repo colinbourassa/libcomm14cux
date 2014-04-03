@@ -508,7 +508,7 @@ bool c14cux_getLambdaTrimLong(c14cux_info* info, const enum c14cux_bank bank, in
 bool c14cux_getCOTrimVoltage(c14cux_info* info, float* coTrimVoltage);
 bool c14cux_getIdleBypassMotorPosition(c14cux_info* info, float* bypassMotorPos);
 bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState);
-bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber, uint8_t* chksumFixer, uint8_t* tuneIdent);
+bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber, uint8_t* chksumFixer, uint16_t* tuneIdent);
 bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode);
 bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state);
 bool c14cux_isMILOn(c14cux_info* info, bool* milOn);

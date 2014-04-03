@@ -784,16 +784,17 @@ bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState)
  * @param info State information for the active connection.
  * @param tuneRevision Decimal representation of the tune revision
  * @param chksumFixer Checksum fixer byte value
- * @param tuneIdent Tune 'Ident' byte value (provides further differentiation after tune revision number)
+ * @param tuneIdent Tune 'Ident' word value (provides further differentiation after tune revision number)
  * @return True when the read was successful, false otherwise
  */
-bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneRevision, uint8_t* chksumFixer, uint8_t* tuneIdent)
+bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneRevision, uint8_t* chksumFixer, uint16_t* tuneIdent)
 {
-    uint8_t idinfo[4];
+    uint8_t idinfo[5];
     bool retVal = false;
     int byteIdx = 0;
+    uint8_t* tuneIdPtr = (uint8_t*)tuneIdent;
 
-    if (c14cux_readMem(info, C14CUX_TuneRevisionOffset, 4, idinfo))
+    if (c14cux_readMem(info, C14CUX_TuneRevisionOffset, 5, idinfo))
     {
         // first two bytes in the 4-byte array represent a BCD tune revision number
         *tuneRevision = 0;
@@ -807,8 +808,10 @@ bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneRevision, uint8_t* 
         // the next byte is the checksum fixer
         *chksumFixer = idinfo[2];
 
-        // and the final is the "Ident" byte
-        *tuneIdent = idinfo[3];
+        // and the final two comprise the "Ident" word
+        tuneIdPtr[0] = idinfo[3];
+        tuneIdPtr[1] = idinfo[4];
+        *tuneIdent = swapShort(*tuneIdent);
 
         retVal = true;
     }
