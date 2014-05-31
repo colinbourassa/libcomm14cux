@@ -873,6 +873,46 @@ bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state*
 }
 
 /**
+ * Gets the state of the screen heater.
+ * @param info State information for the active connection.
+ * @param state State of the screen heater (true is on, false is off)
+ * @return True when the read was successful, false otherwise
+ */
+bool c14cux_getScreenHeaterState(c14cux_info* info, bool* state)
+{
+    uint8_t bits = 0;
+    bool status = false;
+
+    if (c14cux_readMem(info, C14CUX_Bits_00DD, 1, &bits))
+    {
+        *state = ((bits & 0x04) == 0x00);
+        status = true;
+    }
+
+    return status;
+}
+
+/**
+ * Gets the state of the AC compressor load input.
+ * @param info State information for the active connection.
+ * @param state State of the AC compressor (true is on, false is off)
+ * @return True when the read was successful, false otherwise
+ */
+bool c14cux_getACCompressorState(c14cux_info* info, bool* state)
+{
+    uint8_t bits = 0;
+    bool status = false;
+
+    if (c14cux_readMem(info, C14CUX_Bits_008A, 1, &bits))
+    {
+        *state = ((bits & 0x08) == 0x00);
+        status = true;
+    }
+
+    return status;
+}
+
+/**
  * Gets the state of the Malfunction Indicator Lamp (MIL). Note that
  * a MIL implies that at least one fault code is set, but not every
  * fault code will trigger a MIL.
@@ -982,7 +1022,7 @@ bool c14cux_driveIdleAirControlMotor(c14cux_info* info, const uint8_t direction,
     bool retVal = false;
     uint8_t iacDirection = 0x00;
 
-    if (c14cux_readMem(info, 0x008A, 1, &iacDirection))
+    if (c14cux_readMem(info, C14CUX_Bits_008A, 1, &iacDirection))
     {
         if (direction == 0)
         {
@@ -993,7 +1033,7 @@ bool c14cux_driveIdleAirControlMotor(c14cux_info* info, const uint8_t direction,
             iacDirection |= 0x01;
         }
 
-        c14cux_writeMem(info, 0x008A, iacDirection);
+        c14cux_writeMem(info, C14CUX_Bits_008A, iacDirection);
         c14cux_writeMem(info, C14CUX_IdleAirControlStepCountOffset, steps);
     }
 }

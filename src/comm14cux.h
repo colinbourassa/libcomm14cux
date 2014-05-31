@@ -152,8 +152,12 @@ enum c14cux_memory_offset
     C14CUX_EngineSpeedFilteredOffset = 0x007C,
     //! Memory location of injector pulse width value
     C14CUX_InjectorPulseWidthOffset = 0x0082,
+    //! Memory location of miscellaneous data bits stored at $008A
+    C14CUX_Bits_008A = 0x008A,
     //! Memory location of purge valve timer value
     C14CUX_PurgeValveStateOffset = 0x0096,
+    //! Memory location of miscellaneous data bits stored at $00DD
+    C14CUX_Bits_00DD = 0x00DD,
     //! Memory location of selected gear value
     C14CUX_TransmissionGearOffset = 0x2000,
     //! Memory location of road speed value
@@ -511,6 +515,8 @@ bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState);
 bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber, uint8_t* chksumFixer, uint16_t* tuneIdent);
 bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode);
 bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state);
+bool c14cux_getScreenHeaterState(c14cux_info* info, bool* state);
+bool c14cux_getACCompressorState(c14cux_info* info, bool* state);
 bool c14cux_isMILOn(c14cux_info* info, bool* milOn);
 bool c14cux_getRpmTable(c14cux_info* info, c14cux_rpmtable* table);
 bool c14cux_getInjectorPulseWidth(c14cux_info* info, uint16_t *pulseWidth);
