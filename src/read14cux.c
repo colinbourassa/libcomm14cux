@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "comm14cux.h"
 
 int main(int argc, char** argv)
@@ -13,22 +14,33 @@ int main(int argc, char** argv)
     FILE *fp;
     int retVal = 0;
     int bytePos = 0;
+    uint32_t baud = C14CUX_BAUD;
 
     ver = c14cux_getLibraryVersion();
 
     if (argc < 4)
     {
         printf("read14cux using libcomm14cux v%d.%d.%d\n", ver.major, ver.minor, ver.patch);
-        printf("Usage: %s <serial device> <address> <length> [output file]\n", argv[0]);
+        printf("Usage: %s <serial device> [-b baud-rate] <address> <length> [output file]\n", argv[0]);
         return 0;
     }
 
-    addr = strtoul(argv[2], NULL, 0);
-    len = strtoul(argv[3], NULL, 0);
+    // if the user specified a nonstandard baud rate, grab it from the parameter list
+    if (strcmp(argv[2], "-b") == 0)
+    {
+        baud = strtoul(argv[3], NULL, 10);
+        addr = strtoul(argv[4], NULL, 0);
+        len = strtoul(argv[5], NULL, 0);
+    }
+    else
+    {
+        addr = strtoul(argv[2], NULL, 0);
+        len = strtoul(argv[3], NULL, 0);
+    }
 
     c14cux_init(&info);
 
-    if (c14cux_connect(&info, argv[1]))
+    if (c14cux_connect(&info, argv[1], baud))
     {
         if (c14cux_readMem(&info, addr, len, readBuf))
         {

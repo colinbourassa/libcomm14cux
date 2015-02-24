@@ -148,7 +148,7 @@ void c14cux_disconnect(c14cux_info *info)
  * @return True if the serial device was successfully opened and its
  *   baud rate was set; false otherwise.
  */
-bool c14cux_connect(c14cux_info *info, const char *devPath)
+bool c14cux_connect(c14cux_info *info, const char *devPath, uint32_t baud)
 {
     bool result = false;
 
@@ -156,7 +156,7 @@ bool c14cux_connect(c14cux_info *info, const char *devPath)
 
     if (WaitForSingleObject(info->mutex, INFINITE) == WAIT_OBJECT_0)
     {
-        result = c14cux_isConnected(info) || c14cux_openSerial(info, devPath);
+        result = c14cux_isConnected(info) || c14cux_openSerial(info, devPath, baud);
         ReleaseMutex(info->mutex);
         dprintf_info("14CUX(info): Connected (Win32)\n");
     }
@@ -168,7 +168,7 @@ bool c14cux_connect(c14cux_info *info, const char *devPath)
 #else // Linux/Unix
 
     pthread_mutex_lock(&info->mutex);
-    result = c14cux_isConnected(info) || c14cux_openSerial(info, devPath);
+    result = c14cux_isConnected(info) || c14cux_openSerial(info, devPath, baud);
     pthread_mutex_unlock(&info->mutex);
     if (result)
     {
@@ -194,7 +194,7 @@ bool c14cux_connect(c14cux_info *info, const char *devPath)
  * Example: /dev/cuaU0 (instead of /dev/ttyU0)
  * @return True if the open/setup was successful, false otherwise
  */
-bool c14cux_openSerial(c14cux_info *info, const char *devPath)
+bool c14cux_openSerial(c14cux_info *info, const char *devPath, uint32_t baud)
 {
     bool retVal = false;
 
@@ -253,8 +253,8 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
             newtio.c_cc[VMIN] = 0;
 
             // set the input and output baud rates to 7812
-            cfsetispeed(&newtio, C14CUX_BAUD);
-            cfsetospeed(&newtio, C14CUX_BAUD);
+            cfsetispeed(&newtio, baud);
+            cfsetospeed(&newtio, baud);
 #endif
 
             // attempt to set the termios parameters
@@ -279,7 +279,7 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
             if (ioctl(info->sd, TIOCGSERIAL, &serial_info) != -1)
             {
                 serial_info.flags = ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
-                serial_info.custom_divisor = serial_info.baud_base / C14CUX_BAUD;
+                serial_info.custom_divisor = serial_info.baud_base / baud;
 
                 if (ioctl(info->sd, TIOCSSERIAL, &serial_info) != -1)
                 {
@@ -292,7 +292,7 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
         // OS X requires an ioctl() to set a nonstandard baud rate
         if (success)
         {
-            speed_t speed = C14CUX_BAUD;
+            speed_t speed = baud;
             if (ioctl(info->sd, IOSSIOSPEED, &speed) != -1)
             {
                 retVal = true;
@@ -335,7 +335,7 @@ bool c14cux_openSerial(c14cux_info *info, const char *devPath)
         if (GetCommState(info->sd, &dcb) == TRUE)
         {
             // set the serial port parameters, including the custom baud rate
-            dcb.BaudRate = C14CUX_BAUD;
+            dcb.BaudRate = baud;
             dcb.fParity = FALSE;
             dcb.fOutxCtsFlow = FALSE;
             dcb.fOutxDsrFlow = FALSE;

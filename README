@@ -40,6 +40,8 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+2.0.0: Added support for nonstandard baud rates (i.e. other than 7812.5 bps)
+       Added preliminary support for AC compressor and heated screen status
 1.2.0: Added function to retrieve final fueling value
        Added sanity checking for several readings
        Changed functions that retrieve fuel map row/col to return weighting
@@ -82,7 +84,8 @@ Changelog
 -------------
 Compatibility
 -------------
-libcomm14cux has been tested with the following operating systems:
+libcomm14cux has been tested with the following operating systems at some
+point in its history:
 
 * Linux (Ubuntu 13.10, i386 / AMD64)
 * OpenBSD 5.2 (AMD64)
@@ -108,13 +111,18 @@ bytes per line), or, if an output filename is given, write the bytes to a file.
 
 The read14cux command line parameters are as follows:
 
-  read14cux <serial-device> <address> <length> [output-file]
+  read14cux <serial-device> [-b baud-rate] <address> <length> [output-file]
 
   serial-device:
     The name of the serial port device, which is probably an FTDI USB converter.
     In recent Linux distributions, it's probably "/dev/ttyUSB0". In Windows,
     it's a COM port (such as "COM2") -- the specific COM port can be found by
     locating the serial device in the Windows Device Manager.
+
+  baud-rate:
+    Optional parameter, prefixed with '-b' if present. Sets the baud rate used
+    when communicating with the ECU. This is only useful if your ECU is running
+    customized firmware that supports a higher baud rate.
 
   address:
     Memory address at which to start reading data. This should be specified in
