@@ -4,6 +4,12 @@
 #include <string.h>
 #include "comm14cux.h"
 
+void usage(c14cux_version ver, const char* name)
+{
+    printf("read14cux using libcomm14cux v%d.%d.%d\n", ver.major, ver.minor, ver.patch);
+    printf("Usage: %s <serial device> [-b baud-rate] <address> <length> [output file]\n", name);
+}
+
 int main(int argc, char** argv)
 {
     uint8_t readBuf[0x10000];
@@ -14,23 +20,30 @@ int main(int argc, char** argv)
     FILE *fp;
     int retVal = 0;
     int bytePos = 0;
-    uint32_t baud = C14CUX_BAUD;
+    unsigned int baud = C14CUX_BAUD;
 
     ver = c14cux_getLibraryVersion();
 
     if (argc < 4)
     {
-        printf("read14cux using libcomm14cux v%d.%d.%d\n", ver.major, ver.minor, ver.patch);
-        printf("Usage: %s <serial device> [-b baud-rate] <address> <length> [output file]\n", argv[0]);
+        usage(ver, argv[0]);
         return 0;
     }
 
     // if the user specified a nonstandard baud rate, grab it from the parameter list
     if (strcmp(argv[2], "-b") == 0)
     {
-        baud = strtoul(argv[3], NULL, 10);
-        addr = strtoul(argv[4], NULL, 0);
-        len = strtoul(argv[5], NULL, 0);
+        if (argc < 6)
+        {
+            usage(ver, argv[0]);
+            return 0;
+        }
+        else
+        {
+            baud = strtoul(argv[3], NULL, 10);
+            addr = strtoul(argv[4], NULL, 0);
+            len = strtoul(argv[5], NULL, 0);
+        }
     }
     else
     {

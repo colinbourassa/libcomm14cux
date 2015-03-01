@@ -145,10 +145,11 @@ void c14cux_disconnect(c14cux_info *info)
  * Opens the serial port (or returns with success if it is already open.)
  * @param info State information for the current connection.
  * @param devPath Full path to the serial device (e.g. "/dev/ttyUSB0" or "COM2")
+ * @param baud Baud rate, which should be set to C14CUX_BAUD for standard ECUs
  * @return True if the serial device was successfully opened and its
  *   baud rate was set; false otherwise.
  */
-bool c14cux_connect(c14cux_info *info, const char *devPath, uint32_t baud)
+bool c14cux_connect(c14cux_info *info, const char *devPath, unsigned int baud)
 {
     bool result = false;
 
@@ -194,7 +195,7 @@ bool c14cux_connect(c14cux_info *info, const char *devPath, uint32_t baud)
  * Example: /dev/cuaU0 (instead of /dev/ttyU0)
  * @return True if the open/setup was successful, false otherwise
  */
-bool c14cux_openSerial(c14cux_info *info, const char *devPath, uint32_t baud)
+bool c14cux_openSerial(c14cux_info *info, const char *devPath, unsigned int baud)
 {
     bool retVal = false;
 

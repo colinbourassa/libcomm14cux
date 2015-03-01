@@ -483,7 +483,7 @@ uint16_t swapShort(const uint16_t source);
 
 void c14cux_init(c14cux_info* info);
 void c14cux_cleanup(c14cux_info* info);
-bool c14cux_connect(c14cux_info* info, const char *devPath, uint32_t baud);
+bool c14cux_connect(c14cux_info* info, const char *devPath, unsigned int baud);
 void c14cux_disconnect(c14cux_info* info);
 bool c14cux_isConnected(c14cux_info* info);
 bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buffer);
