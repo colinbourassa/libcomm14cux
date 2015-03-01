@@ -59,6 +59,8 @@ if (MINGW)
   set (CMAKE_SHARED_LINKER_FLAGS "-static-libgcc")
   set (CMAKE_EXE_LINKER_FLAGS "-static-libgcc")
 
+  set (BINDIR "${CMAKE_BINARY_DIR}/${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+
   # convert proper Unix-style newline characters into Windows-style
   file (READ "${CMAKE_SOURCE_DIR}/README" README_CONTENTS)
   file (READ "${CMAKE_SOURCE_DIR}/LICENSE" LICENSE_CONTENTS)
@@ -85,14 +87,14 @@ if (MINGW)
 
   install (FILES ${SOURCE_SUBDIR}/comm14cux.h
            DESTINATION "include")
-  install (FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcomm14cux.dll
+  install (FILES ${BINDIR}/libcomm14cux.dll
            DESTINATION ".")
-  install (FILES "README.txt"
-                 "LICENSE.txt"
+  install (FILES "${CMAKE_BINARY_DIR}/README.txt"
+                 "${CMAKE_BINARY_DIR}/LICENSE.txt"
            DESTINATION "doc")
-  install (PROGRAMS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/read14cux.exe
+  install (PROGRAMS ${BINDIR}/read14cux.exe
            DESTINATION ".")
-  install (PROGRAMS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/write14cux.exe
+  install (PROGRAMS ${BINDIR}/write14cux.exe
            DESTINATION ".")
 
   set (CPACK_GENERATOR "ZIP")
