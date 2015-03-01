@@ -23,7 +23,7 @@ c14cux_info info;
 c14cux_init(&info);
 .br
 .nf
-if (c14cux_connect(&info, "/dev/ttyUSB0"))
+if (c14cux_connect(&info, "/dev/ttyUSB0", C14CUX_BAUD))
 {
     uint8_t speed_mph = 0;
     bool status = c14cux_getRoadSpeed(&info, &speed_mph);
