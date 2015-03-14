@@ -1,6 +1,6 @@
 ------------
 libcomm14cux
-http://code.google.com/p/libcomm14cux
+https://github.com/colinbourassa/libcomm14cux
 ------------
 libcomm14cux is a cross-platform library that is capable of communicating with
 the Lucas 14CUX ECU via its diagnostic serial port. Special hardware is required
@@ -8,7 +8,7 @@ to match the ECU's signaling scheme; the hardware is beyond the scope of this
 document and detailed on the following web site:
 
 http://alum.wpi.edu/~colinb/14cux_interface.html
-Mirror: http://code.google.com/p/libcomm14cux/wiki/HardwareInterface
+Mirror: https://github.com/colinbourassa/libcomm14cux/blob/wiki/HardwareInterface.md
 
 The library itself has no user-interface and requires a front-end application
 to display data. Included in this archive is a simple command-line utility
@@ -16,7 +16,7 @@ to display data. Included in this archive is a simple command-line utility
 14CUX's memory. The RoverGauge project provides a graphical front-end to this
 library:
 
-http://code.google.com/p/rovergauge
+https://github.com/colinbourassa/rovergauge
 
 To assist in the development of other front-ends, the source archive can be
 used to generate HTML documentation of the API. This is done by running Doxygen
