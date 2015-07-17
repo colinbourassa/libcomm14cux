@@ -124,14 +124,14 @@ enum c14cux_memory_offset
     C14CUX_RPMTableOffset = 0xC800,
     //! Memory location of Port 1
     C14CUX_Port1Offset = 0x0002,
-    //! Memory location of even bank long-term lambda fueling trim
-    C14CUX_LongTermLambdaFuelingTrimEvenOffset = 0x0042,
     //! Memory location of odd bank long-term lambda fueling trim
-    C14CUX_LongTermLambdaFuelingTrimOddOffset = 0x0046,
-    //! Memory location of even bank short-term lambda fueling trim
-    C14CUX_ShortTermLambdaFuelingTrimEvenOffset = 0x0065,
+    C14CUX_LongTermLambdaFuelingTrimOddOffset = 0x0042,
+    //! Memory location of even bank long-term lambda fueling trim
+    C14CUX_LongTermLambdaFuelingTrimEvenOffset = 0x0046,
     //! Memory location of odd bank short-term lambda fueling trim
-    C14CUX_ShortTermLambdaFuelingTrimOddOffset = 0x0067,
+    C14CUX_ShortTermLambdaFuelingTrimOddOffset = 0x0065,
+    //! Memory location of even bank short-term lambda fueling trim
+    C14CUX_ShortTermLambdaFuelingTrimEvenOffset = 0x0067,
     //! Memory location of fault code block
     C14CUX_FaultCodesOffset = 0x0049,
     //! Memory location of minimum throttle position value
@@ -254,17 +254,17 @@ typedef struct
   // Location 0x0049, mask 0x77
   //! Indicates fault with the ECU memory checksum
   uint8_t ROM_Checksum_Failure       : 1;
-  //! Indicates fault with the even-bank oxygen sensor
-  uint8_t Lambda_Sensor_Even         : 1;
   //! Indicates fault with the odd-bank oxygen sensor
   uint8_t Lambda_Sensor_Odd          : 1;
+  //! Indicates fault with the even-bank oxygen sensor
+  uint8_t Lambda_Sensor_Even         : 1;
   //! (Unused)
   uint8_t Spare0                     : 1;
   //! Indicates a misfire in the even bank
-  uint8_t Misfire_Even_Bank          : 1;
-  //! Indicates a misfire in the odd bank
   uint8_t Misfire_Odd_Bank           : 1;
   //! Indicates a fault with the airflow meter
+  uint8_t Misfire_Even_Bank          : 1;
+  //! Indicates a misfire in the odd bank
   uint8_t Airflow_Meter              : 1;
   //! Indicates that the tune resistor is out of range
   uint8_t Tune_Resistor_Out_of_Range : 1;
