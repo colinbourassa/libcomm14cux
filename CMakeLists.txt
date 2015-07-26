@@ -62,10 +62,8 @@ if (MINGW)
   set (BINDIR "${CMAKE_BINARY_DIR}/${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
   # convert proper Unix-style newline characters into Windows-style
-  file (READ "${CMAKE_SOURCE_DIR}/README" README_CONTENTS)
-  file (READ "${CMAKE_SOURCE_DIR}/LICENSE" LICENSE_CONTENTS)
-  file (WRITE "${CMAKE_BINARY_DIR}/README.txt" ${README_CONTENTS})
-  file (WRITE "${CMAKE_BINARY_DIR}/LICENSE.txt" ${LICENSE_CONTENTS})
+  configure_file ("${CMAKE_SOURCE_DIR}/README" "${CMAKE_BINARY_DIR}/README.TXT" NEWLINE_STYLE WIN32)
+  configure_file ("${CMAKE_SOURCE_DIR}/LICENSE" "${CMAKE_BINARY_DIR}/LICENSE.TXT" NEWLINE_STYLE WIN32)
 
   if ("$ENV{SystemDrive}" STREQUAL "")
     message (STATUS "Windows system drive not found; creating 'install' directory under current directory...")
