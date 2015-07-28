@@ -13,10 +13,11 @@ set (COMM14CUX_VERSION "${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CU
 
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "bin")
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
+set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "bin")
 set (SOURCE_SUBDIR "${CMAKE_SOURCE_DIR}/src")
 
 set (CPACK_SOURCE_GENERATOR "TGZ")
-set (CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VERSION}-src")
+set (CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VERSION}")
 set (CPACK_SOURCE_IGNORE_FILES
       ".*deb$"
       ".*zip$"
@@ -51,33 +52,38 @@ include_directories (
   "${CMAKE_BINARY_DIR}/src"
   )
 
-add_library (comm14cux SHARED ${SOURCE_SUBDIR}/setup.c
-                              ${SOURCE_SUBDIR}/protocol.c
-                              ${SOURCE_SUBDIR}/data.c)
+if (BUILD_STATIC STREQUAL "ON")
+  add_library (comm14cux STATIC ${SOURCE_SUBDIR}/setup.c
+                                ${SOURCE_SUBDIR}/protocol.c
+                                ${SOURCE_SUBDIR}/data.c)
+  set (LIBNAME "${PROJECT_NAME}.a")
+else()
+  add_library (comm14cux SHARED ${SOURCE_SUBDIR}/setup.c
+                                ${SOURCE_SUBDIR}/protocol.c
+                                ${SOURCE_SUBDIR}/data.c)
+  if (MINGW)
+    set (LIBNAME "${PROJECT_NAME}.dll")
+  else()
+    set (LIBNAME "${PROJECT_NAME}.so")
+  endif()
+endif()
+
 target_link_libraries (comm14cux m)
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.c)
 add_executable (write14cux ${SOURCE_SUBDIR}/write14cux.c)
 
+set (BINDIR "${CMAKE_BINARY_DIR}/${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+
 if (MINGW)
   message (STATUS "Found Windows/MinGW platform.")
 
-  # statically link against the C MinGW lib to avoid incurring an additional DLL dependency
+  # statically link against the C lib to avoid incurring an additional DLL dependency
   set (CMAKE_SHARED_LINKER_FLAGS "-static-libgcc")
   set (CMAKE_EXE_LINKER_FLAGS "-static-libgcc")
-
-  set (BINDIR "${CMAKE_BINARY_DIR}/${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
   # convert proper Unix-style newline characters into Windows-style
   configure_file ("${CMAKE_SOURCE_DIR}/README" "${CMAKE_BINARY_DIR}/README.TXT" NEWLINE_STYLE WIN32)
   configure_file ("${CMAKE_SOURCE_DIR}/LICENSE" "${CMAKE_BINARY_DIR}/LICENSE.TXT" NEWLINE_STYLE WIN32)
-
-  if ("$ENV{SystemDrive}" STREQUAL "")
-    message (STATUS "Windows system drive not found; creating 'install' directory under current directory...")
-    set (CMAKE_INSTALL_PREFIX "./install")
-  else()
-    message (STATUS "Defaulting installation path to: $ENV{SystemDrive}/comm14cux")
-    set (CMAKE_INSTALL_PREFIX "$ENV{SystemDrive}/comm14cux")
-  endif()
 
   set_target_properties (
     comm14cux
@@ -89,17 +95,17 @@ if (MINGW)
   target_link_libraries (read14cux comm14cux)
   target_link_libraries (write14cux comm14cux)
 
-  install (FILES ${SOURCE_SUBDIR}/comm14cux.h
+  install (FILES "${SOURCE_SUBDIR}/comm14cux.h"
+                 "${SOURCE_SUBDIR}/comm14cux_version.h"
            DESTINATION "include")
-  install (FILES ${BINDIR}/libcomm14cux.dll
-           DESTINATION ".")
-  install (FILES "${CMAKE_BINARY_DIR}/README.txt"
-                 "${CMAKE_BINARY_DIR}/LICENSE.txt"
-           DESTINATION "doc")
-  install (PROGRAMS ${BINDIR}/read14cux.exe
-           DESTINATION ".")
-  install (PROGRAMS ${BINDIR}/write14cux.exe
-           DESTINATION ".")
+  install (FILES "${BINDIR}/${LIBNAME}"
+           DESTINATION "lib")
+  install (FILES "${CMAKE_BINARY_DIR}/README.TXT"
+                 "${CMAKE_BINARY_DIR}/LICENSE.TXT"
+           DESTINATION "share/doc/${PROJECT_NAME}")
+  install (PROGRAMS "${BINDIR}/read14cux.exe"
+                    "${BINDIR}/write14cux.exe"
+           DESTINATION "bin")
 
   set (CPACK_GENERATOR "ZIP")
   set (CPACK_PACKAGE_NAME ${PROJECT_NAME})
@@ -122,7 +128,7 @@ else()
                       /usr/local/bin)
 
   if (GZIP_TOOL)
-    set (MANNAME "libcomm14cux.3")
+    set (MANNAME "${PROJECT_NAME}.3")
     set (MAN "${CMAKE_SOURCE_DIR}/${MANNAME}")
     set (MAN-GZ "${CMAKE_BINARY_DIR}/${MANNAME}.gz")
     add_custom_command (OUTPUT ${MAN-GZ}
@@ -148,7 +154,7 @@ else()
     message (STATUS "System is NetBSD; install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
   else()
     set (CMAKE_INSTALL_PREFIX "/usr")
-    message (STATUS "Install path prefix is set to ${CMAKE_INSTALL_PREFIX}.")
+    message (STATUS "Defaulting install path prefix to ${CMAKE_INSTALL_PREFIX}.")
   endif()
 
   set_target_properties (
@@ -158,44 +164,43 @@ else()
         VERSION   ${COMM14CUX_VERSION}
   )
 
-  set (BINDIR "${CMAKE_BINARY_DIR}/${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-
   target_link_libraries (read14cux comm14cux pthread)
   target_link_libraries (write14cux comm14cux pthread)
 
   # set the installation destinations for the header files,
   # shared library binaries, and reference utility
-  install (FILES ${SOURCE_SUBDIR}/comm14cux.h
+  install (FILES "${SOURCE_SUBDIR}/comm14cux.h"
+                 "${SOURCE_SUBDIR}/comm14cux_version.h"
            DESTINATION "include"
            PERMISSIONS
             OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
   if (CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
     message (STATUS "Using OpenBSD-style shared library naming.")
-    install (FILES ${BINDIR}/libcomm14cux.so
-                   ${BINDIR}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}
+    install (FILES "${BINDIR}/${PROJECT_NAME}.so"
+                   "${BINDIR}/${PROJECT_NAME}.so.${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}"
              DESTINATION "lib"
              PERMISSIONS
               OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     message (STATUS "Using Mac OS X-style shared library naming.")
-    install (FILES ${BINDIR}/libcomm14cux.dylib
-                   ${BINDIR}/libcomm14cux.${COMM14CUX_VER_MAJOR}.dylib
-                   ${BINDIR}/libcomm14cux.${COMM14CUX_VERSION}.dylib
+    install (FILES "${BINDIR}/${PROJECT_NAME}.dylib"
+                   "${BINDIR}/${PROJECT_NAME}.${COMM14CUX_VER_MAJOR}.dylib"
+                   "${BINDIR}/${PROJECT_NAME}.${COMM14CUX_VERSION}.dylib"
              DESTINATION "lib"
              PERMISSIONS
               OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
   else()
     message (STATUS "Using Linux/FreeBSD-style shared library naming.")
-    install (FILES ${BINDIR}/libcomm14cux.so
-                   ${BINDIR}/libcomm14cux.so.${COMM14CUX_VER_MAJOR}
-                   ${BINDIR}/libcomm14cux.so.${COMM14CUX_VERSION}
+    install (FILES "${BINDIR}/${PROJECT_NAME}.so"
+                   "${BINDIR}/${PROJECT_NAME}.so.${COMM14CUX_VER_MAJOR}"
+                   "${BINDIR}/${PROJECT_NAME}.so.${COMM14CUX_VERSION}"
              DESTINATION "lib"
              PERMISSIONS
               OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
   endif()
 
-  install (DIRECTORY DESTINATION "share/doc/comm14cux" DIRECTORY_PERMISSIONS
+  install (DIRECTORY DESTINATION "share/doc/${PROJECT_NAME}" DIRECTORY_PERMISSIONS
             OWNER_READ OWNER_EXECUTE OWNER_WRITE
             GROUP_READ GROUP_EXECUTE
             WORLD_READ WORLD_EXECUTE)
@@ -209,18 +214,18 @@ else()
 
   install (FILES "${CMAKE_SOURCE_DIR}/README"
                  "${CMAKE_SOURCE_DIR}/LICENSE"
-           DESTINATION "share/doc/comm14cux"
+           DESTINATION "share/doc/${PROJECT_NAME}"
            PERMISSIONS
             OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-  install (PROGRAMS ${BINDIR}/read14cux
+  install (PROGRAMS "${BINDIR}/read14cux"
            DESTINATION "bin"
            PERMISSIONS
             OWNER_READ OWNER_EXECUTE OWNER_WRITE
             GROUP_READ GROUP_EXECUTE
             WORLD_READ WORLD_EXECUTE)
 
-  install (PROGRAMS ${BINDIR}/write14cux
+  install (PROGRAMS "${BINDIR}/write14cux"
            DESTINATION "bin"
            PERMISSIONS
             OWNER_READ OWNER_EXECUTE OWNER_WRITE
