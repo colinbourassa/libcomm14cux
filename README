@@ -2,8 +2,8 @@
 libcomm14cux
 https://github.com/colinbourassa/libcomm14cux
 
-Download releases:
-https://drive.google.com/folderview?id=0B83FOZ5t1n4cSlFyWTd6YnJYOFU&usp=drive_web
+Download latest release:
+https://github.com/colinbourassa/libcomm14cux/releases/latest
 
 Discussion:
 https://groups.google.com/forum/#!forum/rovergauge
@@ -47,6 +47,8 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+2.0.2: Updated release URLs in README
+2.0.1: Added better support for cross-compiling to Windows using MXE
 2.0.0: Added support for nonstandard baud rates (i.e. other than 7812.5 bps)
        Added preliminary support for AC compressor and heated screen status
 1.2.0: Added function to retrieve final fueling value
