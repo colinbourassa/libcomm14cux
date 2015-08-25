@@ -99,7 +99,7 @@ if (MINGW)
                  "${SOURCE_SUBDIR}/comm14cux_version.h"
            DESTINATION "include")
   install (FILES "${BINDIR}/${LIBNAME}"
-           DESTINATION "lib")
+           DESTINATION "bin")
   install (FILES "${CMAKE_BINARY_DIR}/README.TXT"
                  "${CMAKE_BINARY_DIR}/LICENSE.TXT"
            DESTINATION "share/doc/${PROJECT_NAME}")
