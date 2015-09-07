@@ -164,6 +164,8 @@ enum c14cux_memory_offset
     C14CUX_RoadSpeedOffset = 0x2003,
     //! Memory location of fuel temperature value
     C14CUX_FuelTempOffset = 0x2006,
+    //! Memory location of the row scalar
+    C14CUX_RowScalarOffset = 0x200A,
     //! Memory location of RPM limit (in RAM)
     C14CUX_RPMLimitOffset = 0x200C,
     //! Memory location of idle mode bit
