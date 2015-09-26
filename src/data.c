@@ -467,9 +467,10 @@ bool c14cux_getMainVoltage(c14cux_info* info, float* mainVoltage)
  * @return True if the fuel map was successfully read; 0 if an invalid
  *   fuel map ID was given or if reading failed
  */
-bool c14cux_getFuelMap(c14cux_info* info, const uint8_t fuelMapId, uint16_t* adjustmentFactor, uint8_t* buffer)
+bool c14cux_getFuelMap(c14cux_info* info, const uint8_t fuelMapId, uint16_t* adjustmentFactor, uint8_t* rowScaler, uint8_t* buffer)
 {
     bool retVal = false;
+    uint16_t scalerOffset = 0;
 
     // check that the map ID is valid
     if (fuelMapId <= 5)
@@ -483,6 +484,7 @@ bool c14cux_getFuelMap(c14cux_info* info, const uint8_t fuelMapId, uint16_t* adj
         if (fuelMapId == 0)
         {
             offset = C14CUX_FuelMap0Offset;
+            scalerOffset = C14CUX_Map0RowScalerInitValueOffset;
         }
         else if ((info->promRev == C14CUX_DataOffsets_RevA) || (info->promRev == C14CUX_DataOffsets_RevB))
         {
@@ -507,6 +509,8 @@ bool c14cux_getFuelMap(c14cux_info* info, const uint8_t fuelMapId, uint16_t* adj
                 offset = 0;
                 break;
             }
+
+            scalerOffset = offset + C14CUX_FuelMapRowScalerOffset;
         }
         else if (info->promRev == C14CUX_DataOffsets_RevC)
         {
@@ -531,6 +535,8 @@ bool c14cux_getFuelMap(c14cux_info* info, const uint8_t fuelMapId, uint16_t* adj
                 offset = 0;
                 break;
             }
+
+            scalerOffset = offset + C14CUX_FuelMapRowScalerOffset;
         }
 
         if (offset != 0)
@@ -539,7 +545,8 @@ bool c14cux_getFuelMap(c14cux_info* info, const uint8_t fuelMapId, uint16_t* adj
 
             // read the fuel map data and the 16-bit adjustment factor at the end
             if (c14cux_readMem(info, offset, C14CUX_FuelMapSize, buffer) &&
-                c14cux_readMem(info, offset + C14CUX_FuelMapSize, 2, (uint8_t*)&adjFactor))
+                c14cux_readMem(info, offset + C14CUX_FuelMapSize, 2, (uint8_t*)&adjFactor) &&
+                c14cux_readMem(info, scalerOffset, 1, rowScaler))
             {
                 *adjustmentFactor = swapShort(adjFactor);
                 retVal = true;

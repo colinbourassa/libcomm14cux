@@ -164,8 +164,8 @@ enum c14cux_memory_offset
     C14CUX_RoadSpeedOffset = 0x2003,
     //! Memory location of fuel temperature value
     C14CUX_FuelTempOffset = 0x2006,
-    //! Memory location of the row scalar
-    C14CUX_RowScalarOffset = 0x200A,
+    //! Memory location of the row scaler (in RAM)
+    C14CUX_RowScalerOffset = 0x200A,
     //! Memory location of RPM limit (in RAM)
     C14CUX_RPMLimitOffset = 0x200C,
     //! Memory location of idle mode bit
@@ -188,6 +188,11 @@ enum c14cux_memory_offset
     C14CUX_RevCMainVoltageFactorBOffset = 0xC7C4,
     //! Memory location of third main voltage computation factor
     C14CUX_RevCMainVoltageFactorCOffset = 0xC7C5,
+
+    //! Memory location of the value used to scale the MAF reading to a fuel map row
+    C14CUX_MAFRowScalerOffset = 0xC1C7,
+    //! Memory location of the initial value used by the row scaler for Map 0
+    C14CUX_Map0RowScalerInitValueOffset = 0xC1C9,
 
     //! Memory location of Fuel Map 0
     C14CUX_FuelMap0Offset = 0xC000,
@@ -231,6 +236,17 @@ enum c14cux_memory_offset
     C14CUX_IdleAirControlStepCountOffset = 0x0075,
     //! Memory location of the fuel pump timer
     C14CUX_FuelPumpTimerOffset = 0x00AF
+};
+
+/**
+ * Offsets from the start of a fuel map to fields that are specific to that
+ * map. This is separated from the c14cux_memory_offset enum because these
+ * offsets are not standalone, but instead have a base address of the start of
+ * one of the fuel maps.
+ */
+enum c14cux_memory_offset_map_data_secion
+{
+  C14CUX_FuelMapRowScalerOffset = 0x10A
 };
 
 /**
@@ -505,7 +521,7 @@ bool c14cux_getTargetIdle(c14cux_info* info, uint16_t* targetIdleRPM);
 bool c14cux_getThrottlePosition(c14cux_info* info, const enum c14cux_throttle_pos_type type, float* throttlePos);
 bool c14cux_getGearSelection(c14cux_info* info, enum c14cux_gear* gear);
 bool c14cux_getMainVoltage(c14cux_info* info, float* voltage);
-bool c14cux_getFuelMap(c14cux_info* info, uint8_t fuelMapId, uint16_t* adjustmentFactor, uint8_t* buffer);
+bool c14cux_getFuelMap(c14cux_info* info, uint8_t fuelMapId, uint16_t* adjustmentFactor, uint8_t* rowScaler, uint8_t* buffer);
 bool c14cux_getCurrentFuelMap(c14cux_info* info, uint8_t* fuelMapId);
 bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex, uint8_t* rowWeighting);
 bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex, uint8_t* colWeighting);
