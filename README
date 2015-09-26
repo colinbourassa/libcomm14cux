@@ -47,6 +47,8 @@ faith, it is provided with ABSOLUTELY NO WARRANTY.
 ---------
 Changelog
 ---------
+2.1.0: Modified getFuelMap() routine to also return the row scaler value for
+       the specified map
 2.0.2: Updated release URLs in README
 2.0.1: Added better support for cross-compiling to Windows using MXE
 2.0.0: Added support for nonstandard baud rates (i.e. other than 7812.5 bps)
