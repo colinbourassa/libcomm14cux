@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "comm14cux.h"
 
 void usage(c14cux_version ver, const char* name)
