@@ -83,7 +83,7 @@ bool c14cux_getCoolantTemp(c14cux_info* info, int16_t* coolantTemp)
 
     if (c14cux_readMem(info, C14CUX_CoolantTempOffset, 1, &count))
     {
-        *coolantTemp = (int16_t)(c14cux_hyperbolicOffsetModel(count));
+        *coolantTemp = temperature_adc_to_degrees_f[count];
         retVal = true;
     }
 
@@ -103,7 +103,7 @@ bool c14cux_getFuelTemp(c14cux_info* info, int16_t* fuelTemp)
 
     if (c14cux_readMem(info, C14CUX_FuelTempOffset, 1, &count))
     {
-        *fuelTemp = (int16_t)(c14cux_hyperbolicOffsetModel(count));
+        *fuelTemp = temperature_adc_to_degrees_f[count];
         retVal = true;
     }
 
@@ -1061,16 +1061,5 @@ bool c14cux_driveIdleAirControlMotor(c14cux_info* info, const uint8_t direction,
         c14cux_writeMem(info, C14CUX_Bits_008A, iacDirection);
         c14cux_writeMem(info, C14CUX_IdleAirControlStepCountOffset, steps);
     }
-}
-
-/**
- * A lookup table that translates ADC counts from the temperature sensors
- * to degrees Fahrenheit.
- * @param count Value measured by 14CUX ADC
- * @return Corresponding sensor value in degrees Fahrenheit
- */
-double c14cux_hyperbolicOffsetModel(const double count)
-{
-  return (double)temperature_adc_to_degrees_f[(uint8_t)count];
 }
 
