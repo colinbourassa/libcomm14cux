@@ -9,10 +9,10 @@
 #include <stdbool.h>
 
 #if defined(WIN32)
-  #include <windows.h>
+#include <windows.h>
 #else
-  #include <pthread.h>
-  #include <errno.h>
+#include <pthread.h>
+#include <errno.h>
 #endif
 
 /** Flag used to enable logging (to stdio) of error conditions */
@@ -27,32 +27,32 @@
 //#define DEBUG_P DEBUG_ALL
 
 #ifdef DEBUG_P
-  #include <stdio.h>
+#include <stdio.h>
 
-  #if (DEBUG_P & DEBUG_ERR)
-    #define dprintf_err   printf
-  #else
-    #define dprintf_err
-  #endif
-
-  #if (DEBUG_P & DEBUG_WARN)
-    #define dprintf_warn  printf
-  #else
-    #define dprintf_warn
-  #endif
-
-  #if (DEBUG_P & DEBUG_INFO)
-    #define dprintf_info  printf
-  #else
-    #define dprintf_info
-  #endif
+#if (DEBUG_P & DEBUG_ERR)
+#define dprintf_err   printf
 #else
-  /** Placeholder macro for error-condition debug logging */
-  #define dprintf_err
-  /** Placeholder macro for warning-condition debug logging */
-  #define dprintf_warn
-  /** Placeholder macro for informational debug logging */
-  #define dprintf_info
+#define dprintf_err
+#endif
+
+#if (DEBUG_P & DEBUG_WARN)
+#define dprintf_warn  printf
+#else
+#define dprintf_warn
+#endif
+
+#if (DEBUG_P & DEBUG_INFO)
+#define dprintf_info  printf
+#else
+#define dprintf_info
+#endif
+#else
+/** Placeholder macro for error-condition debug logging */
+#define dprintf_err
+/** Placeholder macro for warning-condition debug logging */
+#define dprintf_warn
+/** Placeholder macro for informational debug logging */
+#define dprintf_info
 #endif
 
 #ifdef __cplusplus
@@ -74,16 +74,16 @@ extern "C" {
  */
 enum c14cux_readcount
 {
-    //! First byte-count threshold for reading
-    C14CUX_ReadCount0 = 0x0010,
-    //! Second byte-count threshold for reading
-    C14CUX_ReadCount1 = 0x0050,
-    //! Third byte-count threshold for reading
-    C14CUX_ReadCount2 = 0x0064,
-    //! Fourth byte-count threshold for reading
-    C14CUX_ReadCount3 = 0x0190,
-    //! Fifth byte-count threshold for reading
-    C14CUX_ReadCount4 = 0x0200
+  //! First byte-count threshold for reading
+  C14CUX_ReadCount0 = 0x0010,
+  //! Second byte-count threshold for reading
+  C14CUX_ReadCount1 = 0x0050,
+  //! Third byte-count threshold for reading
+  C14CUX_ReadCount2 = 0x0064,
+  //! Fourth byte-count threshold for reading
+  C14CUX_ReadCount3 = 0x0190,
+  //! Fifth byte-count threshold for reading
+  C14CUX_ReadCount4 = 0x0200
 };
 
 /**
@@ -92,14 +92,14 @@ enum c14cux_readcount
  */
 enum c14cux_readcount_value
 {
-    //! 14CUX's table index for the ReadCount1 quantity
-    C14CUX_ReadCount1Value = 0x10,
-    //! 14CUX's table index for the ReadCount2 quantity
-    C14CUX_ReadCount2Value = 0x11,
-    //! 14CUX's table index for the ReadCount3 quantity
-    C14CUX_ReadCount3Value = 0x12,
-    //! 14CUX's table index for the ReadCount4 quantity
-    C14CUX_ReadCount4Value = 0x13
+  //! 14CUX's table index for the ReadCount1 quantity
+  C14CUX_ReadCount1Value = 0x10,
+  //! 14CUX's table index for the ReadCount2 quantity
+  C14CUX_ReadCount2Value = 0x11,
+  //! 14CUX's table index for the ReadCount3 quantity
+  C14CUX_ReadCount3Value = 0x12,
+  //! 14CUX's table index for the ReadCount4 quantity
+  C14CUX_ReadCount4Value = 0x13
 };
 
 /**
@@ -107,10 +107,10 @@ enum c14cux_readcount_value
  */
 enum c14cux_data_size
 {
-    //! Size of the used portion of the 14CUX ROM
-    C14CUX_ROMSize = 0x4000,
-    //! Size of each fuel map, in bytes
-    C14CUX_FuelMapSize = 0x80
+  //! Size of the used portion of the 14CUX ROM
+  C14CUX_ROMSize = 0x4000,
+  //! Size of each fuel map, in bytes
+  C14CUX_FuelMapSize = 0x80
 };
 
 /**
@@ -118,124 +118,124 @@ enum c14cux_data_size
  */
 enum c14cux_memory_offset
 {
-    //! Starting address of the 14CUX ROM contents in RAM
-    C14CUX_ROMAddress = 0xC000,
-    //! Memory location of the RPM table used to bracket engine speed
-    C14CUX_RPMTableOffset = 0xC800,
-    //! Memory location of Port 1
-    C14CUX_Port1Offset = 0x0002,
-    //! Memory location of odd bank long-term lambda fueling trim
-    C14CUX_LongTermLambdaFuelingTrimOddOffset = 0x0042,
-    //! Memory location of even bank long-term lambda fueling trim
-    C14CUX_LongTermLambdaFuelingTrimEvenOffset = 0x0046,
-    //! Memory location of odd bank short-term lambda fueling trim
-    C14CUX_ShortTermLambdaFuelingTrimOddOffset = 0x0065,
-    //! Memory location of even bank short-term lambda fueling trim
-    C14CUX_ShortTermLambdaFuelingTrimEvenOffset = 0x0067,
-    //! Memory location of fault code block
-    C14CUX_FaultCodesOffset = 0x0049,
-    //! Memory location of minimum throttle position value
-    C14CUX_ThrottleMinimumPositionOffset = 0x0051,
-    //! Memory location of main voltage value
-    C14CUX_MainVoltageOffset = 0x0055,
-    //! Memory location of (low) airflow mass value
-    C14CUX_MassAirflowDirectOffset = 0x0057,
-    //! Memory location of throttle position value
-    C14CUX_ThrottlePositionOffset = 0x005F,
-    //! Memory location of coolant temperature value
-    C14CUX_CoolantTempOffset = 0x006A,
-    //! Memory location of idle bypass motor position value
-    C14CUX_IdleBypassPositionOffset = 0x006D,
-    //! Memory location of instantaneous engine speed value
-    C14CUX_EngineSpeedInstantaneousOffset = 0x007A,
-    //! Memory location of filtered engine speed value
-    C14CUX_EngineSpeedFilteredOffset = 0x007C,
-    //! Memory location of injector pulse width value
-    C14CUX_InjectorPulseWidthOffset = 0x0082,
-    //! Memory location of miscellaneous data bits stored at $008A
-    C14CUX_Bits_008A = 0x008A,
-    //! Memory location of purge valve timer value
-    C14CUX_PurgeValveStateOffset = 0x0096,
-    //! Memory location of miscellaneous data bits stored at $00DD
-    C14CUX_Bits_00DD = 0x00DD,
-    //! Memory location of selected gear value
-    C14CUX_TransmissionGearOffset = 0x2000,
-    //! Memory location of road speed value
-    C14CUX_RoadSpeedOffset = 0x2003,
-    //! Memory location of fuel temperature value
-    C14CUX_FuelTempOffset = 0x2006,
-    //! Memory location of the row scaler (in RAM)
-    C14CUX_RowScalerOffset = 0x200A,
-    //! Memory location of RPM limit (in RAM)
-    C14CUX_RPMLimitOffset = 0x200C,
-    //! Memory location of idle mode bit
-    C14CUX_IdleModeOffset = 0x2047,
-    //! Memory location of linearized MAF reading
-    C14CUX_MassAirflowLinearOffset = 0x204D,
-    //! Memory location of target idle speed
-    C14CUX_TargetIdleSpeedOffset = 0x2051,
+  //! Starting address of the 14CUX ROM contents in RAM
+  C14CUX_ROMAddress = 0xC000,
+  //! Memory location of the RPM table used to bracket engine speed
+  C14CUX_RPMTableOffset = 0xC800,
+  //! Memory location of Port 1
+  C14CUX_Port1Offset = 0x0002,
+  //! Memory location of odd bank long-term lambda fueling trim
+  C14CUX_LongTermLambdaFuelingTrimOddOffset = 0x0042,
+  //! Memory location of even bank long-term lambda fueling trim
+  C14CUX_LongTermLambdaFuelingTrimEvenOffset = 0x0046,
+  //! Memory location of odd bank short-term lambda fueling trim
+  C14CUX_ShortTermLambdaFuelingTrimOddOffset = 0x0065,
+  //! Memory location of even bank short-term lambda fueling trim
+  C14CUX_ShortTermLambdaFuelingTrimEvenOffset = 0x0067,
+  //! Memory location of fault code block
+  C14CUX_FaultCodesOffset = 0x0049,
+  //! Memory location of minimum throttle position value
+  C14CUX_ThrottleMinimumPositionOffset = 0x0051,
+  //! Memory location of main voltage value
+  C14CUX_MainVoltageOffset = 0x0055,
+  //! Memory location of (low) airflow mass value
+  C14CUX_MassAirflowDirectOffset = 0x0057,
+  //! Memory location of throttle position value
+  C14CUX_ThrottlePositionOffset = 0x005F,
+  //! Memory location of coolant temperature value
+  C14CUX_CoolantTempOffset = 0x006A,
+  //! Memory location of idle bypass motor position value
+  C14CUX_IdleBypassPositionOffset = 0x006D,
+  //! Memory location of instantaneous engine speed value
+  C14CUX_EngineSpeedInstantaneousOffset = 0x007A,
+  //! Memory location of filtered engine speed value
+  C14CUX_EngineSpeedFilteredOffset = 0x007C,
+  //! Memory location of injector pulse width value
+  C14CUX_InjectorPulseWidthOffset = 0x0082,
+  //! Memory location of miscellaneous data bits stored at $008A
+  C14CUX_Bits_008A = 0x008A,
+  //! Memory location of purge valve timer value
+  C14CUX_PurgeValveStateOffset = 0x0096,
+  //! Memory location of miscellaneous data bits stored at $00DD
+  C14CUX_Bits_00DD = 0x00DD,
+  //! Memory location of selected gear value
+  C14CUX_TransmissionGearOffset = 0x2000,
+  //! Memory location of road speed value
+  C14CUX_RoadSpeedOffset = 0x2003,
+  //! Memory location of fuel temperature value
+  C14CUX_FuelTempOffset = 0x2006,
+  //! Memory location of the row scaler (in RAM)
+  C14CUX_RowScalerOffset = 0x200A,
+  //! Memory location of RPM limit (in RAM)
+  C14CUX_RPMLimitOffset = 0x200C,
+  //! Memory location of idle mode bit
+  C14CUX_IdleModeOffset = 0x2047,
+  //! Memory location of linearized MAF reading
+  C14CUX_MassAirflowLinearOffset = 0x204D,
+  //! Memory location of target idle speed
+  C14CUX_TargetIdleSpeedOffset = 0x2051,
 
-    //! Memory location of first main voltage computation factor
-    C14CUX_RevBMainVoltageFactorAOffset = 0xC79B,
-    //! Memory location of second main voltage computation factor
-    C14CUX_RevBMainVoltageFactorBOffset = 0xC79C,
-    //! Memory location of third main voltage computation factor
-    C14CUX_RevBMainVoltageFactorCOffset = 0xC79D,
+  //! Memory location of first main voltage computation factor
+  C14CUX_RevBMainVoltageFactorAOffset = 0xC79B,
+  //! Memory location of second main voltage computation factor
+  C14CUX_RevBMainVoltageFactorBOffset = 0xC79C,
+  //! Memory location of third main voltage computation factor
+  C14CUX_RevBMainVoltageFactorCOffset = 0xC79D,
 
-    //! Memory location of first main voltage computation factor
-    C14CUX_RevCMainVoltageFactorAOffset = 0xC7C3,
-    //! Memory location of second main voltage computation factor
-    C14CUX_RevCMainVoltageFactorBOffset = 0xC7C4,
-    //! Memory location of third main voltage computation factor
-    C14CUX_RevCMainVoltageFactorCOffset = 0xC7C5,
+  //! Memory location of first main voltage computation factor
+  C14CUX_RevCMainVoltageFactorAOffset = 0xC7C3,
+  //! Memory location of second main voltage computation factor
+  C14CUX_RevCMainVoltageFactorBOffset = 0xC7C4,
+  //! Memory location of third main voltage computation factor
+  C14CUX_RevCMainVoltageFactorCOffset = 0xC7C5,
 
-    //! Memory location of the value used to scale the MAF reading to a fuel map row
-    C14CUX_MAFRowScalerOffset = 0xC1C7,
-    //! Memory location of the initial value used by the row scaler for Map 0
-    C14CUX_Map0RowScalerInitValueOffset = 0xC1C9,
+  //! Memory location of the value used to scale the MAF reading to a fuel map row
+  C14CUX_MAFRowScalerOffset = 0xC1C7,
+  //! Memory location of the initial value used by the row scaler for Map 0
+  C14CUX_Map0RowScalerInitValueOffset = 0xC1C9,
 
-    //! Memory location of Fuel Map 0
-    C14CUX_FuelMap0Offset = 0xC000,
+  //! Memory location of Fuel Map 0
+  C14CUX_FuelMap0Offset = 0xC000,
 
-    //! Memory location of Fuel Map 1
-    C14CUX_NewFuelMap1Offset = 0xC267,
-    //! Memory location of Fuel Map 2
-    C14CUX_NewFuelMap2Offset = 0xC379,
-    //! Memory location of Fuel Map 3
-    C14CUX_NewFuelMap3Offset = 0xC48B,
-    //! Memory location of Fuel Map 4
-    C14CUX_NewFuelMap4Offset = 0xC59D,
-    //! Memory location of Fuel Map 5
-    C14CUX_NewFuelMap5Offset = 0xC6AF,
+  //! Memory location of Fuel Map 1
+  C14CUX_NewFuelMap1Offset = 0xC267,
+  //! Memory location of Fuel Map 2
+  C14CUX_NewFuelMap2Offset = 0xC379,
+  //! Memory location of Fuel Map 3
+  C14CUX_NewFuelMap3Offset = 0xC48B,
+  //! Memory location of Fuel Map 4
+  C14CUX_NewFuelMap4Offset = 0xC59D,
+  //! Memory location of Fuel Map 5
+  C14CUX_NewFuelMap5Offset = 0xC6AF,
 
-    //! Memory location of Fuel Map 1
-    C14CUX_OldFuelMap1Offset = 0xC23F,
-    //! Memory location of Fuel Map 2
-    C14CUX_OldFuelMap2Offset = 0xC351,
-    //! Memory location of Fuel Map 3
-    C14CUX_OldFuelMap3Offset = 0xC463,
-    //! Memory location of Fuel Map 4
-    C14CUX_OldFuelMap4Offset = 0xC575,
-    //! Memory location of Fuel Map 5
-    C14CUX_OldFuelMap5Offset = 0xC687,
+  //! Memory location of Fuel Map 1
+  C14CUX_OldFuelMap1Offset = 0xC23F,
+  //! Memory location of Fuel Map 2
+  C14CUX_OldFuelMap2Offset = 0xC351,
+  //! Memory location of Fuel Map 3
+  C14CUX_OldFuelMap3Offset = 0xC463,
+  //! Memory location of Fuel Map 4
+  C14CUX_OldFuelMap4Offset = 0xC575,
+  //! Memory location of Fuel Map 5
+  C14CUX_OldFuelMap5Offset = 0xC687,
 
-    //! Memory location of the tune number (code revision) in BCD
-    C14CUX_TuneRevisionOffset = 0xFFE9,
-    //! Memory location of the checksum fixer byte
-    C14CUX_ChecksumFixerOffset = 0xFFEB,
-    //! Memory location of the tune 'Ident" byte
-    C14CUX_TuneIdentOffset = 0xFFEC,
-    //! Memory location of the current fuel map ID
-    C14CUX_CurrentFuelMapIdOffset = 0x202C,
-    //! Memory location of the current fuel map row index
-    C14CUX_FuelMapRowIndexOffset = 0x005B,
-    //! Memory location of the current fuel map column index
-    C14CUX_FuelMapColumnIndexOffset = 0x005C,
+  //! Memory location of the tune number (code revision) in BCD
+  C14CUX_TuneRevisionOffset = 0xFFE9,
+  //! Memory location of the checksum fixer byte
+  C14CUX_ChecksumFixerOffset = 0xFFEB,
+  //! Memory location of the tune 'Ident" byte
+  C14CUX_TuneIdentOffset = 0xFFEC,
+  //! Memory location of the current fuel map ID
+  C14CUX_CurrentFuelMapIdOffset = 0x202C,
+  //! Memory location of the current fuel map row index
+  C14CUX_FuelMapRowIndexOffset = 0x005B,
+  //! Memory location of the current fuel map column index
+  C14CUX_FuelMapColumnIndexOffset = 0x005C,
 
-    //! Memory location of the idle air control motor step count
-    C14CUX_IdleAirControlStepCountOffset = 0x0075,
-    //! Memory location of the fuel pump timer
-    C14CUX_FuelPumpTimerOffset = 0x00AF
+  //! Memory location of the idle air control motor step count
+  C14CUX_IdleAirControlStepCountOffset = 0x0075,
+  //! Memory location of the fuel pump timer
+  C14CUX_FuelPumpTimerOffset = 0x00AF
 };
 
 /**
@@ -255,12 +255,12 @@ enum c14cux_memory_offset_map_data_secion
  */
 enum c14cux_main_voltage_factor
 {
-    //! Fixed main voltage coefficient 'A' for very old ECUs (<= 1990)
-    C14CUX_RevAMainVoltageFactorA = 0x64,
-    //! Fixed main voltage coefficient 'B' for very old ECUs (<= 1990)
-    C14CUX_RevAMainVoltageFactorB = 0xBD,
-    //! Fixed main voltage coefficient 'C' for very old ECUs (<= 1990)
-    C14CUX_RevAMainVoltageFactorC = 0x6180
+  //! Fixed main voltage coefficient 'A' for very old ECUs (<= 1990)
+  C14CUX_RevAMainVoltageFactorA = 0x64,
+  //! Fixed main voltage coefficient 'B' for very old ECUs (<= 1990)
+  C14CUX_RevAMainVoltageFactorB = 0xBD,
+  //! Fixed main voltage coefficient 'C' for very old ECUs (<= 1990)
+  C14CUX_RevAMainVoltageFactorC = 0x6180
 };
 
 /**
@@ -337,13 +337,13 @@ typedef struct
 
   // Location 0x004D, mask 0x20
   //! (Unused)
-  uint8_t Spare8                        : 4; 
+  uint8_t Spare8                        : 4;
   //! Indicates ambiguity between a low-fuel-pressure fault and an air-leak fault
   uint8_t Low_Fuel_Pressure_or_Air_Leak : 1;
   //! Indicates fault with the fuel temperature sensor
   uint8_t Fuel_Temp_Sensor              : 1;
   //! (Unused)
-  uint8_t Spare9                        : 2; 
+  uint8_t Spare9                        : 2;
 
 
   // Location 0x004E, mask 0xC0
@@ -386,10 +386,10 @@ typedef struct
  */
 enum c14cux_gear
 {
-    C14CUX_Gear_NoReading = 0x00,
-    C14CUX_Gear_ParkOrNeutral = 0x01,
-    C14CUX_Gear_DriveOrReverse = 0x02,
-    C14CUX_Gear_ManualGearbox = 0x03
+  C14CUX_Gear_NoReading = 0x00,
+  C14CUX_Gear_ParkOrNeutral = 0x01,
+  C14CUX_Gear_DriveOrReverse = 0x02,
+  C14CUX_Gear_ManualGearbox = 0x03
 };
 
 /**
@@ -397,8 +397,8 @@ enum c14cux_gear
  */
 enum c14cux_bank
 {
-    C14CUX_Bank_Odd = 0x0,
-    C14CUX_Bank_Even = 0x1
+  C14CUX_Bank_Odd = 0x0,
+  C14CUX_Bank_Even = 0x1
 };
 
 /**
@@ -406,8 +406,8 @@ enum c14cux_bank
  */
 enum c14cux_lambda_trim_type
 {
-    C14CUX_LambdaTrimType_ShortTerm,
-    C14CUX_LambdaTrimType_LongTerm
+  C14CUX_LambdaTrimType_ShortTerm,
+  C14CUX_LambdaTrimType_LongTerm
 };
 
 /**
@@ -415,8 +415,8 @@ enum c14cux_lambda_trim_type
  */
 enum c14cux_feedback_mode
 {
-    C14CUX_FeedbackMode_ClosedLoop,
-    C14CUX_FeedbackMode_OpenLoop
+  C14CUX_FeedbackMode_ClosedLoop,
+  C14CUX_FeedbackMode_OpenLoop
 };
 
 /**
@@ -424,8 +424,8 @@ enum c14cux_feedback_mode
  */
 enum c14cux_airflow_type
 {
-    C14CUX_AirflowType_Direct,
-    C14CUX_AirflowType_Linearized
+  C14CUX_AirflowType_Direct,
+  C14CUX_AirflowType_Linearized
 };
 
 /**
@@ -433,8 +433,8 @@ enum c14cux_airflow_type
  */
 enum c14cux_throttle_pos_type
 {
-    C14CUX_ThrottlePosType_Absolute,
-    C14CUX_ThrottlePosType_Corrected
+  C14CUX_ThrottlePosType_Absolute,
+  C14CUX_ThrottlePosType_Corrected
 };
 
 /**
@@ -443,14 +443,14 @@ enum c14cux_throttle_pos_type
  */
 enum c14cux_data_offset_rev
 {
-    //! The revision of the connect ECU has not yet been determined.
-    C14CUX_DataOffsets_Unset = 0x00,
-    //! The connected ECU uses the first revision of data offsets
-    C14CUX_DataOffsets_RevA = 0x01,
-    //! The connected ECU uses the second revision of data offsets
-    C14CUX_DataOffsets_RevB = 0x02,
-    //! The connected ECU uses the third revision of data offsets
-    C14CUX_DataOffsets_RevC = 0x03
+  //! The revision of the connect ECU has not yet been determined.
+  C14CUX_DataOffsets_Unset = 0x00,
+  //! The connected ECU uses the first revision of data offsets
+  C14CUX_DataOffsets_RevA = 0x01,
+  //! The connected ECU uses the second revision of data offsets
+  C14CUX_DataOffsets_RevB = 0x02,
+  //! The connected ECU uses the third revision of data offsets
+  C14CUX_DataOffsets_RevC = 0x03
 };
 
 /**
@@ -458,9 +458,9 @@ enum c14cux_data_offset_rev
  */
 enum c14cux_purge_valve_state
 {
-    C14CUX_PurgeValveState_Closed = 0,
-    C14CUX_PurgeValveState_Toggling = 1,
-    C14CUX_PurgeValveState_Open = 2
+  C14CUX_PurgeValveState_Closed = 0,
+  C14CUX_PurgeValveState_Toggling = 1,
+  C14CUX_PurgeValveState_Open = 2
 };
 
 /**
@@ -468,31 +468,31 @@ enum c14cux_purge_valve_state
  */
 typedef struct
 {
-    //! Revision of the connected ECU (affecting fuel map locations)
-    enum c14cux_data_offset_rev promRev;
-    //! The coarse address set during the last read operation
-    uint16_t lastReadCoarseAddress;
-    //! The number of bytes read during the last read operation
-    uint8_t lastReadQuantity;
-    //! Flag set when the user wishes to cancel a read operation
-    bool cancelRead;
-    //! Factor involved in computations with the main voltage
-    uint8_t voltageFactorA;
-    //! Factor involved in computations with the main voltage
-    uint8_t voltageFactorB;
-    //! Factor involved in computations with the main voltage
-    uint16_t voltageFactorC;
+  //! Revision of the connected ECU (affecting fuel map locations)
+  enum c14cux_data_offset_rev promRev;
+  //! The coarse address set during the last read operation
+  uint16_t lastReadCoarseAddress;
+  //! The number of bytes read during the last read operation
+  uint8_t lastReadQuantity;
+  //! Flag set when the user wishes to cancel a read operation
+  bool cancelRead;
+  //! Factor involved in computations with the main voltage
+  uint8_t voltageFactorA;
+  //! Factor involved in computations with the main voltage
+  uint8_t voltageFactorB;
+  //! Factor involved in computations with the main voltage
+  uint16_t voltageFactorC;
 
 #if defined(WIN32)
-    //! Descriptor for the serial port device
-    HANDLE sd;
-    //! Lock to prevent multiple simultaneous open/close/read/write operations
-    HANDLE mutex;
+  //! Descriptor for the serial port device
+  HANDLE sd;
+  //! Lock to prevent multiple simultaneous open/close/read/write operations
+  HANDLE mutex;
 #else
-    //! Descriptor for the serial port device
-    int sd;
-    //! Lock to prevent multiple simultaneous open/close/read/write operations
-    pthread_mutex_t mutex;
+  //! Descriptor for the serial port device
+  int sd;
+  //! Lock to prevent multiple simultaneous open/close/read/write operations
+  pthread_mutex_t mutex;
 #endif
 
 } c14cux_info;
@@ -501,7 +501,7 @@ uint16_t swapShort(const uint16_t source);
 
 void c14cux_init(c14cux_info* info);
 void c14cux_cleanup(c14cux_info* info);
-bool c14cux_connect(c14cux_info* info, const char *devPath, unsigned int baud);
+bool c14cux_connect(c14cux_info* info, const char* devPath, unsigned int baud);
 void c14cux_disconnect(c14cux_info* info);
 bool c14cux_isConnected(c14cux_info* info);
 bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buffer);
@@ -530,14 +530,14 @@ bool c14cux_getLambdaTrimLong(c14cux_info* info, const enum c14cux_bank bank, in
 bool c14cux_getCOTrimVoltage(c14cux_info* info, float* coTrimVoltage);
 bool c14cux_getIdleBypassMotorPosition(c14cux_info* info, float* bypassMotorPos);
 bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState);
-bool c14cux_getTuneRevision(c14cux_info* info, uint16_t *tuneNumber, uint8_t* chksumFixer, uint16_t* tuneIdent);
+bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneNumber, uint8_t* chksumFixer, uint16_t* tuneIdent);
 bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode);
 bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state);
 bool c14cux_getScreenHeaterState(c14cux_info* info, bool* state);
 bool c14cux_getACCompressorState(c14cux_info* info, bool* state);
 bool c14cux_isMILOn(c14cux_info* info, bool* milOn);
 bool c14cux_getRpmTable(c14cux_info* info, c14cux_rpmtable* table);
-bool c14cux_getInjectorPulseWidth(c14cux_info* info, uint16_t *pulseWidth);
+bool c14cux_getInjectorPulseWidth(c14cux_info* info, uint16_t* pulseWidth);
 
 bool c14cux_clearFaultCodes(c14cux_info* info);
 bool c14cux_runFuelPump(c14cux_info* info);
