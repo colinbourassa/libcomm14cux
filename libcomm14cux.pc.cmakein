@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@INSTALL_LIB_DIR@
+includedir=@INSTALL_INC_DIR@
+
+Name: libcomm14cux
+Description: libcomm14cux engine management diagnosic library
+Version: @COMM14CUX_VERSION@
+
+Requires:
+Libs: -L${libdir} -lcomm14cux
+Cflags: -I${includedir}

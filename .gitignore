@@ -18,3 +18,5 @@ LICENSE.TXT
 README.TXT
 LICENSE.txt
 README.txt
+build/
+build-win32/
