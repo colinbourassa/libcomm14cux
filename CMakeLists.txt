@@ -60,7 +60,7 @@ set (CPACK_SOURCE_IGNORE_FILES
       "src/comm14cux_version.h$")
 
 option (ENABLE_DOC_INSTALL "Enables installation of documentation (README, LICENSE, manpage) to the appropriate locations" ON)
-option (ENABLE_TESTAPP_INSTALL "Enables installation of the test utilities to the appropriate locations" ON)
+option (ENABLE_TESTAPP_INSTALL "Enables installation of the read14cux/write14cux utilities" ON)
 
 configure_file (
   "${SOURCE_SUBDIR}/comm14cux_version.h.in"
@@ -89,12 +89,12 @@ else()
   if (MINGW)
     set (LIBNAME "${PROJECT_NAME}.dll")
     set (LIB_DESTINATION_DIR "${INSTALL_BIN_DIR}")
+    set (IMPORTLIBNAME "${PROJECT_NAME}.dll.a")
   else()
     set (LIBNAME "${PROJECT_NAME}.so")
     set (LIB_DESTINATION_DIR "${INSTALL_LIB_DIR}")
   endif()
 endif()
-message (STATUS "Install location for library files is ${CMAKE_INSTALL_PREFIX}/${LIB_DESTINATION_DIR}")
 
 target_link_libraries (comm14cux m)
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.c)
@@ -131,6 +131,11 @@ if (MINGW)
   install (FILES "${LIBCOMM14CUX_PC}"
            DESTINATION "${INSTALL_PKGCONFIG_DIR}")
 
+  if (NOT BUILD_STATIC STREQUAL "ON")
+    install (FILES "${BINDIR}/${IMPORTLIBNAME}"
+             DESTINATION "${INSTALL_LIB_DIR}")
+  endif()
+
   # MXE requires that documentation and test applications not be installed
   # by default, so we provide a couple env vars to control this
   if (ENABLE_DOC_INSTALL)
@@ -141,6 +146,7 @@ if (MINGW)
   else()
     message (STATUS "Skipping installation of documentation.")
   endif()
+
   if (ENABLE_TESTAPP_INSTALL)
     message (STATUS "Install will include test applications.")
     install (PROGRAMS "${BINDIR}/read14cux.exe"
