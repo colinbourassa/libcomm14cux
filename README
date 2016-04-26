@@ -108,8 +108,7 @@ point in its history:
 * Macintosh OS X 10.6
 
 Note that installation packages are not available for some of the OSs listed
-above, but it is possible to build from source for those platforms (see
-"Building the library from source", below.)
+above, but it is possible to build from source for those platforms.
 
 ---------------
 Using read14cux
