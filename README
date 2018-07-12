@@ -14,7 +14,6 @@ the Lucas 14CUX ECU via its diagnostic serial port. Special hardware is required
 to match the ECU's signaling scheme; the hardware is beyond the scope of this
 document and detailed on the following web site:
 
-http://alum.wpi.edu/~colinb/14cux-serial-interface.html
 Mirror: https://github.com/colinbourassa/libcomm14cux/blob/wiki/HardwareInterface.md
 
 The library itself has no user-interface and requires a front-end application
