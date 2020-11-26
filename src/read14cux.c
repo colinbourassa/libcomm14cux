@@ -60,7 +60,7 @@ int main(int argc, char** argv)
       // if a filename was specified, write to the file rather than STDOUT
       if (argc >= 5)
       {
-        fp = fopen(argv[4], "w");
+        fp = fopen(argv[4], "wb");
 
         if (fp != NULL)
         {
