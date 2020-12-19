@@ -9,7 +9,7 @@ set(PROJECT_URL "https://github.com/colinbourassa/libcomm14cux")
 
 set (COMM14CUX_VER_MAJOR 2)
 set (COMM14CUX_VER_MINOR 1)
-set (COMM14CUX_VER_PATCH 2)
+set (COMM14CUX_VER_PATCH 3)
 set (COMM14CUX_VERSION "${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}")
 
 set (SOURCE_SUBDIR "${CMAKE_SOURCE_DIR}/src")
@@ -40,7 +40,7 @@ set (CPACK_SOURCE_IGNORE_FILES
 
 option (ENABLE_DOC_INSTALL "Enables installation of documentation (README, LICENSE, manpage) to the appropriate locations" OFF)
 option (ENABLE_TESTAPP_INSTALL "Enables installation of the read14cux/write14cux utilities" OFF)
-option (ENABLE_PKGCONFIG_INSTALL "Enables installation of a pkgconfig configuration file" OFF)
+option (ENABLE_PKGCONFIG_INSTALL "Enables installation of a pkgconfig configuration file" ON)
 
 configure_file ("${SOURCE_SUBDIR}/comm14cux_version.h.in"
                 "${CMAKE_BINARY_DIR}/comm14cux_version.h")
