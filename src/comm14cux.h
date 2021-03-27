@@ -264,8 +264,11 @@ enum c14cux_main_voltage_factor
 };
 
 /**
- * Defines the bit-level contents of the memory locations that
- * contain ECU fault codes in the 14CUX.
+ * Defines the bit-level contents of the memory locations that contain ECU fault
+ * codes in the 14CUX.
+ *
+ * Caution: Because the language does not guarantee a consistent behavior for
+ * bitfields, this may not work for certain compilers/architectures.
  */
 typedef struct
 {
