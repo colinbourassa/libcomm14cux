@@ -1,5 +1,5 @@
-cmake_minimum_required (VERSION 2.8)
-project (libcomm14cux)
+cmake_minimum_required (VERSION 3.0)
+project (libcomm14cux LANGUAGES C)
 include (GNUInstallDirs)
 
 set(PROJECT_NAME "libcomm14cux")
