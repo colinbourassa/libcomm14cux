@@ -4,26 +4,22 @@
 //             the software protocol used by the ECU over its
 //             serial link.
 
-#if defined(WIN32) && defined(linux)
-#error "Only one of 'WIN32' or 'linux' may be defined."
-#endif
-
-#include <unistd.h>
-
-#if defined(WIN32)
-#include <windows.h>
-#elif defined(__NetBSD__)
-#include <string.h>
-#endif
-
+#include <time.h>
 #include "comm14cux.h"
 #include "comm14cux_internal.h"
+
+int get_elapsed_ms(struct timespec* start, struct timespec* end)
+{
+  const int deltaMs = (end->tv_sec - start->tv_sec) * 1000 +
+                      (end->tv_nsec - start->tv_nsec) / 1000000;
+  return deltaMs;
+}
 
 /**
  * Cancels the pending read operation by aborting after the current read
  * command is finished.
  */
-void c14cux_cancelRead(c14cux_info* info)
+void c14cux_cancel_read(c14cux_info* info)
 {
   info->cancelRead = 1;
 }
@@ -32,62 +28,69 @@ void c14cux_cancelRead(c14cux_info* info)
  * Reads bytes from the serial device using an OS-specific call.
  * @param buffer Buffer into which data should be read
  * @param quantity Number of bytes to read
- * @return Number of bytes read from the device, or -1 if no bytes could be read
+ * @return Number of bytes read from the device, or -1 if reading failed
  */
-int16_t c14cux_readSerialBytes(c14cux_info* info, uint8_t* buffer, uint16_t quantity)
+int16_t c14cux_read_serial_bytes(c14cux_info* info, uint8_t* buf, uint16_t count)
 {
-  int16_t bytesRead = -1;
-
-  if (c14cux_isConnected(info))
+  int retVal = -1;
+  if (info->connected)
   {
-#if defined(WIN32)
-    DWORD w32BytesRead = 0;
+    int readCount = 0;
+    int ftdiStatus = 0;
+    struct timespec start;
+    struct timespec now;
+    int elapsedMs = 0;
 
-    if ((ReadFile(info->sd, (UCHAR*) buffer, quantity, &w32BytesRead, NULL) == TRUE) &&
-        (w32BytesRead > 0))
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &start) == 0)
     {
-      bytesRead = w32BytesRead;
+      do {
+        ftdiStatus = ftdi_read_data(&info->ftdi, buf + readCount, count - readCount);
+        readCount += (ftdiStatus > 0) ? ftdiStatus : 0;
+        if (readCount < count)
+        {
+          // TODO: experiment with a sleep delay here
+          elapsedMs = (clock_gettime(CLOCK_MONOTONIC_RAW, &now) == 0) ? get_elapsed_ms(&start, &now) : C14CUX_TIMEOUT_MS;
+        }
+      } while ((readCount < count) && (ftdiStatus != -666) && (elapsedMs < C14CUX_TIMEOUT_MS));
+      retVal = readCount;
     }
-
-#else
-    bytesRead = read(info->sd, buffer, quantity);
-#endif
   }
-  else
-  {
-    dprintf_warn("14CUX(warning): Not connected.\n");
-  }
-
-  return bytesRead;
+  return retVal;
 }
 
 /**
  * Writes bytes to the serial device using an OS-specific call
  * @param buffer Buffer from which written data should be drawn
  * @param quantity Number of bytes to write
- * @return Number of bytes written to the device, or -1 if no bytes could be written
+ * @return Number of bytes written to the device, or -1 if writing failed
  */
-int16_t c14cux_writeSerialBytes(c14cux_info* info, uint8_t* buffer, uint16_t quantity)
+int16_t c14cux_write_serial_bytes(c14cux_info* info, uint8_t* buf, uint16_t count)
 {
-  int16_t bytesWritten = -1;
-
-  if (c14cux_isConnected(info))
+  int16_t retVal = -1;
+  if (info->connected)
   {
-#if defined(WIN32)
-    DWORD w32BytesWritten = 0;
+    int ftdiStatus = 0;
+    int numWritten = 0;
+    struct timespec start;
+    struct timespec now;
+    int elapsedMs = 0;
 
-    if ((WriteFile(info->sd, (UCHAR*) buffer, quantity, &w32BytesWritten, NULL) == TRUE) &&
-        (w32BytesWritten == quantity))
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &start) == 0)
     {
-      bytesWritten = w32BytesWritten;
+      do {
+        ftdiStatus = ftdi_write_data(&info->ftdi, buf + numWritten, count - numWritten);
+        numWritten += (ftdiStatus > 0) ? ftdiStatus : 0;
+        if (numWritten < count)
+        {
+          elapsedMs = (clock_gettime(CLOCK_MONOTONIC_RAW, &now) == 0) ?
+                      get_elapsed_ms(&start, &now) : C14CUX_TIMEOUT_MS;
+        }
+      } while ((numWritten < count) && (ftdiStatus != -666) && (elapsedMs < C14CUX_TIMEOUT_MS));
+      retVal = numWritten;
     }
-
-#else
-    bytesWritten = write(info->sd, buffer, quantity);
-#endif
   }
 
-  return bytesWritten;
+  return retVal;
 }
 
 /**
@@ -98,18 +101,9 @@ int16_t c14cux_writeSerialBytes(c14cux_info* info, uint8_t* buffer, uint16_t qua
  * @param buffer Pointer to a buffer of at least len bytes
  * @return 1 when the operation was successful; 0 otherwise
  */
-bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buffer)
+bool c14cux_read_mem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buffer)
 {
-#if defined(WIN32)
-
-  if (WaitForSingleObject(info->mutex, INFINITE) != WAIT_OBJECT_0)
-  {
-    return 0;
-  }
-
-#else
   pthread_mutex_lock(&info->mutex);
-#endif
 
   uint16_t totalBytesRead = 0;
   uint16_t singleReqQuantity = 0;
@@ -120,13 +114,13 @@ bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buf
 
   info->cancelRead = 0;
 
-  if (c14cux_isConnected(info))
+  if (info->connected)
   {
     // loop until we've read all the bytes, or we experienced a read error
     while ((totalBytesRead < len) && (readCallBytesRead > 0) && (info->cancelRead == 0))
     {
       // read the maximum number of bytes as is reasonable
-      singleReqQuantity = c14cux_getByteCountForNextRead(len, totalBytesRead);
+      singleReqQuantity = c14cux_get_byte_count_for_next_read(len, totalBytesRead);
 
       // if the next address to read is within the 64-byte window
       // created by the last coarse address that was set, then we
@@ -140,7 +134,7 @@ bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buf
                    singleReqQuantity, addr + totalBytesRead);
 
       // if sending the read command is successful...
-      if (c14cux_sendReadCmd(info, addr + totalBytesRead, singleReqQuantity, sendLastByteOnly))
+      if (c14cux_send_read_cmd(info, addr + totalBytesRead, singleReqQuantity, sendLastByteOnly))
       {
         dprintf_info("14CUX(info): Successfully sent read command.\n");
 
@@ -152,8 +146,8 @@ bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buf
         do
         {
           readCallBytesRead =
-            c14cux_readSerialBytes(info, buffer + totalBytesRead + singleReqBytesRead,
-                                   singleReqQuantity - singleReqBytesRead);
+            c14cux_read_serial_bytes(info, buffer + totalBytesRead + singleReqBytesRead,
+                                     singleReqQuantity - singleReqBytesRead);
 
           singleReqBytesRead += readCallBytesRead;
         }
@@ -194,11 +188,7 @@ bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buf
     info->lastReadQuantity = 0;
   }
 
-#if defined(WIN32)
-  ReleaseMutex(info->mutex);
-#else
   pthread_mutex_unlock(&info->mutex);
-#endif
 
   return readSuccess;
 }
@@ -211,14 +201,14 @@ bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buf
  *      work only if the coarse address was previously set.
  * @return True when the read command is successfully sent; false otherwise
  */
-bool c14cux_sendReadCmd(c14cux_info* info, uint16_t addr, uint16_t len, bool lastByteOnly)
+bool c14cux_send_read_cmd(c14cux_info* info, uint16_t addr, uint16_t len, bool lastByteOnly)
 {
   bool success = 0;
   uint8_t cmdByte = 0;
 
   // do the command-agnostic coarse address setup
   // (req'd for both reads and writes)
-  if (lastByteOnly || c14cux_setReadCoarseAddr(info, addr, len))
+  if (lastByteOnly || c14cux_set_read_coarse_addr(info, addr, len))
   {
     // if we actually did send the command bytes to set a new coarse
     // address, then remember what it was
@@ -231,7 +221,7 @@ bool c14cux_sendReadCmd(c14cux_info* info, uint16_t addr, uint16_t len, bool las
     cmdByte = ((addr & 0x003F) | 0xC0);
     dprintf_info("14CUX(info): Sending Read command byte: 0x%02X... (no echo)\n", cmdByte);
 
-    if (c14cux_writeSerialBytes(info, &cmdByte, 1) == 1)
+    if (c14cux_write_serial_bytes(info, &cmdByte, 1) == 1)
     {
       // The 14CUX doesn't echo the Read command byte;
       // it simply starts sending the requested data.
@@ -259,9 +249,9 @@ bool c14cux_sendReadCmd(c14cux_info* info, uint16_t addr, uint16_t len, bool las
  *   successfully sent to the 14CUX, and the same bytes were echoed in reply;
  *   false otherwise.
  */
-bool c14cux_setReadCoarseAddr(c14cux_info* info, uint16_t addr, uint16_t len)
+bool c14cux_set_read_coarse_addr(c14cux_info* info, uint16_t addr, uint16_t len)
 {
-  return c14cux_setCoarseAddr(info, addr, len);
+  return c14cux_set_coarse_addr(info, addr, len);
 }
 
 /**
@@ -272,9 +262,9 @@ bool c14cux_setReadCoarseAddr(c14cux_info* info, uint16_t addr, uint16_t len)
  * @return 1 when the bytes were successfully sent to the 14CUX and the
  *   same bytes were echoed in reply; 0 otherwise.
  */
-bool c14cux_setWriteCoarseAddr(c14cux_info* info, uint16_t addr)
+bool c14cux_set_write_coarse_addr(c14cux_info* info, uint16_t addr)
 {
-  return c14cux_setCoarseAddr(info, addr, 0x00);
+  return c14cux_set_coarse_addr(info, addr, 0x00);
 }
 
 /**
@@ -285,7 +275,7 @@ bool c14cux_setWriteCoarseAddr(c14cux_info* info, uint16_t addr)
  * @param len Number of bytes to retrieve when the read operation is executed.
  * @return True when the command bytes were sent and echoed properly; false otherwise
  */
-bool c14cux_setCoarseAddr(c14cux_info* info, uint16_t addr, uint16_t len)
+bool c14cux_set_coarse_addr(c14cux_info* info, uint16_t addr, uint16_t len)
 {
   uint8_t firstByte = 0x00;
   uint8_t secondByte = 0x00;
@@ -341,8 +331,8 @@ bool c14cux_setCoarseAddr(c14cux_info* info, uint16_t addr, uint16_t len)
 
   dprintf_info("14CUX(info): Sending byte: 0x%02X...\n", firstByte);
 
-  if ((c14cux_writeSerialBytes(info, &firstByte, 1) == 1) &&
-      (c14cux_readSerialBytes(info, &readByte, 1) == 1) &&
+  if ((c14cux_write_serial_bytes(info, &firstByte, 1) == 1) &&
+      (c14cux_read_serial_bytes(info, &readByte, 1) == 1) &&
       (readByte == firstByte))
   {
     // bits 13:6 of the address
@@ -350,8 +340,8 @@ bool c14cux_setCoarseAddr(c14cux_info* info, uint16_t addr, uint16_t len)
 
     dprintf_info("14CUX(info): Sending byte: 0x%02X...\n", secondByte);
 
-    if ((c14cux_writeSerialBytes(info, &secondByte, 1) == 1) &&
-        (c14cux_readSerialBytes(info, &readByte, 1) == 1) &&
+    if ((c14cux_write_serial_bytes(info, &secondByte, 1) == 1) &&
+        (c14cux_read_serial_bytes(info, &readByte, 1) == 1) &&
         (readByte == secondByte))
     {
       retVal = true;
@@ -368,18 +358,9 @@ bool c14cux_setCoarseAddr(c14cux_info* info, uint16_t addr, uint16_t len)
  * @param val 8-bit value to write at specified location
  * @return True when byte was written successfully; false otherwise
  */
-bool c14cux_writeMem(c14cux_info* info, uint16_t addr, uint8_t val)
+bool c14cux_write_mem(c14cux_info* info, uint16_t addr, uint8_t val)
 {
-#if defined(WIN32)
-
-  if (WaitForSingleObject(info->mutex, INFINITE) != WAIT_OBJECT_0)
-  {
-    return 0;
-  }
-
-#else
   pthread_mutex_lock(&info->mutex);
-#endif
 
   bool retVal = false;
   uint8_t cmdByte = 0x00;
@@ -388,7 +369,7 @@ bool c14cux_writeMem(c14cux_info* info, uint16_t addr, uint8_t val)
   info->lastReadCoarseAddress = 0;
   info->lastReadQuantity = 0;
 
-  if (c14cux_isConnected(info) && c14cux_setWriteCoarseAddr(info, addr))
+  if (info->connected && c14cux_set_write_coarse_addr(info, addr))
   {
     // build the next byte in the command
     cmdByte = ((addr & 0x003F) | 0x80);
@@ -396,28 +377,23 @@ bool c14cux_writeMem(c14cux_info* info, uint16_t addr, uint8_t val)
     // send (and look for the echo of) the third command byte
     dprintf_info("14CUX(info): Sending byte: 0x%02X...\n", cmdByte);
 
-    if ((c14cux_writeSerialBytes(info, &cmdByte, 1) == 1) &&
-        (c14cux_readSerialBytes(info, &readByte, 1) == 1) &&
+    if ((c14cux_write_serial_bytes(info, &cmdByte, 1) == 1) &&
+        (c14cux_read_serial_bytes(info, &readByte, 1) == 1) &&
         (readByte == cmdByte))
     {
       // send (and look for the echo of) the byte
       // containing the value to write
       dprintf_info("14CUX(info): Sending byte: 0x%02X...\n", val);
 
-      if ((c14cux_writeSerialBytes(info, &val, 1) == 1) &&
-          (c14cux_readSerialBytes(info, &readByte, 1) == 1) &&
+      if ((c14cux_write_serial_bytes(info, &val, 1) == 1) &&
+          (c14cux_read_serial_bytes(info, &readByte, 1) == 1) &&
           (readByte == val))
       {
         retVal = true;
       }
     }
   }
-
-#if defined(WIN32)
-  ReleaseMutex(info->mutex);
-#else
   pthread_mutex_unlock(&info->mutex);
-#endif
 
   return retVal;
 }
@@ -430,9 +406,9 @@ bool c14cux_writeMem(c14cux_info* info, uint16_t addr, uint8_t val)
  * @bytesRead Number of bytes read thus far
  * @return Number of bytes to request for the next single read operation
  */
-uint16_t c14cux_getByteCountForNextRead(uint16_t len, uint16_t bytesRead)
+uint16_t c14cux_get_byte_count_for_next_read(uint16_t len, uint16_t bytesRead)
 {
-  uint16_t bytesLeft = len - bytesRead;
+  const uint16_t bytesLeft = len - bytesRead;
   uint16_t retCount = 0;
 
   if (bytesLeft >= C14CUX_ReadCount4)

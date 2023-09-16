@@ -4,31 +4,16 @@
 //          setup/initialization of the library and the
 //          serial port.
 
-#if defined(WIN32) && defined(linux)
-#error "Only one of 'WIN32' or 'linux' may be defined."
-#endif
-
-#include <unistd.h>
-#include <fcntl.h>
-
-#if defined(WIN32)
-#include <windows.h>
-#else
-#include <string.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <arpa/inet.h>
-#endif
-
-#if defined(linux)
-#include <linux/serial.h>
-#elif defined(__APPLE__)
-#include <IOKit/serial/ioss.h>
-#endif
-
 #include "comm14cux.h"
 #include "comm14cux_internal.h"
 #include "comm14cux_version.h"
+#include <stdlib.h>
+#include <string.h>
+#include <libusb.h>
+
+#ifndef WIN32
+#include <arpa/inet.h>
+#endif
 
 /**
  * Swaps multibyte big-endian data (from the ECU) into the local endianness.
@@ -54,7 +39,7 @@ uint16_t swapShort(const uint16_t source)
  * to connect to the ECU; that requires c14cux_connect().
  * @param info
  */
-void c14cux_init(c14cux_info* info)
+void c14cux_init(c14cux_info* info, bool verbose)
 {
   info->promRev = C14CUX_DataOffsets_Unset;
   info->lastReadCoarseAddress = 0x0000;
@@ -63,14 +48,10 @@ void c14cux_init(c14cux_info* info)
   info->voltageFactorA = 0;
   info->voltageFactorB = 0;
   info->voltageFactorC = 0;
-
-#if defined(WIN32)
-  info->sd = INVALID_HANDLE_VALUE;
-  info->mutex = CreateMutex(NULL, TRUE, NULL);
-#else
-  info->sd = 0;
+  info->connected = false;
+  info->verbose = verbose;
+  ftdi_init(&info->ftdi);
   pthread_mutex_init(&info->mutex, NULL);
-#endif
 }
 
 /**
@@ -79,35 +60,22 @@ void c14cux_init(c14cux_info* info)
  */
 void c14cux_cleanup(c14cux_info* info)
 {
-#if defined(WIN32)
-
-  if (c14cux_isConnected(info))
+  if (info->connected)
   {
-    CloseHandle(info->sd);
-    info->sd = INVALID_HANDLE_VALUE;
+    ftdi_usb_close(&info->ftdi);
+    info->connected = false;
   }
-
-  CloseHandle(info->mutex);
-#else
-
-  if (c14cux_isConnected(info))
-  {
-    close(info->sd);
-    info->sd = 0;
-  }
-
   pthread_mutex_destroy(&info->mutex);
-#endif
+  ftdi_deinit(&info->ftdi);
 }
 
 /**
  * Returns version information for this build of the library.
  * @return Version of this build of libcomm14cux
  */
-c14cux_version c14cux_getLibraryVersion()
+c14cux_version c14cux_get_version()
 {
   c14cux_version ver;
-
   ver.major = COMM14CUX_VER_MAJOR;
   ver.minor = COMM14CUX_VER_MINOR;
   ver.patch = COMM14CUX_VER_PATCH;
@@ -121,288 +89,189 @@ c14cux_version c14cux_getLibraryVersion()
  */
 void c14cux_disconnect(c14cux_info* info)
 {
-#if defined(WIN32)
-
-  if (WaitForSingleObject(info->mutex, INFINITE) == WAIT_OBJECT_0)
-  {
-    if (c14cux_isConnected(info))
-    {
-      CloseHandle(info->sd);
-      info->sd = INVALID_HANDLE_VALUE;
-    }
-
-    ReleaseMutex(info->mutex);
-  }
-
-#else
   pthread_mutex_lock(&info->mutex);
-
-  if (c14cux_isConnected(info))
+  if (info->connected)
   {
-    close(info->sd);
-    info->sd = 0;
+    ftdi_usb_close(&info->ftdi);
+    info->connected = false;
   }
-
   pthread_mutex_unlock(&info->mutex);
-#endif
 }
 
 /**
- * Opens the serial port (or returns with success if it is already open.)
+ * Opens and configures the FTDI device (or returns with success if it is already open.)
  * @param info State information for the current connection.
- * @param devPath Full path to the serial device (e.g. "/dev/ttyUSB0" or "COM2")
+ * @param vid Vendor ID of the USB-to-serial device
+ * @param pid Product ID of the USB-to-serial device
  * @param baud Baud rate, which should be set to C14CUX_BAUD for standard ECUs
- * @return True if the serial device was successfully opened and its
- *   baud rate was set; false otherwise.
+ * @return True if the FTDI device was successfully opened and configured; false otherwise.
  */
-bool c14cux_connect(c14cux_info* info, const char* devPath, unsigned int baud)
+bool c14cux_connect_by_usb_pid(c14cux_info* info, uint16_t vid, uint16_t pid, unsigned int baud)
 {
-  bool result = false;
-
-#if defined(WIN32)
-
-  if (WaitForSingleObject(info->mutex, INFINITE) == WAIT_OBJECT_0)
-  {
-    result = c14cux_isConnected(info) || c14cux_openSerial(info, devPath, baud);
-    ReleaseMutex(info->mutex);
-    dprintf_info("14CUX(info): Connected (Win32)\n");
-  }
-  else
-  {
-    dprintf_err("14CUX(error): Connect failed (Win32)\n");
-  }
-
-#else // Linux/Unix
-
   pthread_mutex_lock(&info->mutex);
-  result = c14cux_isConnected(info) || c14cux_openSerial(info, devPath, baud);
-  pthread_mutex_unlock(&info->mutex);
-
-  if (result)
+  if (!info->connected &&
+      (ftdi_set_interface(&info->ftdi, INTERFACE_A) == 0))
   {
-    dprintf_info("14CUX(info): Connected (Linux/Unix)\n");
-  }
-  else
-  {
-    dprintf_err("14CUX(error): Connect failed (Linux/Unix)\n");
-  }
-
-#endif
-
-  return result;
-}
-
-/**
- * Opens the serial device for the USB<->RS-232 converter and sets the
- * parameters for the link to match those on the 14CUX.
- * Uses OS-specific calls to do this in the correct manner.
- * Note for FreeBSD users: Do not use the ttyX devices, as they block
- * on the open() call while waiting for a carrier detect line, which
- * will never be asserted. Instead, use the equivalent cuaX device.
- * Example: /dev/cuaU0 (instead of /dev/ttyU0)
- * @return True if the open/setup was successful, false otherwise
- */
-bool c14cux_openSerial(c14cux_info* info, const char* devPath, unsigned int baud)
-{
-  bool retVal = false;
-
-#if defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
-  // Most UNIXes can handle the serial port in a similar fashion (using
-  // the termios interface.) The only major difference between them is
-  // the assignment of the nonstandard baud rate, which is done directly
-  // into the termios struct for BSD, but via ioctls for both Linux and OS X.
-
-  struct termios newtio;
-  bool success = true;
-
-  dprintf_info("14CUX(info): Opening the serial device (%s)...\n", devPath);
-  info->sd = open(devPath, O_RDWR | O_NOCTTY);
-
-  if (info->sd > 0)
-  {
-    dprintf_info("14CUX(info): Opened device successfully.\n");
-
-    if (tcgetattr(info->sd, &newtio) != 0)
+    if (ftdi_usb_open(&info->ftdi, vid, pid) == 0)
     {
-      dprintf_err("14CUX(error): Unable to read serial port parameters.\n");
-      success = false;
-    }
-
-    if (success)
-    {
-      // set up the serial port:
-      // * enable the receiver, set 8-bit fields, set local mode, disable hardware flow control
-      // * set non-canonical mode, disable echos, disable signals
-      // * disable all special handling of CR or LF, disable all software flow control
-      // * disable all output post-processing
-      newtio.c_cflag &= ((CREAD | CS8 | CLOCAL) & ~(CRTSCTS));
-      newtio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-      newtio.c_iflag &= ~(INLCR | ICRNL | IGNCR | IXON | IXOFF | IXANY);
-      newtio.c_oflag &= ~OPOST;
-
-#if defined(linux) || defined(__APPLE__)
-      // when waiting for responses, wait until we haven't received any
-      // characters for a period of time before returning with failure
-      newtio.c_cc[VTIME] = 1;
-      newtio.c_cc[VMIN] = 0;
-
-      // set the baud rate selector to 38400, which, in this case,
-      // is simply an indicator that we're using a custom baud rate
-      // (set by an ioctl() below)
-      cfsetispeed(&newtio, B38400);
-      cfsetospeed(&newtio, B38400);
-
-#else // BSD and other UNIXes
-
-      // This is set higher than the 0.1 seconds used by the Linux/OSX
-      // code, as values much lower than this cause the first echoed
-      // byte to be missed when running under BSD.
-      newtio.c_cc[VTIME] = 5;
-      newtio.c_cc[VMIN] = 0;
-
-      // set the input and output baud rates to 7812
-      cfsetispeed(&newtio, baud);
-      cfsetospeed(&newtio, baud);
-#endif
-
-      // attempt to set the termios parameters
-      dprintf_info("14CUX(info): Setting serial port parameters...\n");
-
-      // flush the serial buffers and set the new parameters
-      if ((tcflush(info->sd, TCIFLUSH) != 0) ||
-          (tcsetattr(info->sd, TCSANOW, &newtio) != 0))
+      if (c14cux_config_ftdi(info, baud))
       {
-        dprintf_err("14CUX(error): Failure setting up port\n");
-        close(info->sd);
-        success = false;
-      }
-    }
-
-#ifdef linux
-
-    // Linux requires an ioctl() to set a nonstandard baud rate
-    if (success)
-    {
-      struct serial_struct serial_info;
-      dprintf_info("14CUX(info): Setting custom baud rate...\n");
-
-      if (ioctl(info->sd, TIOCGSERIAL, &serial_info) != -1)
-      {
-        serial_info.flags = ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
-        serial_info.custom_divisor = serial_info.baud_base / baud;
-
-        if (ioctl(info->sd, TIOCSSERIAL, &serial_info) != -1)
-        {
-          dprintf_info("14CUX(info): Baud rate setting successful.\n");
-          retVal = true;
-        }
-      }
-    }
-
-#elif defined(__APPLE__)
-
-    // OS X requires an ioctl() to set a nonstandard baud rate
-    if (success)
-    {
-      speed_t speed = baud;
-
-      if (ioctl(info->sd, IOSSIOSPEED, &speed) != -1)
-      {
-        retVal = true;
+        info->connected = true;
       }
       else
       {
-        dprintf_err("14CUX(error): Unable to set baud rate.\n");
+        ftdi_usb_close(&info->ftdi);
       }
     }
-
-#else
-    retVal = success;
-#endif
-
-    // close the device if it couldn't be configured
-    if (retVal == false)
-    {
-      close(info->sd);
-    }
   }
-  else // open() returned failure
-  {
-    dprintf_err("14CUX(error): Error opening device (%s)\n", strerror(errno));
-  }
-
-#elif defined(WIN32)
-
-  DCB dcb;
-  COMMTIMEOUTS commTimeouts;
-
-  // attempt to open the device
-  dprintf_info("14CUX(info): Opening the serial device (Win32) '%s'...\n", devPath);
-
-  // open and get a handle to the serial device
-  info->sd = CreateFile(devPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-  // verify that the serial device was opened
-  if (info->sd != INVALID_HANDLE_VALUE)
-  {
-    if (GetCommState(info->sd, &dcb) == TRUE)
-    {
-      // set the serial port parameters, including the custom baud rate
-      dcb.BaudRate = baud;
-      dcb.fParity = FALSE;
-      dcb.fOutxCtsFlow = FALSE;
-      dcb.fOutxDsrFlow = FALSE;
-      dcb.fDtrControl = FALSE;
-      dcb.fRtsControl = FALSE;
-      dcb.ByteSize = 8;
-      dcb.Parity = 0;
-      dcb.StopBits = 0;
-
-      if ((SetCommState(info->sd, &dcb) == TRUE) &&
-          (GetCommTimeouts(info->sd, &commTimeouts) == TRUE))
-      {
-        // modify the COM port parameters to wait 100 ms before timing out
-        commTimeouts.ReadIntervalTimeout = 100;
-        commTimeouts.ReadTotalTimeoutMultiplier = 0;
-        commTimeouts.ReadTotalTimeoutConstant = 100;
-
-        if (SetCommTimeouts(info->sd, &commTimeouts) == TRUE)
-        {
-          retVal = true;
-        }
-      }
-    }
-
-    // the serial device was opened, but couldn't be configured properly;
-    // close it before returning with failure
-    if (!retVal)
-    {
-      dprintf_err("14CUX(error): Failure setting up port; closing serial device...\n");
-      CloseHandle(info->sd);
-    }
-  }
-  else
-  {
-    dprintf_err("14CUX(error): Error opening device.\n");
-  }
-
-#endif
-
-  return retVal;
+  pthread_mutex_unlock(&info->mutex);
+  dprintf_info(info->connected ? "14CUX(info): Connected\n" : "14CUX(error): Connect failed\n");
+  return info->connected;
 }
 
 /**
- * Checks the file descriptor for the serial device to determine if it has
- * already been opened.
- * @return True if the serial device is open; false otherwise.
+ * Opens and configures the FTDI device (or returns with success if it is already open.)
+ * @param info State information for the current connection.
+ * @param bus USB bus number on which the FTDI device is connected
+ * @param addr USB bus address at which the FTDI device is connected
+ * @param baud Baud rate, which should be set to C14CUX_BAUD for standard ECUs
+ * @return True if the FTDI device was successfully opened and configured; false otherwise.
  */
-bool c14cux_isConnected(c14cux_info* info)
+bool c14cux_connect_by_usb_addr(c14cux_info* info, uint8_t bus, uint8_t addr, unsigned int baud)
 {
-#if defined(WIN32)
-  return (info->sd != INVALID_HANDLE_VALUE);
-#else
-  return (info->sd > 0);
-#endif
+  pthread_mutex_lock(&info->mutex);
+  if (!info->connected &&
+      (ftdi_set_interface(&info->ftdi, INTERFACE_A) == 0))
+  {
+    if (ftdi_usb_open_bus_addr(&info->ftdi, bus, addr) == 0)
+    {
+      if (c14cux_config_ftdi(info, baud))
+      {
+        info->connected = true;
+      }
+      else
+      {
+        ftdi_usb_close(&info->ftdi);
+      }
+    }
+  }
+  pthread_mutex_unlock(&info->mutex);
+  dprintf_info(info->connected ? "14CUX(info): Connected\n" : "14CUX(error): Connect failed\n");
+  return (info->connected);
+}
+
+/**
+ * Sets the baud rate, line properties, and latency for an FTDI device that
+ * was previously opened.
+ * @return True if the open/setup was successful, false otherwise
+ */
+bool c14cux_config_ftdi(c14cux_info* info, unsigned int baud)
+{
+  bool status = false;
+  ftdi_tcioflush(&info->ftdi);
+  if (ftdi_set_baudrate(&info->ftdi, baud) == 0)
+  {
+    if (ftdi_set_line_property(&info->ftdi, BITS_8, STOP_BIT_1, NONE) == 0)
+    {
+      if (ftdi_setflowctrl(&info->ftdi, SIO_DISABLE_FLOW_CTRL) == 0)
+      {
+        if (ftdi_set_latency_timer(&info->ftdi, 1) == 0)
+        {
+          status = true;
+        }
+        else if (info->verbose)
+        {
+          fprintf(stderr, "Failed to set FTDI latency timer (\"%s\")\n", ftdi_get_error_string(&info->ftdi));
+        }
+      }
+      else if (info->verbose)
+      {
+        fprintf(stderr, "Failed to disable FTDI flow control (\"%s\")\n", ftdi_get_error_string(&info->ftdi));
+      }
+    }
+    else if (info->verbose)
+    {
+      fprintf(stderr, "Failed to set FTDI line properties (\"%s\")\n", ftdi_get_error_string(&info->ftdi));
+    }
+  }
+  else if (info->verbose)
+  {
+    fprintf(stderr, "Failed to set FTDI baud rate (\"%s\")\n", ftdi_get_error_string(&info->ftdi));
+  }
+
+  return status;
+}
+
+/**
+ * Frees memory previously used to store a list of FTDI device info structs.
+ */
+void c14cux_ftdi_list_free(c14cux_ftdi_info* list)
+{
+  c14cux_ftdi_info* next = NULL;
+  while (list)
+  {
+    next = list->next;
+    free(list);
+    list = next;
+  }
+}
+
+/**
+ * Retrieves a list of all FTDI devices (with known USB PIDs) on the system.
+ * Note that memory used by the returned list must be freed after use by
+ * calling c14cux_ftdi_list_free().
+ * @param info libcomm14cux connection context
+ * @param returnList Pointer to the head of the linked list of FTDI device info structs
+ * @return Number of FTDI devices found
+ */
+int c14cux_ftdi_enumerate(c14cux_info* info, c14cux_ftdi_info** returnList)
+{
+  struct ftdi_device_list* libftdiList;
+
+  // Use VID:PID of 0:0 to search for all standard VID:PID
+  // combinations known to libftdi.
+  const int libftdiCount = ftdi_usb_find_all(&info->ftdi, &libftdiList, 0, 0);
+  struct ftdi_device_list** libftdiListHead = &libftdiList;
+  int libftdiIndex = 0;
+
+  char manufacturer[USB_STR_LEN];
+  char description[USB_STR_LEN];
+  int count = 0;
+  c14cux_ftdi_info* prev = NULL;
+  c14cux_ftdi_info* cur = NULL;
+  c14cux_ftdi_info* listHead = NULL;
+
+  while (libftdiList && (libftdiIndex < libftdiCount))
+  {
+    if (ftdi_usb_get_strings(&info->ftdi, libftdiList->dev,
+                             manufacturer, USB_STR_LEN,
+                             description, USB_STR_LEN,
+                             NULL, 0) == 0)
+    {
+      const uint8_t bus_num = libusb_get_bus_number(libftdiList->dev);
+      const uint8_t device_addr = libusb_get_device_address(libftdiList->dev);
+      cur = malloc(sizeof(c14cux_ftdi_info));
+      cur->busNumber = bus_num;
+      cur->deviceAddress = device_addr;
+      strncpy(cur->manufacturer, manufacturer, USB_STR_LEN);
+      strncpy(cur->description, description, USB_STR_LEN);
+      if (listHead == NULL)
+      {
+        listHead = cur;
+      }
+      if (prev)
+      {
+        prev->next = cur;
+      }
+      prev = cur;
+      count++;
+    }
+    libftdiIndex++;
+    libftdiList = libftdiList->next;
+  }
+
+  ftdi_list_free(libftdiListHead);
+  *returnList = listHead;
+  return count;
 }
 

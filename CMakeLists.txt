@@ -7,9 +7,9 @@ set(PROJECT_DESCRIPTION "Library supporting serial communication with the Lucas 
 set(PROJECT_AUTHOR "Colin Bourassa <colin.bourassa@gmail.com>")
 set(PROJECT_URL "https://github.com/colinbourassa/libcomm14cux")
 
-set (COMM14CUX_VER_MAJOR 2)
-set (COMM14CUX_VER_MINOR 1)
-set (COMM14CUX_VER_PATCH 3)
+set (COMM14CUX_VER_MAJOR 3)
+set (COMM14CUX_VER_MINOR 0)
+set (COMM14CUX_VER_PATCH 0)
 set (COMM14CUX_VERSION "${COMM14CUX_VER_MAJOR}.${COMM14CUX_VER_MINOR}.${COMM14CUX_VER_PATCH}")
 
 set (SOURCE_SUBDIR "${CMAKE_SOURCE_DIR}/src")
@@ -42,10 +42,18 @@ option (ENABLE_DOC_INSTALL "Enables installation of documentation (README, LICEN
 option (ENABLE_TESTAPP_INSTALL "Enables installation of the read14cux/write14cux utilities" OFF)
 option (ENABLE_PKGCONFIG_INSTALL "Enables installation of a pkgconfig configuration file" ON)
 
+find_package (LibFTDI1 CONFIG REQUIRED)
+find_package (PkgConfig)
+pkg_check_modules(LIBRARY_USB libusb-1.0 IMPORTED_TARGET)
+
+if (NOT LIBRARY_USB_FOUND)
+  message(FATAL_ERROR "LibUSB 1.0 required to build.")
+endif()
+
 configure_file ("${SOURCE_SUBDIR}/comm14cux_version.h.in"
                 "${CMAKE_BINARY_DIR}/comm14cux_version.h")
 
-include_directories ("${CMAKE_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}")
+include_directories ("${CMAKE_SOURCE_DIR}/src" "${CMAKE_BINARY_DIR}" "${LIBRARY_USB_INCLUDE_DIRS}")
 
 if (BUILD_STATIC STREQUAL "ON")
   add_library (comm14cux STATIC ${SOURCE_SUBDIR}/setup.c
@@ -57,7 +65,7 @@ else()
                                 ${SOURCE_SUBDIR}/data.c)
 endif()
 
-target_link_libraries (comm14cux m)
+target_link_libraries (comm14cux m ftdi1 usb-1.0)
 
 add_executable (read14cux ${SOURCE_SUBDIR}/read14cux.c)
 add_executable (write14cux ${SOURCE_SUBDIR}/write14cux.c)
@@ -187,7 +195,7 @@ else()
     set (CPACK_DEBIAN_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
     set (CPACK_DEBIAN_PACKAGE_MAINTAINER "${PROJECT_AUTHOR}")
     set (CPACK_DEBIAN_PACKAGE_SECTION "Libraries")
-    set (CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.13)")
+    set (CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.13), libusb-1.0-0 (>= 1.0.22), libftdi1-2 (>= 1.5)")
     set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
     set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${COMM14CUX_VERSION}-${CMAKE_SYSTEM_NAME}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
     set (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")

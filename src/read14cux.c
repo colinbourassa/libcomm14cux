@@ -7,7 +7,7 @@
 void usage(c14cux_version ver, const char* name)
 {
   printf("read14cux using libcomm14cux v%d.%d.%d\n", ver.major, ver.minor, ver.patch);
-  printf("Usage: %s <serial device> [-b baud-rate] <address> <length> [output file]\n", name);
+  printf("Usage: %s [-b baud-rate] <address> <length> [output file]\n", name);
 }
 
 int main(int argc, char** argv)
@@ -21,46 +21,55 @@ int main(int argc, char** argv)
   int retVal = 0;
   int bytePos = 0;
   unsigned int baud = C14CUX_BAUD;
+  int outfileParamPos = -1;
 
-  ver = c14cux_getLibraryVersion();
+  ver = c14cux_get_version();
 
-  if (argc < 4)
+  if (argc < 3)
   {
     usage(ver, argv[0]);
     return 0;
   }
 
   // if the user specified a nonstandard baud rate, grab it from the parameter list
-  if (strcmp(argv[2], "-b") == 0)
+  if (strcmp(argv[1], "-b") == 0)
   {
-    if (argc < 6)
+    if (argc < 5)
     {
       usage(ver, argv[0]);
       return 0;
     }
     else
     {
-      baud = strtoul(argv[3], NULL, 10);
-      addr = strtoul(argv[4], NULL, 0);
-      len = strtoul(argv[5], NULL, 0);
+      if (argc >= 6)
+      {
+        outfileParamPos = 5;
+      }
+      baud = strtoul(argv[2], NULL, 10);
+      addr = strtoul(argv[3], NULL, 0);
+      len = strtoul(argv[4], NULL, 0);
     }
   }
   else
   {
-    addr = strtoul(argv[2], NULL, 0);
-    len = strtoul(argv[3], NULL, 0);
+    addr = strtoul(argv[1], NULL, 0);
+    len = strtoul(argv[2], NULL, 0);
+    if (argc >= 4)
+    {
+      outfileParamPos = 3;
+    }
   }
 
-  c14cux_init(&info);
+  c14cux_init(&info, true);
 
-  if (c14cux_connect(&info, argv[1], baud))
+  if (c14cux_connect_by_usb_pid(&info, 0x0403, 0x6001, baud))
   {
-    if (c14cux_readMem(&info, addr, len, readBuf))
+    if (c14cux_read_mem(&info, addr, len, readBuf))
     {
       // if a filename was specified, write to the file rather than STDOUT
-      if (argc >= 5)
+      if (outfileParamPos > 0)
       {
-        fp = fopen(argv[4], "wb");
+        fp = fopen(argv[outfileParamPos], "wb");
 
         if (fp != NULL)
         {

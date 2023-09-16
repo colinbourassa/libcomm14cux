@@ -7,13 +7,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
-#if defined(WIN32)
-#include <windows.h>
-#else
+#include <stdio.h>
 #include <pthread.h>
 #include <errno.h>
-#endif
+#include <libftdi1/ftdi.h>
 
 /** Flag used to enable logging (to stdio) of error conditions */
 #define DEBUG_ERR  1
@@ -61,6 +58,9 @@ extern "C" {
 
 /** Baud rate of the 14CUX serial port */
 #define C14CUX_BAUD 7812
+
+/** Milliseconds without a response that will cause a read to fail */
+#define C14CUX_TIMEOUT_MS 100
 
 /** Number of engine speed ranges in the fuel maps */
 #define FUEL_MAP_COLUMNS 16
@@ -466,6 +466,17 @@ enum c14cux_purge_valve_state
   C14CUX_PurgeValveState_Open = 2
 };
 
+#define USB_STR_LEN 256
+struct c14cux_ftdi_info
+{
+  uint8_t busNumber;
+  uint8_t deviceAddress;
+  char manufacturer[USB_STR_LEN];
+  char description[USB_STR_LEN];
+  struct c14cux_ftdi_info* next;
+};
+typedef struct c14cux_ftdi_info c14cux_ftdi_info;
+
 /**
  * Contains information about the state of the current connection to the ECU.
  */
@@ -485,68 +496,60 @@ typedef struct
   uint8_t voltageFactorB;
   //! Factor involved in computations with the main voltage
   uint16_t voltageFactorC;
-
-#if defined(WIN32)
-  //! Descriptor for the serial port device
-  HANDLE sd;
-  //! Lock to prevent multiple simultaneous open/close/read/write operations
-  HANDLE mutex;
-#else
-  //! Descriptor for the serial port device
-  int sd;
+  //! FTDI USB serial converter info
+  struct ftdi_context ftdi;
   //! Lock to prevent multiple simultaneous open/close/read/write operations
   pthread_mutex_t mutex;
-#endif
+  bool connected;
+  bool verbose;
 
 } c14cux_info;
 
 uint16_t swapShort(const uint16_t source);
+c14cux_version c14cux_get_version();
 
-void c14cux_init(c14cux_info* info);
+void c14cux_init(c14cux_info* info, bool verbose);
 void c14cux_cleanup(c14cux_info* info);
-bool c14cux_connect(c14cux_info* info, const char* devPath, unsigned int baud);
+bool c14cux_connect_by_usb_pid(c14cux_info* info, uint16_t vid, uint16_t pid, unsigned int baud);
+bool c14cux_connect_by_usb_addr(c14cux_info* info, uint8_t bus, uint8_t addr, unsigned int baud);
 void c14cux_disconnect(c14cux_info* info);
-bool c14cux_isConnected(c14cux_info* info);
-bool c14cux_readMem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buffer);
-bool c14cux_writeMem(c14cux_info* info, uint16_t addr, uint8_t val);
-bool c14cux_dumpROM(c14cux_info* info, uint8_t* buffer);
-bool c14cux_getFaultCodes(c14cux_info* info, c14cux_faultcodes* faultCodes);
-
-c14cux_version c14cux_getLibraryVersion();
-
-bool c14cux_getRoadSpeed(c14cux_info* info, uint8_t* roadSpeed);
-bool c14cux_getCoolantTemp(c14cux_info* info, int16_t* coolantTemp);
-bool c14cux_getFuelTemp(c14cux_info* info, int16_t* fuelTemp);
-bool c14cux_getMAFReading(c14cux_info* info, const enum c14cux_airflow_type type, float* mafReading);
-bool c14cux_getEngineRPM(c14cux_info* info, uint16_t* engineRPM);
-bool c14cux_getRPMLimit(c14cux_info* info, uint16_t* rpmLimit);
-bool c14cux_getTargetIdle(c14cux_info* info, uint16_t* targetIdleRPM);
-bool c14cux_getThrottlePosition(c14cux_info* info, const enum c14cux_throttle_pos_type type, float* throttlePos);
-bool c14cux_getGearSelection(c14cux_info* info, enum c14cux_gear* gear);
-bool c14cux_getMainVoltage(c14cux_info* info, float* voltage);
-bool c14cux_getFuelMap(c14cux_info* info, uint8_t fuelMapId, uint16_t* adjustmentFactor, uint8_t* rowScaler, uint8_t* buffer);
-bool c14cux_getCurrentFuelMap(c14cux_info* info, uint8_t* fuelMapId);
-bool c14cux_getFuelMapRowIndex(c14cux_info* info, uint8_t* fuelMapRowIndex, uint8_t* rowWeighting);
-bool c14cux_getFuelMapColumnIndex(c14cux_info* info, uint8_t* fuelMapColIndex, uint8_t* colWeighting);
-bool c14cux_getLambdaTrimShort(c14cux_info* info, const enum c14cux_bank bank, int16_t* lambdaTrim);
-bool c14cux_getLambdaTrimLong(c14cux_info* info, const enum c14cux_bank bank, int16_t* lambdaTrim);
-bool c14cux_getCOTrimVoltage(c14cux_info* info, float* coTrimVoltage);
-bool c14cux_getIdleBypassMotorPosition(c14cux_info* info, float* bypassMotorPos);
-bool c14cux_getFuelPumpRelayState(c14cux_info* info, bool* fuelPumpRelayState);
-bool c14cux_getTuneRevision(c14cux_info* info, uint16_t* tuneNumber, uint8_t* chksumFixer, uint16_t* tuneIdent);
-bool c14cux_getIdleMode(c14cux_info* info, bool* idleMode);
-bool c14cux_getPurgeValveState(c14cux_info* info, enum c14cux_purge_valve_state* state);
-bool c14cux_getScreenHeaterState(c14cux_info* info, bool* state);
-bool c14cux_getACCompressorState(c14cux_info* info, bool* state);
-bool c14cux_isMILOn(c14cux_info* info, bool* milOn);
-bool c14cux_getRpmTable(c14cux_info* info, c14cux_rpmtable* table);
-bool c14cux_getInjectorPulseWidth(c14cux_info* info, uint16_t* pulseWidth);
-
-bool c14cux_clearFaultCodes(c14cux_info* info);
-bool c14cux_runFuelPump(c14cux_info* info);
-bool c14cux_driveIdleAirControlMotor(c14cux_info* info, uint8_t direction, uint8_t steps);
-
-void c14cux_cancelRead(c14cux_info* info);
+bool c14cux_read_mem(c14cux_info* info, uint16_t addr, uint16_t len, uint8_t* buffer);
+bool c14cux_write_mem(c14cux_info* info, uint16_t addr, uint8_t val);
+bool c14cux_dump_rom(c14cux_info* info, uint8_t* buffer);
+bool c14cux_get_fault_codes(c14cux_info* info, c14cux_faultcodes* faultCodes);
+bool c14cux_get_road_speed(c14cux_info* info, uint8_t* roadSpeed);
+bool c14cux_get_coolant_temp(c14cux_info* info, int16_t* coolantTemp);
+bool c14cux_get_fuel_temp(c14cux_info* info, int16_t* fuelTemp);
+bool c14cux_get_maf_reading(c14cux_info* info, const enum c14cux_airflow_type type, float* mafReading);
+bool c14cux_get_engine_rpm(c14cux_info* info, uint16_t* engineRPM);
+bool c14cux_get_rpm_limit(c14cux_info* info, uint16_t* rpmLimit);
+bool c14cux_get_target_idle(c14cux_info* info, uint16_t* targetIdleRPM);
+bool c14cux_get_throttle_position(c14cux_info* info, const enum c14cux_throttle_pos_type type, float* throttlePos);
+bool c14cux_get_gear_selection(c14cux_info* info, enum c14cux_gear* gear);
+bool c14cux_get_main_voltage(c14cux_info* info, float* voltage);
+bool c14cux_get_fuel_map(c14cux_info* info, uint8_t fuelMapId, uint16_t* adjustmentFactor, uint8_t* rowScaler, uint8_t* buffer);
+bool c14cux_get_current_fuel_map(c14cux_info* info, uint8_t* fuelMapId);
+bool c14cux_get_fuel_map_row_index(c14cux_info* info, uint8_t* fuelMapRowIndex, uint8_t* rowWeighting);
+bool c14cux_get_fuel_map_column_index(c14cux_info* info, uint8_t* fuelMapColIndex, uint8_t* colWeighting);
+bool c14cux_get_lambda_trim_short(c14cux_info* info, const enum c14cux_bank bank, int16_t* lambdaTrim);
+bool c14cux_get_lambda_trim_long(c14cux_info* info, const enum c14cux_bank bank, int16_t* lambdaTrim);
+bool c14cux_get_co_trim_voltage(c14cux_info* info, float* coTrimVoltage);
+bool c14cux_get_idle_bypass_motor_position(c14cux_info* info, float* bypassMotorPos);
+bool c14cux_get_fuel_pump_relay_state(c14cux_info* info, bool* fuelPumpRelayState);
+bool c14cux_get_tune_revision(c14cux_info* info, uint16_t* tuneNumber, uint8_t* chksumFixer, uint16_t* tuneIdent);
+bool c14cux_get_idle_mode(c14cux_info* info, bool* idleMode);
+bool c14cux_get_purge_valve_state(c14cux_info* info, enum c14cux_purge_valve_state* state);
+bool c14cux_get_screen_heater_state(c14cux_info* info, bool* state);
+bool c14cux_get_ac_compressor_state(c14cux_info* info, bool* state);
+bool c14cux_get_mil_state(c14cux_info* info, bool* milOn);
+bool c14cux_get_rpm_table(c14cux_info* info, c14cux_rpmtable* table);
+bool c14cux_get_injector_pulsewidth(c14cux_info* info, uint16_t* pulseWidth);
+bool c14cux_clear_fault_codes(c14cux_info* info);
+bool c14cux_run_fuel_pump(c14cux_info* info);
+bool c14cux_drive_iac_motor(c14cux_info* info, uint8_t direction, uint8_t steps);
+void c14cux_cancel_read(c14cux_info* info);
+int c14cux_ftdi_enumerate(c14cux_info* info, c14cux_ftdi_info** list);
+void c14cux_ftdi_list_free(c14cux_ftdi_info* list);
 
 /* Closing brace for 'extern "C"' */
 #ifdef __cplusplus
