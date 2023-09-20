@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.21)
 project (libcomm14cux LANGUAGES C)
 include (GNUInstallDirs)
 
@@ -219,6 +219,32 @@ install (FILES "${SOURCE_SUBDIR}/comm14cux.h"
 #
 install (TARGETS comm14cux
          LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+
+#
+# install any library dependencies
+#
+if (MINGW OR WIN32)
+
+  # When we call find_library() below, we're only looking for DLLs, so set the suffix list appropriately
+  set (CMAKE_FIND_LIBRARY_SUFFIXES ".dll")
+
+  find_library (LIBRARY_USB libusb-1.0)
+  if (LIBRARY_USB)
+    message (STATUS "Found libusb1 at ${LIBRARY_USB}")
+  else ()
+    message (SEND_ERROR "Could not find libusb1!")
+  endif ()
+
+  find_library (LIBRARY_FTDI libftdi1)
+  if (LIBRARY_FTDI)
+    message (STATUS "Found libftdi1 at ${LIBRARY_FTDI}")
+  else ()
+    message (SEND_ERROR "Could not find libftdi1!")
+  endif ()
+
+  install (FILES "${LIBRARY_USB}" "${LIBRARY_FTDI}"
+           DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
 
 #
 # install the pkgconfig file
