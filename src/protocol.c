@@ -8,6 +8,10 @@
 #include "comm14cux.h"
 #include "comm14cux_internal.h"
 
+#ifdef WIN32
+  #define CLOCK_MONOTONIC_RAW CLOCK_MONOTONIC
+#endif
+
 int get_elapsed_ms(struct timespec* start, struct timespec* end)
 {
   const int deltaMs = (end->tv_sec - start->tv_sec) * 1000 +
