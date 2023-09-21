@@ -4,10 +4,10 @@
 #include <string.h>
 #include "comm14cux.h"
 
-void usage(c14cux_version ver, const char* name)
+void usage(c14cux_version ver)
 {
   printf("read14cux using libcomm14cux v%d.%d.%d\n", ver.major, ver.minor, ver.patch);
-  printf("Usage: %s [-b baud-rate] <address> <length> [output file]\n", name);
+  printf("Usage: read14cux [-b baud-rate] <address> <length> [output file]\n");
 }
 
 int main(int argc, char** argv)
@@ -15,7 +15,6 @@ int main(int argc, char** argv)
   uint8_t readBuf[0x10000];
   uint16_t addr;
   uint16_t len;
-  c14cux_version ver;
   c14cux_info info;
   FILE* fp;
   int retVal = 0;
@@ -23,20 +22,19 @@ int main(int argc, char** argv)
   unsigned int baud = C14CUX_BAUD;
   int outfileParamPos = -1;
 
-  ver = c14cux_get_version();
-
   if (argc < 3)
   {
-    usage(ver, argv[0]);
+    usage(c14cux_get_version());
     return 0;
   }
 
+  printf("Usage: read14cux [-b baud-rate] <address> <length> [output file]\n");
   // if the user specified a nonstandard baud rate, grab it from the parameter list
   if (strcmp(argv[1], "-b") == 0)
   {
     if (argc < 5)
     {
-      usage(ver, argv[0]);
+      usage(c14cux_get_version());
       return 0;
     }
     else
@@ -117,7 +115,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    printf("Error: could not open serial device (%s).\n", argv[1]);
+    printf("Error: failed to open FTDI USB device.\n");
     retVal = -4;
   }
 
