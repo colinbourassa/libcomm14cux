@@ -228,6 +228,20 @@ if (MINGW OR WIN32)
   # When we call find_library() below, we're only looking for DLLs, so set the suffix list appropriately
   set (CMAKE_FIND_LIBRARY_SUFFIXES ".dll")
 
+  find_library (LIBGCC NAMES libgcc_s_sjlj-1 libgcc_s_seh-1 libgcc_s_dw2-1)
+  if (LIBGCC)
+    message (STATUS "Found libgcc at ${LIBGCC}")
+  else ()
+    message (SEND_ERROR "Could not find libgcc!")
+  endif ()
+
+  find_library (LIBWINPTHREAD libwinpthread-1)
+  if (LIBWINPTHREAD)
+    message (STATUS "Found libwinpthread at ${LIBWINPTHREAD}")
+  else ()
+    message (SEND_ERROR "Could not find libwinpthread!")
+  endif ()
+
   find_library (LIBRARY_USB libusb-1.0)
   if (LIBRARY_USB)
     message (STATUS "Found libusb1 at ${LIBRARY_USB}")
@@ -242,7 +256,10 @@ if (MINGW OR WIN32)
     message (SEND_ERROR "Could not find libftdi1!")
   endif ()
 
-  install (FILES "${LIBRARY_USB}" "${LIBRARY_FTDI}"
+  install (FILES "${LIBRARY_USB}"
+                 "${LIBRARY_FTDI}"
+                 "${LIBGCC}"
+                 "${LIBWINPTHREAD}"
            DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
 
