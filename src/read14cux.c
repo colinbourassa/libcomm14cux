@@ -28,7 +28,6 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  printf("Usage: read14cux [-b baud-rate] <address> <length> [output file]\n");
   // if the user specified a nonstandard baud rate, grab it from the parameter list
   if (strcmp(argv[1], "-b") == 0)
   {
