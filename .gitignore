@@ -20,3 +20,4 @@ LICENSE.txt
 README.txt
 build/
 build-win32/
+build-win64/
